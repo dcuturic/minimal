@@ -1,5 +1,22 @@
-# Validation for Minecraft Converter
-from pydantic import BaseModel
+from app.validation import Validator
 
-class MinecraftConverterInput(BaseModel):
-    pass
+def validate_minecraft_converter_request(data):
+    rules = {
+        "input_text": {
+            "required": True,
+            "type": str,
+            "min_length": 2,
+            "max_length": 5000
+        },
+        "mode": {
+            "required": True,
+            "type": str,
+            "min_length": 2,
+            "max_length": 100
+        },
+        "options": {
+            "required": False,
+            "type": dict
+        }
+    }
+    return Validator.validate(data, rules)
