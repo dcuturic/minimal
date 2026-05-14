@@ -1,3 +1,14 @@
 {
-  "demo": "data"
+  "source": "base-webserver-template",
+  "config": {
+    "engine": "nginx",
+    "version": "1.24",
+    "ssl": true,
+    "firewall_rules": [
+      "allow 80",
+      "allow 443",
+      "allow 22"
+    ]
+  },
+  "mode": "production"
 }
