@@ -4,6 +4,7 @@ import os
 ui_bp = Blueprint('hosting_template_builder_ui', __name__)
 
 @ui_bp.route('/minimal-solutions/hosting_template_builder')
+@ui_bp.route('/minimal-solutions/hosting_template_builder/demo')
 def ui():
     html_path = os.path.join(os.path.dirname(__file__), 'ui_hosting_template_builder.html')
     if os.path.exists(html_path):
