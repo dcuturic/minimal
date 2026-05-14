@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-14 22:18:09",
+  "finish_id": "8037d606-4a72-4273-8ab8-0acf7ae988fe",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "42c826ec",
+  "ticket_title": "Minimal-Lösung API-Schnittstelle bauen: Minecraft Validator",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
