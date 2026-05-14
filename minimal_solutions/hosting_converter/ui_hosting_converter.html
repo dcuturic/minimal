@@ -137,13 +137,21 @@
         }
 
         .copy-btn {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
             padding: 0.25rem 0.75rem;
             font-size: 0.875rem;
             background-color: var(--border-color);
             color: var(--text-primary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
         }
 
         .api-docs {
@@ -210,8 +218,11 @@
             <div id="resultState">
                 <h3>Ergebnis:</h3>
                 <div class="result-box">
-                    <button class="copy-btn" onclick="copyResult()">Kopieren</button>
-                    <pre id="resultOutput"></pre>
+                    <div class="action-buttons">
+                        <button class="copy-btn" onclick="downloadResult()">Download</button>
+                        <button class="copy-btn" onclick="copyResult()">Kopieren</button>
+                    </div>
+                    <pre id="resultOutput" style="margin-top: 1.5rem;"></pre>
                 </div>
             </div>
         </div>
@@ -293,32 +304,21 @@
                 const data = await response.json();
                 
                 if (!response.ok || !data.success) {
-                    const errorMsg = data.error && data.error.message ? data.error.message : 'Ein Fehler ist aufgetreten';
+                    let errorMsg = 'Ein Fehler ist aufgetreten';
+                    if (data.error && data.error.message) {
+                        errorMsg = data.error.message;
+                        if (data.error.details) {
+                            errorMsg += ': ' + JSON.stringify(data.error.details);
+                        }
+                    }
                     throw new Error(errorMsg);
                 }
                 
                 resultOutput.textContent = typeof data.data === 'object' ? JSON.stringify(data.data, null, 2) : data.data;
                 resultState.style.display = 'block';
             } catch (err) {
-                // If the endpoint is not yet implemented, provide a mock response for the demo
-                if (err.message === 'Ein Fehler ist aufgetreten' || err.message.includes('Unexpected token')) {
-                    console.log("Mocking response since backend might not be available.");
-                    const mockData = {
-                        success: true,
-                        data: {
-                            source: source,
-                            config: config,
-                            mode: mode,
-                            converted_data: "Converted Output Mock for " + mode,
-                            message: "Hosting successfully converted."
-                        }
-                    };
-                    resultOutput.textContent = JSON.stringify(mockData.data, null, 2);
-                    resultState.style.display = 'block';
-                } else {
-                    errorState.textContent = err.message;
-                    errorState.style.display = 'block';
-                }
+                errorState.textContent = err.message;
+                errorState.style.display = 'block';
             } finally {
                 loadingState.style.display = 'none';
                 submitBtn.disabled = false;
@@ -328,13 +328,33 @@
         function copyResult() {
             const resultText = document.getElementById('resultOutput').textContent;
             navigator.clipboard.writeText(resultText).then(() => {
-                const btn = document.querySelector('.copy-btn');
+                const btns = document.querySelectorAll('.copy-btn');
+                const btn = btns[1]; // Kopieren button
                 const originalText = btn.textContent;
                 btn.textContent = 'Kopiert!';
                 setTimeout(() => {
                     btn.textContent = originalText;
                 }, 2000);
             });
+        }
+
+        function downloadResult() {
+            const resultText = document.getElementById('resultOutput').textContent;
+            const mode = document.getElementById('modeSelect').value;
+            let extension = "txt";
+            if (mode === "json") extension = "json";
+            else if (mode === "yaml") extension = "yaml";
+            else if (mode === "xml") extension = "xml";
+            
+            const blob = new Blob([resultText], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `hosting_converted.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
