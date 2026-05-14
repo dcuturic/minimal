@@ -1,4 +1,47 @@
-# Tests for Minecraft Formatter
+import pytest
+from app import create_app
 
-def test_minecraft_formatter():
-    pass
+@pytest.fixture
+def client():
+    app = create_app()
+    app.config['TESTING'] = True
+    with app.test_client() as client:
+        yield client
+
+def test_minecraft_formatter_happy_path(client):
+    response = client.post('/api/minimal-solutions/minecraft_formatter', json={
+        "input_text": "&cHello &fWorld",
+        "mode": "chat",
+        "options": {
+            "strip_colors": False
+        }
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "success"
+    assert data["data"]["input_text"] == "&cHello &fWorld"
+    assert data["data"]["mode"] == "chat"
+    assert data["data"]["formatted"] == True
+
+def test_minecraft_formatter_empty_input(client):
+    response = client.post('/api/minimal-solutions/minecraft_formatter', json={})
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["status"] == "error"
+    assert "VALIDATION_ERROR" in data["error"]["code"]
+    assert "input_text" in data["error"]["details"]
+    assert "mode" in data["error"]["details"]
+
+def test_minecraft_formatter_invalid_input(client):
+    response = client.post('/api/minimal-solutions/minecraft_formatter', json={
+        "input_text": 123,
+        "mode": 456,
+        "options": "invalid"
+    })
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data["status"] == "error"
+    assert "VALIDATION_ERROR" in data["error"]["code"]
+    assert "input_text" in data["error"]["details"]
+    assert "mode" in data["error"]["details"]
+    assert "options" in data["error"]["details"]
