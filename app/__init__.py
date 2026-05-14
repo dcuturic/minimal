@@ -357,6 +357,12 @@ def create_app():
         except ImportError:
             pass
 
+        try:
+            from minimal_solutions.minecraft_validator.api_minecraft_validator import api_bp as minecraft_validator_api_bp
+            app.register_blueprint(minecraft_validator_api_bp)
+        except ImportError:
+            pass
+
     except ImportError as e:
         print(f"Warning: Could not import UI blueprints: {e}")
         
