@@ -1,1 +1,8 @@
-{}
+{
+  "input_text": "&cHello &fWorld\n&aWelcome to the server!",
+  "mode": "chat",
+  "options": {
+    "strip_colors": false,
+    "convert_to_html": true
+  }
+}
