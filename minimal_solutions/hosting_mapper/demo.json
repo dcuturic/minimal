@@ -1,3 +1,11 @@
 {
-  "demo": true
+  "source": "hostingserver-europe-1.internal.net",
+  "config": {
+    "region": "eu-central",
+    "provider": "aws",
+    "tier": "enterprise",
+    "ssl_enabled": true,
+    "max_connections": 1000
+  },
+  "mode": "auto"
 }
