@@ -328,7 +328,11 @@
                     throw new Error(errorMsg);
                 }
                 
-                resultOutput.textContent = typeof data.data === 'object' ? JSON.stringify(data.data, null, 2) : data.data;
+                if (data.data && data.data.formatted_data) {
+                    resultOutput.textContent = typeof data.data.formatted_data === 'object' ? JSON.stringify(data.data.formatted_data, null, 2) : data.data.formatted_data;
+                } else {
+                    resultOutput.textContent = typeof data.data === 'object' ? JSON.stringify(data.data, null, 2) : data.data;
+                }
                 resultState.style.display = 'block';
             } catch (err) {
                 errorState.textContent = err.message;
