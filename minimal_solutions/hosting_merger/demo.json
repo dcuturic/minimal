@@ -1,3 +1,8 @@
 {
-    "demo": true
+  "source": "server1.example.com\nserver2.example.com\nserver3.example.com",
+  "config": {
+    "merge_strategy": "newline",
+    "prefix": "HOST: "
+  },
+  "mode": "Advanced"
 }
