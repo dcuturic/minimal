@@ -1,1 +1,26 @@
-{}
+{
+  "demo_requests": [
+    {
+      "name": "Standard Summary",
+      "request": {
+        "source": "https://github.com/example/repo",
+        "config": {
+          "format": "markdown",
+          "include_metadata": true
+        },
+        "mode": "standard"
+      }
+    },
+    {
+      "name": "Detailed Report",
+      "request": {
+        "source": "https://github.com/example/complex-app",
+        "config": {
+          "format": "pdf",
+          "include_metrics": true
+        },
+        "mode": "detailed"
+      }
+    }
+  ]
+}
