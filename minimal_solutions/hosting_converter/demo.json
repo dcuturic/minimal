@@ -1,0 +1,9 @@
+{
+  "source": "https://github.com/my-org/my-nextjs-app",
+  "config": {
+    "framework": "nextjs",
+    "node_version": "18.x",
+    "package_manager": "npm"
+  },
+  "mode": "vercel"
+}
