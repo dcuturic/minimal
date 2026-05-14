@@ -1,1 +1,9 @@
-{}
+{
+  "source": "https://github.com/example/my-project.git",
+  "config": {
+    "branch": "main",
+    "npm_install": true,
+    "build_command": "npm run build"
+  },
+  "mode": "production"
+}
