@@ -316,6 +316,12 @@ def create_app():
         from minimal_solutions.hosting_converter.api_hosting_converter import api_bp as hosting_converter_api_bp
         app.register_blueprint(hosting_converter_api_bp)
 
+        from minimal_solutions.hosting_analyzer.api_hosting_analyzer import api_bp as hosting_analyzer_api_bp
+        app.register_blueprint(hosting_analyzer_api_bp)
+
+        from minimal_solutions.hosting_analyzer.ui_hosting_analyzer import ui_bp as hosting_analyzer_ui_bp
+        app.register_blueprint(hosting_analyzer_ui_bp)
+
     except ImportError as e:
         print(f"Warning: Could not import UI blueprints: {e}")
         
