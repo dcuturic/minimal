@@ -1,1 +1,8 @@
-{}
+{
+  "source": "vps-123.hosting.example.com",
+  "config": {
+    "lowercase": true,
+    "remove_www": true
+  },
+  "mode": "advanced"
+}
