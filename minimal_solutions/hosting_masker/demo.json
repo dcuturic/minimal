@@ -1,1 +1,8 @@
-{}
+{
+  "source": "192.168.1.100",
+  "config": {
+    "mask_pattern": "***.***.*.***",
+    "keep_last": 1
+  },
+  "mode": "IP-Address"
+}
