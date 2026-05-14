@@ -1,3 +1,10 @@
 {
-  "demo": "data"
+  "source": "cluster-node-alpha",
+  "config": {
+    "delete_logs": true,
+    "clear_cache": true,
+    "remove_orphaned_containers": false,
+    "target_directory": "/var/www/html/tmp"
+  },
+  "mode": "standard"
 }
