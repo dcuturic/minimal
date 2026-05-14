@@ -1,0 +1,5 @@
+{
+  "csv_text": "id,product_name,price,in_stock\n1,Gaming Mouse,45.99,true\n2,Mechanical Keyboard,120.00,false\n3,USB-C Hub,25.50,true\n4,27-inch Monitor,299.99,true",
+  "delimiter": ",",
+  "has_header": true
+}

@@ -1,0 +1,269 @@
+<div class="masker-container" style="width: 100%;">
+    <style>
+        .masker-input-group { margin-bottom: 1.5rem; }
+        .masker-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .masker-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .masker-input:focus { outline: none; border-color: var(--primary-color); }
+        .masker-textarea {
+            width: 100%;
+            min-height: 120px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .masker-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .masker-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .masker-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .masker-controls { display: flex; gap: 1rem; justify-content: center; }
+        .masker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .masker-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="masker-grid">
+        <div class="masker-form-section">
+            <div class="masker-input-group">
+                <label>Topic</label>
+                <input type="text" id="masker-topic-input" class="masker-input" placeholder="e.g. Marketing Campaign">
+            </div>
+
+            <div class="masker-input-group">
+                <label>Target</label>
+                <input type="text" id="masker-target-input" class="masker-input" placeholder="e.g. B2B Customers">
+            </div>
+
+            <div class="masker-input-group">
+                <label>Options</label>
+                <textarea id="masker-options-input" class="masker-textarea" placeholder='{"anonymize": true}'></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processMasker(this)">
+                Mask Landingpage
+            </button>
+        </div>
+
+        <div class="masker-preview-section">
+            <div class="masker-preview-box" id="masker-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="masker-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill inputs and click mask.</p>
+                </div>
+                
+                <div id="masker-result-state" style="display: none; width: 100%;">
+                    <pre class="masker-result-text" id="masker-text-result"></pre>
+                </div>
+            </div>
+            
+            <div class="masker-controls" style="display: none;" id="masker-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyMaskerResult(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processMasker(btn) {
+            const topic = document.getElementById('masker-topic-input').value.trim();
+            const target = document.getElementById('masker-target-input').value.trim();
+            const options = document.getElementById('masker-options-input').value.trim();
+            
+            const container = document.getElementById('masker-preview-container');
+            const controls = document.getElementById('masker-result-controls');
+            const emptyState = document.getElementById('masker-empty-state');
+            const resultState = document.getElementById('masker-result-state');
+            
+            if (!topic || !target) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide at least a topic and target.');
+                } else {
+                    alert('Please provide at least a topic and target.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Processing...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'masker-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/landingpage_masker', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        target: target,
+                        options: options
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('masker-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Mask Landingpage'; }
+                    return;
+                }
+
+                const outputText = typeof result.data === 'object' ? JSON.stringify(result.data, null, 2) : result.data.result || JSON.stringify(result.data);
+
+                document.getElementById('masker-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Mask Landingpage'; }
+
+            } catch (err) {
+                const loader = document.getElementById('masker-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Mask Landingpage'; }
+            }
+        }
+
+        function copyMaskerResult(btn) {
+            const outputText = document.getElementById('masker-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um Landingpage-Daten programmgesteuert zu maskieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/landingpage_masker</code>
+        </div>
+
+        <div class="masker-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "topic": "Produkt-Launch",
+  "target": "Neukunden",
+  "options": "{\"anonymize\": true}"
+}</pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "topic": "Produkt-Launch",
+    "target": "Neukunden",
+    "options": "{\"anonymize\": true}",
+    "masker_id": "msk_123456",
+    "timestamp": "2026-05-13T12:00:00Z",
+    "masked": true
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

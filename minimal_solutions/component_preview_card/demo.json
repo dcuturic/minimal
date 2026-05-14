@@ -1,0 +1,5 @@
+{
+  "component_name": "Modern Card",
+  "category": "Layout",
+  "preview_html": "<div class=\"p-6 rounded-xl border border-gray-800 bg-black text-white hover:border-gray-600 transition-colors duration-300\">\n  <h3 class=\"text-xl font-medium mb-2\">Minimalist Approach</h3>\n  <p class=\"text-gray-400 text-sm\">This card demonstrates a simple, elegant design without unnecessary decorations.</p>\n</div>"
+}

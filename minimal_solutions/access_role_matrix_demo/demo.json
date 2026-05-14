@@ -1,0 +1,4 @@
+{
+  "roles": ["Admin", "Editor", "Viewer", "Guest"],
+  "permissions": ["Create", "Read", "Update", "Delete", "Share"]
+}

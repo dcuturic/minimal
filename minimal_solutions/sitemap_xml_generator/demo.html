@@ -1,0 +1,284 @@
+<div class="sitemap-gen-container" style="width: 100%;">
+    <style>
+        .sitemap-gen-input-group { margin-bottom: 1.5rem; }
+        .sitemap-gen-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .sitemap-gen-input, .sitemap-gen-textarea, .sitemap-gen-select {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .sitemap-gen-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .sitemap-gen-input:focus, .sitemap-gen-textarea:focus, .sitemap-gen-select:focus { outline: none; border-color: var(--primary-color); }
+        
+        .sitemap-gen-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .sitemap-gen-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .sitemap-gen-controls { display: flex; gap: 1rem; justify-content: center; }
+        .sitemap-gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .sitemap-gen-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="sitemap-gen-grid">
+        <div class="sitemap-gen-form-section">
+            <div class="sitemap-gen-input-group">
+                <label>URLs (One URL per line)</label>
+                <textarea id="sitemap-gen-urls" class="sitemap-gen-textarea" placeholder="https://example.com/&#10;https://example.com/about/"></textarea>
+            </div>
+
+            <div class="sitemap-gen-input-group">
+                <label>Change Frequency</label>
+                <select id="sitemap-gen-changefreq" class="sitemap-gen-select">
+                    <option value="always">always</option>
+                    <option value="hourly">hourly</option>
+                    <option value="daily" selected>daily</option>
+                    <option value="weekly">weekly</option>
+                    <option value="monthly">monthly</option>
+                    <option value="yearly">yearly</option>
+                    <option value="never">never</option>
+                </select>
+            </div>
+
+            <div class="sitemap-gen-input-group">
+                <label>Priority (0.0 to 1.0)</label>
+                <input type="number" id="sitemap-gen-priority" class="sitemap-gen-input" min="0.0" max="1.0" step="0.1" value="0.5">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processSitemapGen(this)">
+                Generate Sitemap XML
+            </button>
+        </div>
+
+        <div class="sitemap-gen-preview-section">
+            <div class="sitemap-gen-preview-box" id="sitemap-gen-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="sitemap-gen-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Add URLs and generate sitemap.xml.</p>
+                </div>
+                
+                <div id="sitemap-gen-result-state" style="display: none; width: 100%;">
+                    <pre class="sitemap-gen-result-text" id="sitemap-gen-text-result"></pre>
+                </div>
+            </div>
+            
+            <div class="sitemap-gen-controls" style="display: none;" id="sitemap-gen-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copySitemapGen(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Text
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadSitemapGen()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; padding: 2rem; background: var(--surface-color); border-radius: 8px; border: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Use the API to generate Sitemap XML programmatically.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="color: var(--text-color);">Endpoint:</strong><br>
+            <code style="background: var(--bg-color); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: var(--primary-color);">POST /api/minimal-solutions/sitemap_xml_generator</code>
+        </div>
+        
+        <div class="sitemap-gen-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <strong style="color: var(--text-color);">Request Example:</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color); font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "urls": [
+    "https://example.com/",
+    "https://example.com/about/"
+  ],
+  "changefreq": "daily",
+  "priority": 0.5
+}</pre>
+            </div>
+            <div>
+                <strong style="color: var(--text-color);">Response Example:</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color); font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "status": "success",
+  "data": {
+    "sitemap_xml": "&lt;?xml version=\"1.0\" encoding=\"UTF-8\"?&gt;\n&lt;urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"&gt;\n..."
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processSitemapGen(btn) {
+            const urlsText = document.getElementById('sitemap-gen-urls').value.trim();
+            const changefreq = document.getElementById('sitemap-gen-changefreq').value;
+            const priority = document.getElementById('sitemap-gen-priority').value;
+            
+            const container = document.getElementById('sitemap-gen-preview-container');
+            const controls = document.getElementById('sitemap-gen-result-controls');
+            const emptyState = document.getElementById('sitemap-gen-empty-state');
+            const resultState = document.getElementById('sitemap-gen-result-state');
+            
+            if (!urlsText) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide at least one URL.');
+                } else {
+                    alert('Please provide at least one URL.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'sitemap-gen-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            const urlsArray = urlsText.split('\n').map(u => u.trim()).filter(u => u);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/sitemap_xml_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        urls: urlsArray,
+                        changefreq: changefreq,
+                        priority: parseFloat(priority)
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('sitemap-gen-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Sitemap XML'; }
+                    return;
+                }
+
+                const outputText = result.data && result.data.result ? result.data.result : (result.data && result.data.sitemap_xml ? result.data.sitemap_xml : '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n... (Mock)\n</urlset>');
+
+                document.getElementById('sitemap-gen-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Sitemap XML'; }
+
+            } catch (err) {
+                const loader = document.getElementById('sitemap-gen-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Sitemap XML'; }
+            }
+        }
+
+        function copySitemapGen(btn) {
+            const outputText = document.getElementById('sitemap-gen-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function downloadSitemapGen() {
+            const outputText = document.getElementById('sitemap-gen-text-result').innerText;
+            const blob = new Blob([outputText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sitemap.xml';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</div>

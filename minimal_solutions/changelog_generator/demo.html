@@ -1,0 +1,271 @@
+<div class="changelog-container" style="width: 100%;">
+    <style>
+        .changelog-input-group { margin-bottom: 1.5rem; }
+        .changelog-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .changelog-input, .changelog-textarea {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .changelog-input:focus, .changelog-textarea:focus { outline: none; border-color: var(--primary-color); }
+        .changelog-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .changelog-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .changelog-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-word;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .changelog-controls { display: flex; gap: 1rem; justify-content: center; }
+        .changelog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .changelog-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="changelog-grid">
+        <div class="changelog-form-section">
+            <div class="changelog-input-group">
+                <label>Version</label>
+                <input type="text" id="changelog-version" class="changelog-input" placeholder="e.g. 1.0.0">
+            </div>
+
+            <div class="changelog-input-group">
+                <label>Date (Optional)</label>
+                <input type="date" id="changelog-date" class="changelog-input">
+            </div>
+
+            <div class="changelog-input-group">
+                <label>Changes (One per line)</label>
+                <textarea id="changelog-changes" class="changelog-textarea" placeholder="- Added new feature X&#10;- Fixed bug Y&#10;- Improved performance"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processChangelog(this)">
+                Generate Changelog
+            </button>
+        </div>
+
+        <div class="changelog-preview-section">
+            <div class="changelog-preview-box" id="changelog-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="changelog-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill the form and click generate.</p>
+                </div>
+                
+                <div id="changelog-result-state" style="display: none; width: 100%;">
+                    <pre class="changelog-result-text" id="changelog-text-result"></pre>
+                </div>
+            </div>
+            
+            <div class="changelog-controls" style="display: none;" id="changelog-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyChangelog(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Markdown
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processChangelog(btn) {
+            const versionInput = document.getElementById('changelog-version').value.trim();
+            const dateInput = document.getElementById('changelog-date').value.trim();
+            const changesInput = document.getElementById('changelog-changes').value.trim();
+            
+            const container = document.getElementById('changelog-preview-container');
+            const controls = document.getElementById('changelog-result-controls');
+            const emptyState = document.getElementById('changelog-empty-state');
+            const resultState = document.getElementById('changelog-result-state');
+            
+            if (!versionInput || !changesInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide version and changes.');
+                } else {
+                    alert('Please provide version and changes.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'changelog-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                // Split changes by newline and remove empty lines
+                const changesList = changesInput.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+                const payload = {
+                    version: versionInput,
+                    changes: changesList
+                };
+                if (dateInput) {
+                    payload.date = dateInput;
+                }
+
+                const response = await fetch('/api/minimal-solutions/changelog_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('changelog-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Changelog'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const outputText = result.data.result;
+
+                document.getElementById('changelog-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Changelog'; }
+
+            } catch (err) {
+                const loader = document.getElementById('changelog-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Changelog'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyChangelog(btn) {
+            const outputText = document.getElementById('changelog-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert Changelogs aus Version, Datum und Änderungen zu generieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/changelog_generator</code>
+        </div>
+
+        <div class="changelog-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "version": "1.0.0",
+  "date": "2026-05-12",
+  "changes": [
+    "Added new feature X",
+    "Fixed bug Y"
+  ]
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `date` ist optional.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "result": "## [1.0.0] - 2026-05-12\n\n- Added new feature X\n- Fixed bug Y"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

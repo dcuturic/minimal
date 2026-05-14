@@ -1,0 +1,6 @@
+{
+  "text": "Hello CraftHoster Platform! This is a base64 test.",
+  "encoded": "SGVsbG8gQ3JhZnRIb3N0ZXIgUGxhdGZvcm0hIFRoaXMgaXMgYSBiYXNlNjQgdGVzdC4=",
+  "short_example": "CraftHoster",
+  "short_example_encoded": "Q3JhZnRIb3N0ZXI="
+}

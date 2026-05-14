@@ -1,0 +1,20 @@
+{
+  "request": {
+    "title": "CraftHoster Minimal Solutions",
+    "description": "Discover a suite of lightweight, fast, and easy-to-use tools built on the CraftHoster Minimal Solutions Platform.",
+    "image_url": "https://crafthoster.com/assets/og-image.jpg",
+    "domain": "https://crafthoster.com"
+  },
+  "response": {
+    "status": "success",
+    "data": {
+      "html": "<meta property=\"og:type\" content=\"website\">\n<meta property=\"og:url\" content=\"https://crafthoster.com\">\n<meta property=\"og:title\" content=\"CraftHoster Minimal Solutions\">\n<meta property=\"og:description\" content=\"Discover a suite of lightweight, fast, and easy-to-use tools built on the CraftHoster Minimal Solutions Platform.\">\n<meta property=\"og:image\" content=\"https://crafthoster.com/assets/og-image.jpg\">",
+      "preview_data": {
+        "title": "CraftHoster Minimal Solutions",
+        "description": "Discover a suite of lightweight, fast, and easy-to-use tools built on the CraftHoster Minimal Solutions Platform.",
+        "image_url": "https://crafthoster.com/assets/og-image.jpg",
+        "domain": "https://crafthoster.com"
+      }
+    }
+  }
+}

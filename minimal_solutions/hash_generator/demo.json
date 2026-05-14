@@ -1,0 +1,20 @@
+{
+  "scenarios": [
+    {
+      "name": "MD5 Hash",
+      "description": "Erzeugt einen MD5-Hash aus einem Text",
+      "input": {
+        "text": "CraftHoster Minimal Solutions",
+        "algorithm": "md5"
+      }
+    },
+    {
+      "name": "SHA-256 Hash",
+      "description": "Erzeugt einen kryptografischen SHA-256 Hash",
+      "input": {
+        "text": "CraftHoster Minimal Solutions",
+        "algorithm": "sha256"
+      }
+    }
+  ]
+}

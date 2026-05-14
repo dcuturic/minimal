@@ -1,0 +1,6 @@
+{
+  "service": "Database API",
+  "incident_type": "Downtime",
+  "status": "identifying",
+  "message": "We are currently experiencing downtime with the database API. We are working to identify the issue."
+}

@@ -1,0 +1,346 @@
+<div class="landingpage-generator-container" style="width: 100%;">
+    <style>
+        .landingpage-generator-input-group { margin-bottom: 1.5rem; }
+        .landingpage-generator-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .landingpage-generator-input, .landingpage-generator-textarea {
+            width: 100%;
+            padding: 0.65rem 1rem;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .landingpage-generator-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .landingpage-generator-input:focus, .landingpage-generator-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .landingpage-generator-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .landingpage-generator-result-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .landingpage-generator-result-box {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            text-align: left;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+        }
+
+        .landingpage-generator-copy-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            align-self: flex-start;
+        }
+
+        .landingpage-generator-copy-btn:hover {
+            background: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+
+        .landingpage-generator-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .landingpage-generator-grid { grid-template-columns: 1fr; } }
+
+        .landingpage-generator-error-box {
+            width: 100%;
+            background: rgba(255, 60, 60, 0.08);
+            border: 1px solid rgba(255, 60, 60, 0.3);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            display: none;
+        }
+        .landingpage-generator-error-box p { margin: 0; color: #ff5c5c; font-size: 0.9rem; }
+        .landingpage-generator-error-box strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #ff5c5c;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .landingpage-generator-loading-box {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .landingpage-generator-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color, var(--text-color));
+            border-radius: 50%;
+            animation: landingpage-generator-spin 0.8s linear infinite;
+        }
+        @keyframes landingpage-generator-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .landingpage-generator-loading-text { color: var(--text-muted); font-size: 0.85rem; }
+    </style>
+
+    <div class="landingpage-generator-grid">
+        <div class="landingpage-generator-form-section">
+            <div class="landingpage-generator-input-group">
+                <label>Topic</label>
+                <input type="text" id="landingpage-generator-topic" class="landingpage-generator-input" placeholder="e.g. Modern AI SaaS">
+            </div>
+
+            <div class="landingpage-generator-input-group">
+                <label>Target Audience</label>
+                <input type="text" id="landingpage-generator-target" class="landingpage-generator-input" placeholder="e.g. Developers and Tech Founders">
+            </div>
+
+            <div class="landingpage-generator-input-group">
+                <label>Options / Features (Optional)</label>
+                <textarea id="landingpage-generator-options" class="landingpage-generator-textarea" placeholder="e.g. Dark mode, easy integration, low latency"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processLandingpageGenerator(this)">
+                Generate Landingpage Data
+            </button>
+        </div>
+
+        <div class="landingpage-generator-preview-section">
+            <div class="landingpage-generator-preview-box" id="landingpage-generator-preview-container">
+                <!-- Empty State -->
+                <div style="text-align: center; color: var(--text-muted);" id="landingpage-generator-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="3" x2="9" y2="21"></line>
+                    </svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure parameters to generate the Landingpage Data.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="landingpage-generator-loading-box" id="landingpage-generator-loading-state">
+                    <div class="landingpage-generator-spinner"></div>
+                    <span class="landingpage-generator-loading-text">Generating Data…</span>
+                </div>
+
+                <!-- Error State -->
+                <div class="landingpage-generator-error-box" id="landingpage-generator-error-state">
+                    <strong id="landingpage-generator-error-title">Error</strong>
+                    <p id="landingpage-generator-error-message"></p>
+                </div>
+
+                <!-- Result State -->
+                <div id="landingpage-generator-result-state" style="display: none; width: 100%;">
+                    <div class="landingpage-generator-result-container">
+                        <div class="landingpage-generator-result-box" id="landingpage-generator-template-output">
+                        </div>
+                        <button class="landingpage-generator-copy-btn" onclick="copyLandingpageGenerator()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="landingpage-generator-api-docs" id="landingpage-generator-api-docs-container" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color); font-size: 1.2rem;">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            You can use this tool via our REST API. Send a POST request with the topic, target, and options.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="display: block; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--primary-color);">POST /api/minimal-solutions/landingpage_generator</code>
+        </div>
+        
+        <div class="landingpage-generator-grid">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+                <pre style="margin: 0; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace; font-size: 0.85rem;">{
+  "topic": "Modern AI SaaS",
+  "target": "Developers and Tech Founders",
+  "options": "Dark mode, easy integration, low latency"
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+                <pre style="margin: 0; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace; font-size: 0.85rem;">{
+  "status": "success",
+  "data": {
+    "landingpage_data": {
+      "headline": "Empower your Development with AI",
+      "subheadline": "Low latency tools designed for Tech Founders.",
+      "features": ["Dark Mode", "Easy Integration", "Low Latency"]
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function landingpageGeneratorShowState(state) {
+            const empty = document.getElementById('landingpage-generator-empty-state');
+            const loading = document.getElementById('landingpage-generator-loading-state');
+            const error = document.getElementById('landingpage-generator-error-state');
+            const result = document.getElementById('landingpage-generator-result-state');
+
+            empty.style.display = 'none';
+            loading.style.display = 'none';
+            error.style.display = 'none';
+            result.style.display = 'none';
+
+            switch (state) {
+                case 'empty': empty.style.display = 'block'; break;
+                case 'loading': loading.style.display = 'flex'; break;
+                case 'error': error.style.display = 'block'; break;
+                case 'result': result.style.display = 'block'; break;
+            }
+        }
+
+        function landingpageGeneratorShowError(title, message) {
+            document.getElementById('landingpage-generator-error-title').textContent = title;
+            document.getElementById('landingpage-generator-error-message').textContent = message;
+            landingpageGeneratorShowState('error');
+        }
+
+        async function processLandingpageGenerator(btn) {
+            const topic = document.getElementById('landingpage-generator-topic').value.trim();
+            const target = document.getElementById('landingpage-generator-target').value.trim();
+            const options = document.getElementById('landingpage-generator-options').value.trim();
+
+            if (!topic || !target) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide both Topic and Target Audience.');
+                } else {
+                    landingpageGeneratorShowError('Validation', 'Please provide both Topic and Target Audience.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+
+            landingpageGeneratorShowState('loading');
+
+            try {
+                const response = await fetch('/api/minimal-solutions/landingpage_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        target: target,
+                        options: options
+                    })
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok || result.status === 'error') {
+                    let errorMsg = result.message || 'Unknown error occurred.';
+                    if (result.details) {
+                        if (typeof result.details === 'object') {
+                            const detailsStr = Object.values(result.details).join(', ');
+                            if (detailsStr) errorMsg += ' - ' + detailsStr;
+                        } else if (Array.isArray(result.details)) {
+                            errorMsg += ' - ' + result.details.join(', ');
+                        } else {
+                            errorMsg += ' - ' + result.details;
+                        }
+                    }
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', errorMsg);
+                    } else {
+                        landingpageGeneratorShowError('API Error', errorMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Landingpage Data'; }
+                    return;
+                }
+
+                renderLandingpageGenerator(result.data.landingpage_data || result.data || 'No data generated.');
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Landingpage Data'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    landingpageGeneratorShowError('Network Error', 'Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Landingpage Data'; }
+            }
+        }
+
+        function renderLandingpageGenerator(data) {
+            let outputText = data;
+            if (typeof data === 'object') {
+                outputText = JSON.stringify(data, null, 2);
+            }
+            document.getElementById('landingpage-generator-template-output').innerText = outputText;
+            landingpageGeneratorShowState('result');
+        }
+
+        function copyLandingpageGenerator() {
+            const text = document.getElementById('landingpage-generator-template-output').innerText;
+            const btn = document.querySelector('.landingpage-generator-copy-btn');
+            const originalHtml = btn.innerHTML;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                } catch (err) {}
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

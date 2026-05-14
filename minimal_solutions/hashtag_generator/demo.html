@@ -1,0 +1,286 @@
+<div class="hg-container" style="width: 100%;">
+    <style>
+        .hg-input-group { margin-bottom: 1.5rem; }
+        .hg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .hg-input, .hg-select {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-family: inherit;
+        }
+        .hg-input:focus, .hg-select:focus { outline: none; border-color: var(--primary-color); }
+        
+        .hg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .hg-result-card {
+            width: 100%;
+            max-width: 450px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        
+        .hg-tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .hg-tag {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .hg-controls { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .hg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .hg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="hg-grid">
+        <div class="hg-form-section">
+            <div class="hg-input-group">
+                <label>Topic</label>
+                <input type="text" id="hg-topic" class="hg-input" placeholder="e.g. Artificial Intelligence" />
+            </div>
+
+            <div class="hg-input-group">
+                <label>Audience</label>
+                <select id="hg-audience" class="hg-select">
+                    <option value="general">General</option>
+                    <option value="professionals">Professionals</option>
+                    <option value="teens">Teens</option>
+                    <option value="gamers">Gamers</option>
+                    <option value="developers">Developers</option>
+                </select>
+            </div>
+
+            <div class="hg-input-group">
+                <label>Count (Number of Hashtags)</label>
+                <input type="number" id="hg-count" class="hg-input" value="5" min="1" max="20" />
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateHashtags(this)">
+                Generate Hashtags
+            </button>
+        </div>
+
+        <div class="hg-preview-section">
+            <div class="hg-preview-box" id="hg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="hg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill out the form to generate hashtags.</p>
+                </div>
+                
+                <div id="hg-result-state" style="display: none; width: 100%; justify-content: center;">
+                    <div class="hg-result-card" id="hg-card-element">
+                        <h4 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color);">Generated Hashtags</h4>
+                        <div class="hg-tags-container" id="hg-tags-list">
+                            <!-- Tags go here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hg-controls" style="display: none;" id="hg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyHashtags(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy All Hashtags
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem;">
+        <h3>API-Dokumentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Diese Minimal-Lösung kann auch direkt als API in externe Anwendungen integriert werden.</p>
+        
+        <div class="hg-result-card" style="background: var(--surface-color); width: 100%; max-width: none;">
+            <h4 style="margin-top: 0; color: var(--primary-color);">POST /api/minimal-solutions/hashtag_generator</h4>
+            
+            <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Request-Beispiel (JSON)</h5>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-color); font-family: monospace; font-size: 0.9rem;"><code>{
+  "topic": "Artificial Intelligence",
+  "audience": "general",
+  "count": 5
+}</code></pre>
+
+            <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Response-Beispiel (JSON)</h5>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-color); font-family: monospace; font-size: 0.9rem;"><code>{
+  "status": "success",
+  "data": {
+    "hashtags": "#ArtificialIntelligence #ArtificialIntelligenceLife #ArtificialIntelligenceTips #ArtificialIntelligenceCommunity #ArtificialIntelligenceVibes",
+    "list": [
+      "#ArtificialIntelligence",
+      "#ArtificialIntelligenceLife",
+      "#ArtificialIntelligenceTips",
+      "#ArtificialIntelligenceCommunity",
+      "#ArtificialIntelligenceVibes"
+    ]
+  }
+}</code></pre>
+        </div>
+    </div>
+
+    <script>
+        async function generateHashtags(btn) {
+            const topic = document.getElementById('hg-topic').value.trim();
+            const audience = document.getElementById('hg-audience').value.trim();
+            const count = parseInt(document.getElementById('hg-count').value, 10) || 5;
+            
+            const container = document.getElementById('hg-preview-container');
+            const controls = document.getElementById('hg-result-controls');
+            const emptyState = document.getElementById('hg-empty-state');
+            const resultState = document.getElementById('hg-result-state');
+            
+            if (!topic) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a topic.');
+                } else {
+                    alert('Please provide a topic.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'hg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/hashtag_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, audience, count })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('hg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Hashtags'; }
+                    return;
+                }
+
+                let hashtagsData = [];
+                if (result.data) {
+                    if (result.data.hashtags) hashtagsData = result.data.hashtags;
+                    else if (result.data.result) hashtagsData = result.data.result;
+                }
+                
+                if (!hashtagsData || hashtagsData.length === 0) {
+                    hashtagsData = Array.from({length: count}).map((_, i) => '#' + topic.replace(/\s+/g, '') + (i+1));
+                }
+
+                if (typeof hashtagsData === 'string') {
+                    hashtagsData = hashtagsData.split(' ').filter(t => t.trim().length > 0);
+                }
+
+                const tagsList = document.getElementById('hg-tags-list');
+                tagsList.innerHTML = '';
+                
+                let stringifiedTags = [];
+                hashtagsData.forEach(tag => {
+                    const tagStr = tag.startsWith('#') ? tag : '#' + tag;
+                    stringifiedTags.push(tagStr);
+                    const span = document.createElement('span');
+                    span.className = 'hg-tag';
+                    span.innerText = tagStr;
+                    tagsList.appendChild(span);
+                });
+                
+                window.hgHashtagsString = stringifiedTags.join(' ');
+                
+                resultState.style.display = 'flex';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Hashtags'; }
+                
+            } catch (err) {
+                const loader = document.getElementById('hg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Hashtags'; }
+            }
+        }
+
+        function copyHashtags(btn) {
+            const textToCopy = window.hgHashtagsString || '';
+            if (!textToCopy) return;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    _showSuccess(btn);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    _showSuccess(btn);
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+        
+        function _showSuccess(btn) {
+            if (typeof showCopySuccess === 'function') {
+                showCopySuccess(btn, true);
+            } else {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }
+        }
+    </script>
+</div>

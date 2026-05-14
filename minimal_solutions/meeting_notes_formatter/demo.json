@@ -1,0 +1,17 @@
+{
+  "request": {
+    "notes": "team meeting 2026-05-13\n- discuss new architecture\n- TODO: set up CI/CD pipeline\n* action: write tests\njust some random notes"
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "formatted_notes": "Team meeting 2026-05-13\n• Discuss new architecture\n• TODO: set up CI/CD pipeline\n• Action: write tests\nJust some random notes",
+      "action_items": [
+        "• TODO: set up CI/CD pipeline",
+        "• Action: write tests"
+      ],
+      "original_length": 128,
+      "formatted_length": 128
+    }
+  }
+}

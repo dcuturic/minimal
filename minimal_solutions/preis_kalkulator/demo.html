@@ -1,0 +1,284 @@
+<div class="pk-container" style="width: 100%;">
+    <style>
+        .pk-input-group { margin-bottom: 1.5rem; }
+        .pk-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .pk-input { width: 100%; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.75rem; border-radius: 4px; font-family: inherit; font-size: 0.95rem; }
+        .pk-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 255, 213), 0.2); }
+        
+        .pk-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .pk-result-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .pk-result-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .pk-result-card.highlight {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(var(--primary-rgb, 0, 255, 213), 0.1);
+        }
+
+        .pk-result-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .pk-result-value {
+            color: var(--text-color);
+            font-size: 1.25rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .pk-controls { display: flex; gap: 1rem; justify-content: center; }
+        .pk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .pk-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="pk-grid">
+        <div class="pk-form-section">
+            <div class="pk-input-group">
+                <label for="pk-base-price">Basispreis (€)</label>
+                <input type="number" id="pk-base-price" class="pk-input" placeholder="0.00" value="100.00" step="0.01" min="0">
+            </div>
+
+            <div class="pk-input-group">
+                <label for="pk-margin">Marge (%)</label>
+                <input type="number" id="pk-margin" class="pk-input" value="10" step="0.1" min="0">
+            </div>
+
+            <div class="pk-input-group">
+                <label for="pk-discount">Rabatt (%)</label>
+                <input type="number" id="pk-discount" class="pk-input" value="5" step="0.1" min="0" max="100">
+            </div>
+
+            <div class="pk-input-group">
+                <label for="pk-markup">Aufschlag (€)</label>
+                <input type="number" id="pk-markup" class="pk-input" value="0.00" step="0.01" min="0">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="calculatePrice(this)">
+                Berechnen
+            </button>
+        </div>
+
+        <div class="pk-preview-section">
+            <div class="pk-preview-box" id="pk-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="pk-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="2" y="3" width="20" height="18" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line><path d="M7 8h10"></path><path d="M7 12h10"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Werte eingeben und berechnen.</p>
+                </div>
+                
+                <div id="pk-result-state" style="display: none; width: 100%;">
+                    <div class="pk-result-grid">
+                        <div class="pk-result-card">
+                            <span class="pk-result-label">Marge (<span id="pk-result-margin-rate">10</span>%)</span>
+                            <span class="pk-result-value" id="pk-result-margin-amount">0.00 €</span>
+                        </div>
+                        <div class="pk-result-card">
+                            <span class="pk-result-label">Rabatt (<span id="pk-result-discount-rate">5</span>%)</span>
+                            <span class="pk-result-value" id="pk-result-discount-amount">0.00 €</span>
+                        </div>
+                        <div class="pk-result-card">
+                            <span class="pk-result-label">Aufschlag</span>
+                            <span class="pk-result-value" id="pk-result-markup-amount">0.00 €</span>
+                        </div>
+                        <div class="pk-result-card highlight">
+                            <span class="pk-result-label">Endpreis</span>
+                            <span class="pk-result-value" id="pk-result-final-price">0.00 €</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pk-controls" style="display: none;" id="pk-result-controls">
+                <button class="btn btn-secondary" onclick="copyPriceResult()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 3rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; color: var(--primary-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Nutze diese Lösung als externe Schnittstelle in deinen eigenen Applikationen.</p>
+        
+        <div style="margin-bottom: 1rem;">
+            <strong>Endpoint:</strong> <code style="background: var(--surface-color); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace;">POST /api/minimal-solutions/preis_kalkulator</code>
+        </div>
+        
+        <div class="pk-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <strong>Request Example:</strong>
+                <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "base_price": 100.0,
+  "margin": 10.0,
+  "discount": 5.0,
+  "markup": 2.5
+}</pre>
+            </div>
+            <div>
+                <strong>Response Example:</strong>
+                <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "status": "success",
+  "data": {
+    "base_price": 100.0,
+    "margin_amount": 10.0,
+    "discount_amount": 5.0,
+    "markup_amount": 2.5,
+    "final_price": 107.5
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function calculatePrice(btn) {
+            const basePrice = parseFloat(document.getElementById('pk-base-price').value);
+            const marginRate = parseFloat(document.getElementById('pk-margin').value);
+            const discountRate = parseFloat(document.getElementById('pk-discount').value);
+            const markup = parseFloat(document.getElementById('pk-markup').value);
+            
+            const container = document.getElementById('pk-preview-container');
+            const emptyState = document.getElementById('pk-empty-state');
+            const resultState = document.getElementById('pk-result-state');
+            
+            // Validation
+            if (isNaN(basePrice) || basePrice < 0) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Bitte einen gültigen Basispreis eingeben.');
+                else alert('Bitte einen gültigen Basispreis eingeben.');
+                return;
+            }
+
+            if (isNaN(marginRate) || marginRate < 0) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Bitte eine gültige Marge eingeben.');
+                else alert('Bitte eine gültige Marge eingeben.');
+                return;
+            }
+
+            if (isNaN(discountRate) || discountRate < 0 || discountRate > 100) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Bitte einen gültigen Rabatt (0-100) eingeben.');
+                else alert('Bitte einen gültigen Rabatt (0-100) eingeben.');
+                return;
+            }
+
+            if (isNaN(markup) || markup < 0) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Bitte einen gültigen Aufschlag eingeben.');
+                else alert('Bitte einen gültigen Aufschlag eingeben.');
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Berechne...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'pk-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/preis_kalkulator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base_price: basePrice, margin: marginRate, discount: discountRate, markup: markup })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.status === 'error') {
+                    throw new Error(result.error?.message || result.message || 'Ein Fehler ist aufgetreten.');
+                }
+
+                const marginAmount = result.data.margin_amount;
+                const discountAmount = result.data.discount_amount;
+                const markupAmount = result.data.markup_amount;
+                const finalPrice = result.data.final_price;
+
+                const loader = document.getElementById('pk-temp-loader');
+                if (loader) loader.remove();
+
+                // Update UI
+                document.getElementById('pk-result-margin-rate').innerText = marginRate;
+                document.getElementById('pk-result-margin-amount').innerText = marginAmount.toFixed(2) + ' €';
+                
+                document.getElementById('pk-result-discount-rate').innerText = discountRate;
+                document.getElementById('pk-result-discount-amount').innerText = '-' + discountAmount.toFixed(2) + ' €';
+                
+                document.getElementById('pk-result-markup-amount').innerText = markupAmount.toFixed(2) + ' €';
+                document.getElementById('pk-result-final-price').innerText = finalPrice.toFixed(2) + ' €';
+
+                resultState.style.display = 'block';
+                document.getElementById('pk-result-controls').style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Berechnen'; }
+
+            } catch (err) {
+                const loader = document.getElementById('pk-temp-loader');
+                if (loader) loader.remove();
+                
+                emptyState.style.display = 'block';
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('API Error', err.message);
+                } else {
+                    alert('Fehler: ' + err.message);
+                }
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Berechnen'; }
+            }
+        }
+
+        function copyPriceResult() {
+            const marginRate = document.getElementById('pk-result-margin-rate').innerText;
+            const marginAmount = document.getElementById('pk-result-margin-amount').innerText;
+            const discountRate = document.getElementById('pk-result-discount-rate').innerText;
+            const discountAmount = document.getElementById('pk-result-discount-amount').innerText;
+            const markupAmount = document.getElementById('pk-result-markup-amount').innerText;
+            const finalPrice = document.getElementById('pk-result-final-price').innerText;
+            
+            const textToCopy = `Preis-Kalkulation:\nMarge (${marginRate}%): ${marginAmount}\nRabatt (${discountRate}%): ${discountAmount}\nAufschlag: ${markupAmount}\nEndpreis: ${finalPrice}`;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                if (typeof showToast === 'function') {
+                    showToast('Ergebnis kopiert!', 'success');
+                } else {
+                    alert('Ergebnis kopiert!');
+                }
+            }).catch(err => {
+                console.error('Copy failed', err);
+            });
+        }
+    </script>
+</div>

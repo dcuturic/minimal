@@ -1,0 +1,16 @@
+{% macro empty_state(title="No Data", description="There is currently no data available.", icon=None, cta_text=None, cta_url="#", cta_onclick=None) %}
+<div class="empty-state">
+    {% if icon %}
+    <div class="empty-state-icon">
+        {{ icon | safe }}
+    </div>
+    {% endif %}
+    <h3 class="empty-state-title">{{ title }}</h3>
+    <p class="empty-state-desc">{{ description }}</p>
+    {% if cta_text %}
+    <div class="empty-state-actions">
+        <a href="{{ cta_url }}" {% if cta_onclick %}onclick="{{ cta_onclick }}"{% endif %} class="btn btn-primary">{{ cta_text }}</a>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

@@ -1,0 +1,3 @@
+{
+  "component_json": "{\n  \"component\": {\n    \"name\": \"Demo Component\",\n    \"version\": \"1.0.0\",\n    \"css\": \".demo { color: #ff0055; padding: 1rem; }\",\n    \"js\": \"console.log('Demo running');\",\n    \"env\": {\n      \"API_ENDPOINT\": \"https://api.example.com\",\n      \"MAX_RETRIES\": \"3\"\n    }\n  }\n}"
+}

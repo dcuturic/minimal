@@ -1,0 +1,34 @@
+{
+  "scenarios": [
+    {
+      "name": "Länge - Meter in Kilometer",
+      "request": {
+        "value": 1000,
+        "from_unit": "m",
+        "to_unit": "km",
+        "category": "length"
+      },
+      "expected": 1.0
+    },
+    {
+      "name": "Gewicht - Kilogramm in Pfund",
+      "request": {
+        "value": 10,
+        "from_unit": "kg",
+        "to_unit": "lb",
+        "category": "weight"
+      },
+      "expected": 22.0462
+    },
+    {
+      "name": "Geschwindigkeit - km/h in m/s",
+      "request": {
+        "value": 100,
+        "from_unit": "km/h",
+        "to_unit": "m/s",
+        "category": "speed"
+      },
+      "expected": 27.7778
+    }
+  ]
+}

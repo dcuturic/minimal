@@ -1,0 +1,257 @@
+<div class="b64-container" style="width: 100%;">
+    <style>
+        .b64-input-group { margin-bottom: 1.5rem; }
+        .b64-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .b64-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .b64-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .b64-toggle-group { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .b64-toggle-group input { display: none; }
+        .b64-toggle-group label { flex: 1; text-align: center; padding: 0.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+        .b64-toggle-group input:checked + label { background: var(--text-color); color: var(--bg-color); border-color: var(--text-color); }
+
+        .b64-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .b64-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .b64-controls { display: flex; gap: 1rem; justify-content: center; }
+        .b64-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .b64-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="b64-grid">
+        <div class="b64-form-section">
+            <div class="b64-input-group">
+                <label>Mode</label>
+                <div class="b64-toggle-group">
+                    <input type="radio" id="mode-encode" name="b64-mode" value="encode" checked>
+                    <label for="mode-encode">Encode</label>
+                    <input type="radio" id="mode-decode" name="b64-mode" value="decode">
+                    <label for="mode-decode">Decode</label>
+                </div>
+            </div>
+
+            <div class="b64-input-group">
+                <label>Text</label>
+                <textarea id="b64-text-input" class="b64-textarea" placeholder="Enter text or Base64 here..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processBase64(this)">
+                Process
+            </button>
+        </div>
+
+        <div class="b64-preview-section">
+            <div class="b64-preview-box" id="b64-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="b64-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter text and click process.</p>
+                </div>
+                
+                <div id="b64-result-state" style="display: none; width: 100%;">
+                    <pre class="b64-result-text" id="b64-text-result"></pre>
+                </div>
+            </div>
+            
+            <div class="b64-controls" style="display: none;" id="b64-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyBase64(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processBase64(btn) {
+            const textInput = document.getElementById('b64-text-input').value.trim();
+            const mode = document.querySelector('input[name="b64-mode"]:checked').value;
+            
+            const container = document.getElementById('b64-preview-container');
+            const controls = document.getElementById('b64-result-controls');
+            const emptyState = document.getElementById('b64-empty-state');
+            const resultState = document.getElementById('b64-result-state');
+            
+            if (!textInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide text to process.');
+                } else {
+                    alert('Please provide text.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Processing...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'b64-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/base64_encoder_decoder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: textInput,
+                        mode: mode
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('b64-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Process'; }
+                    return;
+                }
+
+                const outputText = result.data.result;
+
+                document.getElementById('b64-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Process'; }
+
+            } catch (err) {
+                const loader = document.getElementById('b64-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Process'; }
+            }
+        }
+
+        function copyBase64(btn) {
+            const outputText = document.getElementById('b64-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert Texte in Base64 zu konvertieren und zurück.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/base64_encoder_decoder</code>
+        </div>
+
+        <div class="b64-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "mode": "encode",
+  "text": "Hello World"
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `mode` kann "encode" oder "decode" sein.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "result": "SGVsbG8gV29ybGQ="
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

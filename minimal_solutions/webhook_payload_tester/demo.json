@@ -1,0 +1,24 @@
+{
+  "title": "Webhook Payload Tester Demo",
+  "description": "Beispiele für das Testen von Webhook Payloads",
+  "examples": [
+    {
+      "name": "Stripe Payment Success",
+      "request": {
+        "payload_json": "{\n  \"id\": \"evt_1MgBXYZ\",\n  \"object\": \"event\",\n  \"api_version\": \"2022-11-15\",\n  \"created\": 1679000000,\n  \"data\": {\n    \"object\": {\n      \"id\": \"pi_1MgBXYZ\",\n      \"object\": \"payment_intent\",\n      \"amount\": 2000,\n      \"currency\": \"usd\",\n      \"status\": \"succeeded\"\n    }\n  },\n  \"type\": \"payment_intent.succeeded\"\n}"
+      }
+    },
+    {
+      "name": "GitHub Push Event",
+      "request": {
+        "payload_json": "{\n  \"ref\": \"refs/heads/main\",\n  \"before\": \"0000000000000000000000000000000000000000\",\n  \"after\": \"abc123def456\",\n  \"repository\": {\n    \"name\": \"my-project\",\n    \"full_name\": \"user/my-project\",\n    \"private\": false\n  },\n  \"pusher\": {\n    \"name\": \"developer\",\n    \"email\": \"dev@example.com\"\n  }\n}"
+      }
+    },
+    {
+      "name": "Invalid Payload (Missing Quote)",
+      "request": {
+        "payload_json": "{\n  \"id\": \"evt_123\",\n  \"type: \"user.created\"\n}"
+      }
+    }
+  ]
+}

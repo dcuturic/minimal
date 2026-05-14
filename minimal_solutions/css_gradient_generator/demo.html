@@ -1,0 +1,291 @@
+<div class="cg-container" style="width: 100%;">
+    <style>
+        .cg-input-group { margin-bottom: 1.5rem; }
+        .cg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .cg-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .cg-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .cg-color-inputs {
+            display: flex;
+            gap: 1rem;
+        }
+        .cg-color-picker {
+            width: 100%;
+            height: 40px;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            background: var(--surface-color);
+        }
+        
+        .cg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .cg-gradient-preview {
+            width: 100%;
+            height: 150px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .cg-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: var(--bg-color);
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .cg-result-label {
+            font-weight: bold;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            width: 60px;
+        }
+
+        .cg-result-value {
+            font-family: monospace;
+            color: var(--text-color);
+            flex: 1;
+            text-align: right;
+            margin-right: 1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cg-copy-icon {
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .cg-copy-icon:hover {
+            color: var(--primary-color);
+        }
+
+        .cg-controls { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
+        .cg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .cg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="cg-grid">
+        <div class="cg-form-section">
+            <div class="cg-input-group">
+                <label>Type</label>
+                <select id="cg-type" class="cg-input" onchange="toggleAngle()">
+                    <option value="linear">Linear</option>
+                    <option value="radial">Radial</option>
+                </select>
+            </div>
+            
+            <div class="cg-input-group">
+                <label>Colors</label>
+                <div class="cg-color-inputs">
+                    <input type="color" id="cg-color1" class="cg-color-picker" value="#FF5733">
+                    <input type="color" id="cg-color2" class="cg-color-picker" value="#3333FF">
+                </div>
+            </div>
+
+            <div class="cg-input-group" id="cg-angle-group">
+                <label>Angle (<span id="cg-angle-val">90</span>°)</label>
+                <input type="range" id="cg-angle" class="cg-input" min="0" max="360" value="90" oninput="document.getElementById('cg-angle-val').innerText = this.value">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateGradient(this)">
+                Generate CSS
+            </button>
+        </div>
+
+        <div class="cg-preview-section">
+            <div class="cg-preview-box" id="cg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="cg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure settings and click generate.</p>
+                </div>
+                
+                <div id="cg-result-state" style="display: none; width: 100%;">
+                    <div class="cg-gradient-preview" id="cg-gradient-box"></div>
+                    
+                    <div class="cg-result-item">
+                        <span class="cg-result-label">CSS</span>
+                        <span class="cg-result-value" id="cg-res-css">-</span>
+                        <svg class="cg-copy-icon" onclick="copyFormat('cg-res-css', this)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cg-controls" style="display: none;" id="cg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyFormat('cg-res-css', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy CSS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color); font-size: 1.25rem;">API & Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">
+            Die CSS Gradient Generator Schnittstelle steht auch als REST-API zur Verfügung. Sende einen <code>POST</code>-Request mit den gewünschten Konfigurationen, um den fertigen CSS-Code als Antwort zu erhalten.
+        </p>
+
+        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-color);">API Endpoint</h4>
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span>
+            <span style="flex: 1; margin-left: 1rem; color: var(--text-color);">/api/minimal-solutions/css_gradient_generator</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; color: var(--text-color);">Request Beispiel</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; color: var(--text-muted);">{
+  "type": "linear",
+  "colors": ["#FF5733", "#3333FF"],
+  "angle": 90
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; color: var(--text-color);">Response Beispiel</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 0;"><code style="font-family: monospace; color: var(--text-muted);">{
+  "status": "success",
+  "data": {
+    "css": "linear-gradient(90deg, #FF5733, #3333FF)"
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAngle() {
+            const type = document.getElementById('cg-type').value;
+            const angleGroup = document.getElementById('cg-angle-group');
+            if (type === 'radial') {
+                angleGroup.style.display = 'none';
+            } else {
+                angleGroup.style.display = 'block';
+            }
+        }
+
+        async function generateGradient(btn) {
+            const type = document.getElementById('cg-type').value;
+            const color1 = document.getElementById('cg-color1').value;
+            const color2 = document.getElementById('cg-color2').value;
+            const angle = parseInt(document.getElementById('cg-angle').value, 10);
+            
+            const container = document.getElementById('cg-preview-container');
+            const controls = document.getElementById('cg-result-controls');
+            const emptyState = document.getElementById('cg-empty-state');
+            const resultState = document.getElementById('cg-result-state');
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'cg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetchWithLoading('/api/minimal-solutions/css_gradient_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: type,
+                        colors: [color1, color2],
+                        angle: angle
+                    })
+                }, btn);
+                
+                const loader = document.getElementById('cg-temp-loader');
+                if (loader) loader.remove();
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        const gradientCss = result.data.css;
+                        document.getElementById('cg-res-css').innerText = "background: " + gradientCss + ";";
+                        document.getElementById('cg-gradient-box').style.background = gradientCss;
+                        
+                        resultState.style.display = 'block';
+                        controls.style.display = 'flex';
+                    } else {
+                        emptyState.style.display = 'block';
+                    }
+                } else {
+                    emptyState.style.display = 'block';
+                }
+
+            } catch (err) {
+                const loader = document.getElementById('cg-temp-loader');
+                if (loader) loader.remove();
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyFormat(elementId, iconElement) {
+            const outputText = document.getElementById(elementId).innerText;
+            if (outputText === '-') return;
+            
+            const doCopy = () => {
+                if (iconElement && iconElement.tagName === 'svg') {
+                    const origColor = iconElement.style.color;
+                    iconElement.style.color = 'var(--primary-color)';
+                    setTimeout(() => { iconElement.style.color = origColor; }, 1000);
+                } else if (iconElement) {
+                    const originalText = iconElement.innerHTML;
+                    iconElement.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => {
+                        iconElement.innerHTML = originalText;
+                    }, 2000);
+                }
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(doCopy);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    doCopy();
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

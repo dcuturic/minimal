@@ -1,0 +1,32 @@
+[
+  {
+    "title": "Linearer Verlauf (Rot zu Blau)",
+    "description": "Erstellt einen linearen CSS-Verlauf im 90-Grad-Winkel.",
+    "request": {
+      "colors": ["#ff0000", "#0000ff"],
+      "angle": 90,
+      "type": "linear"
+    },
+    "response": {
+      "success": true,
+      "data": {
+        "css": "linear-gradient(90deg, #ff0000, #0000ff)"
+      }
+    }
+  },
+  {
+    "title": "Radialer Verlauf (Grün zu Gelb)",
+    "description": "Erstellt einen radialen CSS-Verlauf.",
+    "request": {
+      "colors": ["#00ff00", "#ffff00"],
+      "angle": 0,
+      "type": "radial"
+    },
+    "response": {
+      "success": true,
+      "data": {
+        "css": "radial-gradient(circle, #00ff00, #ffff00)"
+      }
+    }
+  }
+]

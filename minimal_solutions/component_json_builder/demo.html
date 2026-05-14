@@ -1,0 +1,283 @@
+<div class="cjb-container" style="width: 100%;">
+    <style>
+        .cjb-input-group { margin-bottom: 1.5rem; }
+        .cjb-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .cjb-textarea {
+            width: 100%;
+            min-height: 120px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .cjb-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .cjb-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .cjb-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .cjb-controls { display: flex; gap: 1rem; justify-content: center; }
+        .cjb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .cjb-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="cjb-grid">
+        <div class="cjb-form-section">
+            <div class="cjb-input-group">
+                <label>Template (HTML)</label>
+                <textarea id="cjb-template-input" class="cjb-textarea" placeholder="<div class='my-component'>\n  Hello {{ name }}\n</div>"></textarea>
+            </div>
+            <div class="cjb-input-group">
+                <label>Environment Data (JSON)</label>
+                <textarea id="cjb-env-input" class="cjb-textarea" placeholder='{ "name": "World" }'></textarea>
+            </div>
+            <div class="cjb-input-group">
+                <label>CSS</label>
+                <textarea id="cjb-css-input" class="cjb-textarea" placeholder=".my-component { color: red; }"></textarea>
+            </div>
+            <div class="cjb-input-group">
+                <label>JavaScript</label>
+                <textarea id="cjb-js-input" class="cjb-textarea" placeholder="console.log('Component initialized');"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processCjb(this)">
+                Build Component JSON
+            </button>
+        </div>
+
+        <div class="cjb-preview-section">
+            <div class="cjb-preview-box" id="cjb-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="cjb-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill inputs and click build.</p>
+                </div>
+                
+                <div id="cjb-result-state" style="display: none; width: 100%;">
+                    <pre class="cjb-result-text" id="cjb-text-result"></pre>
+                </div>
+            </div>
+            
+            <div class="cjb-controls" style="display: none;" id="cjb-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyCjb(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processCjb(btn) {
+            const templateInput = document.getElementById('cjb-template-input').value.trim();
+            const envInput = document.getElementById('cjb-env-input').value.trim();
+            const cssInput = document.getElementById('cjb-css-input').value.trim();
+            const jsInput = document.getElementById('cjb-js-input').value.trim();
+            
+            const container = document.getElementById('cjb-preview-container');
+            const controls = document.getElementById('cjb-result-controls');
+            const emptyState = document.getElementById('cjb-empty-state');
+            const resultState = document.getElementById('cjb-result-state');
+            
+            if (!templateInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Template is required.');
+                } else {
+                    alert('Template is required.');
+                }
+                return;
+            }
+
+            let envParsed = {};
+            if (envInput) {
+                try {
+                    envParsed = JSON.parse(envInput);
+                } catch (e) {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('Validation', 'Invalid JSON in Environment Data.');
+                    } else {
+                        alert('Invalid JSON in Environment Data.');
+                    }
+                    return;
+                }
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Building...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'cjb-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const requestData = {
+                    template: templateInput,
+                    env: envParsed,
+                    css: cssInput,
+                    js: jsInput
+                };
+                
+                const response = await fetch('/api/minimal-solutions/component_json_builder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('cjb-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Build Component JSON'; }
+                    return;
+                }
+
+                // Assuming the API returns the built JSON inside result.data
+                const outputText = JSON.stringify(result.data, null, 2);
+
+                document.getElementById('cjb-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Build Component JSON'; }
+
+            } catch (err) {
+                const loader = document.getElementById('cjb-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Build Component JSON'; }
+            }
+        }
+
+        function copyCjb(btn) {
+            const outputText = document.getElementById('cjb-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert Component JSONs aus Template, Env, CSS und JS zusammenzubauen.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/component_json_builder</code>
+        </div>
+
+        <div class="cjb-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "template": "&lt;div class=\"my-component\"&gt;\n  Hello {{ name }}\n&lt;/div&gt;",
+  "env": { "name": "World" },
+  "css": ".my-component { color: red; }",
+  "js": "console.log('Component initialized');"
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `env`, `css` und `js` sind optional, `template` ist erforderlich.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "template": "&lt;div class=\"my-component\"&gt;\n  Hello {{ name }}\n&lt;/div&gt;",
+    "env": {
+      "name": "World"
+    },
+    "css": ".my-component { color: red; }",
+    "js": "console.log('Component initialized');"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

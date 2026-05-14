@@ -1,0 +1,9 @@
+{
+  "topic": "Search Engine Optimization Normalization",
+  "target": "Web Developers and Content Creators",
+  "options": {
+    "normalization_level": "aggressive",
+    "include_meta": true,
+    "strip_html": true
+  }
+}

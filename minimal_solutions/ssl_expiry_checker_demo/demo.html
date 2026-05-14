@@ -1,0 +1,280 @@
+<div class="ssl-container" style="width: 100%;">
+    <style>
+        .ssl-input-group { margin-bottom: 1.5rem; }
+        .ssl-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ssl-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: inherit; font-size: 1rem; }
+        .ssl-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .ssl-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ssl-card {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .ssl-card-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .ssl-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ssl-card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--surface-color);
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .ssl-card-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .ssl-card-value {
+            color: var(--text-color);
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .ssl-status-valid {
+            color: #4ade80; /* green */
+            font-weight: 600;
+        }
+
+        .ssl-status-expired {
+            color: #f87171; /* red */
+            font-weight: 600;
+        }
+
+        .ssl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ssl-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="ssl-grid">
+        <div class="ssl-form-section">
+            <div class="ssl-input-group">
+                <label>Domain</label>
+                <input type="text" id="ssl-domain" class="ssl-input" placeholder="e.g. google.com">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="checkSsl(this)">
+                Check SSL Expiry
+            </button>
+            <div id="ssl-error-state" style="display:none; color: var(--error-color, #ff4d4d); margin-top: 1rem; font-size: 0.9rem;"></div>
+        </div>
+
+        <div class="ssl-preview-section">
+            <div class="ssl-preview-box" id="ssl-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ssl-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter a domain to check SSL expiry.</p>
+                </div>
+                
+                <div id="ssl-result-state" style="display: none; width: 100%;">
+                    <div class="ssl-card" id="ssl-result-card">
+                        <!-- Content injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function checkSsl(btn) {
+            const domainInput = document.getElementById('ssl-domain').value;
+            
+            const container = document.getElementById('ssl-preview-container');
+            const emptyState = document.getElementById('ssl-empty-state');
+            const resultState = document.getElementById('ssl-result-state');
+            const errorState = document.getElementById('ssl-error-state');
+            const resultCard = document.getElementById('ssl-result-card');
+            
+            // Hide previous errors in local state
+            if (errorState) errorState.style.display = 'none';
+
+            // Validation Error-State
+            if (!domainInput || domainInput.trim() === '') {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide a Domain.');
+                } else if (errorState) {
+                    errorState.innerText = 'Please provide a Domain.';
+                    errorState.style.display = 'block';
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Checking...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ssl-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                // Call API
+                const response = await fetch('/api/minimal-solutions/ssl_expiry_checker_demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        domain: domainInput
+                    })
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('ssl-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else if (errorState) {
+                        errorState.innerText = result.message || 'Unknown error occurred.';
+                        errorState.style.display = 'block';
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Check SSL Expiry'; }
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+
+                // Update UI Result-State - Expiry Card
+                const data = result.data || result;
+                
+                const mockValid = data.is_valid !== undefined ? data.is_valid : true;
+                const mockIssuer = data.issuer || {"commonName": "Let's Encrypt Authority X3"};
+                const issuerName = mockIssuer.commonName || mockIssuer.organizationName || JSON.stringify(mockIssuer);
+                const mockExpiryDate = data.expiry_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+                const mockDaysLeft = data.days_remaining !== undefined ? data.days_remaining : 30;
+
+                const statusClass = mockValid ? 'ssl-status-valid' : 'ssl-status-expired';
+                const statusText = mockValid ? 'Valid' : 'Expired / Invalid';
+
+                resultCard.innerHTML = `
+                    <div class="ssl-card-header">SSL Certificate Info</div>
+                    <div class="ssl-card-body">
+                        <div class="ssl-card-item">
+                            <span class="ssl-card-label">Domain</span>
+                            <span class="ssl-card-value">${data.domain || domainInput}</span>
+                        </div>
+                        <div class="ssl-card-item">
+                            <span class="ssl-card-label">Status</span>
+                            <span class="ssl-card-value ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="ssl-card-item">
+                            <span class="ssl-card-label">Issuer</span>
+                            <span class="ssl-card-value">${issuerName}</span>
+                        </div>
+                        <div class="ssl-card-item">
+                            <span class="ssl-card-label">Expires On</span>
+                            <span class="ssl-card-value">${new Date(mockExpiryDate).toLocaleString()}</span>
+                        </div>
+                        <div class="ssl-card-item">
+                            <span class="ssl-card-label">Days Left</span>
+                            <span class="ssl-card-value">${mockDaysLeft}</span>
+                        </div>
+                    </div>
+                `;
+                
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Check SSL Expiry'; }
+
+                const resultBox = document.querySelector('.result-box');
+                if(resultBox) {
+                    const jsonStr = JSON.stringify(result, null, 2);
+                    resultBox.innerHTML = `
+                        <div style="text-align: center; width: 100%;">
+                            <p style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">Check Successful!</p>
+                            <pre class="code-block" style="text-align: left; background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;" id="ssl-json-result">${jsonStr}</pre>
+                            <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="navigator.clipboard.writeText(document.getElementById('ssl-json-result').innerText); const orig = this.innerText; this.innerText = 'Copied!'; setTimeout(() => this.innerText = orig, 2000);">
+                                Copy JSON
+                            </button>
+                        </div>
+                    `;
+                }
+                
+            } catch (err) {
+                const loader = document.getElementById('ssl-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else if (errorState) {
+                    errorState.innerText = 'Failed to connect to the API.';
+                    errorState.style.display = 'block';
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Check SSL Expiry'; }
+                emptyState.style.display = 'flex';
+            }
+        }
+    </script>
+    <div class="api-docs" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-bottom: 1rem;">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You can use this tool via our REST API. Send a POST request to the endpoint with the domain you want to check.</p>
+        
+        <div class="api-endpoint" style="background: var(--surface-color); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-family: monospace;">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/ssl_expiry_checker_demo
+        </div>
+
+        <div class="ssl-grid">
+            <div>
+                <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">Request Example</h4>
+                <pre style="background: var(--surface-color); padding: 1rem; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.9rem; color: var(--text-color);"><code>{
+  "domain": "google.com"
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">Response Example</h4>
+                <pre style="background: var(--surface-color); padding: 1rem; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.9rem; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "domain": "google.com",
+    "is_valid": true,
+    "days_remaining": 65,
+    "expiry_date": "2026-07-16T12:00:00.000Z",
+    "issuer": {
+      "commonName": "GTS CA 1C3",
+      "organizationName": "Google Trust Services LLC",
+      "countryName": "US"
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

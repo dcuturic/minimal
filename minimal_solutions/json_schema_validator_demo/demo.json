@@ -1,0 +1,24 @@
+{
+  "json_text": {
+    "user_id": 1001,
+    "username": "crafthoster_demo",
+    "email": "demo@crafthoster.com",
+    "active": true,
+    "roles": ["admin", "user"]
+  },
+  "schema_text": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "user_id": { "type": "integer" },
+      "username": { "type": "string", "minLength": 3 },
+      "email": { "type": "string", "format": "email" },
+      "active": { "type": "boolean" },
+      "roles": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "required": ["user_id", "username", "email", "active"]
+  }
+}

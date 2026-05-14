@@ -1,0 +1,302 @@
+<div class="jsv-container" style="width: 100%;">
+    <style>
+        .jsv-input-group { margin-bottom: 1.5rem; }
+        .jsv-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
+        .jsv-textarea {
+            width: 100%;
+            height: 200px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-color);
+            padding: 0.75rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .jsv-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+        }
+
+        .jsv-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .jsv-result-state {
+            width: 100%;
+            display: none;
+        }
+        
+        .jsv-result-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .jsv-result-valid {
+            background-color: rgba(0, 255, 213, 0.1);
+            color: #00ffd5;
+            border: 1px solid rgba(0, 255, 213, 0.3);
+        }
+        
+        .jsv-result-invalid {
+            background-color: rgba(255, 77, 77, 0.1);
+            color: #ff4d4d;
+            border: 1px solid rgba(255, 77, 77, 0.3);
+        }
+
+        .jsv-error-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+        
+        .jsv-error-list li {
+            background: var(--bg-color);
+            border-left: 3px solid #ff4d4d;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+
+        .jsv-controls { display: flex; gap: 1rem; justify-content: center; }
+        .jsv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .jsv-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="jsv-grid">
+        <div class="jsv-form-section">
+            <div class="jsv-input-group">
+                <label>JSON Schema</label>
+                <textarea id="jsv-schema" class="jsv-textarea" placeholder="{&#10;  &quot;$schema&quot;: &quot;http://json-schema.org/draft-07/schema#&quot;,&#10;  &quot;type&quot;: &quot;object&quot;,&#10;  &quot;properties&quot;: { ... }&#10;}"></textarea>
+            </div>
+
+            <div class="jsv-input-group">
+                <label>JSON Data</label>
+                <textarea id="jsv-data" class="jsv-textarea" placeholder="{&#10;  &quot;name&quot;: &quot;John Doe&quot;,&#10;  &quot;age&quot;: 30&#10;}"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="validateJsonSchema(this)">
+                Validate JSON
+            </button>
+        </div>
+
+        <div class="jsv-preview-section">
+            <div class="jsv-preview-box" id="jsv-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="jsv-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter Schema and JSON Data to validate.</p>
+                </div>
+                
+                <div id="jsv-result-state" class="jsv-result-state">
+                    <div id="jsv-validation-badge" class="jsv-result-badge"></div>
+                    <ul id="jsv-error-list" class="jsv-error-list" style="display: none;"></ul>
+                    <button id="jsv-copy-btn" class="btn btn-secondary mt-3" style="width: 100%; display: none;" onclick="copyValidationReport(this)">Copy Validation Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lastValidationResult = null;
+
+        function copyValidationReport(btn) {
+            if (!lastValidationResult) return;
+            const reportText = JSON.stringify(lastValidationResult, null, 2);
+            navigator.clipboard.writeText(reportText).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = 'Copied!';
+                setTimeout(() => btn.innerText = originalText, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+
+        async function validateJsonSchema(btn) {
+            const schemaText = document.getElementById('jsv-schema').value;
+            const dataText = document.getElementById('jsv-data').value;
+            
+            const container = document.getElementById('jsv-preview-container');
+            const emptyState = document.getElementById('jsv-empty-state');
+            const resultState = document.getElementById('jsv-result-state');
+            const badge = document.getElementById('jsv-validation-badge');
+            const errorList = document.getElementById('jsv-error-list');
+            
+            // Basic Input Validation
+            if (!schemaText.trim() || !dataText.trim()) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide both JSON Schema and JSON Data.');
+                } else {
+                    alert('Please provide both JSON Schema and JSON Data.');
+                }
+                return;
+            }
+
+            // Try basic JSON parsing first
+            let parsedSchema, parsedData;
+            try {
+                parsedSchema = JSON.parse(schemaText);
+            } catch (e) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Invalid Schema', 'The provided schema is not a valid JSON string.');
+                else alert('Invalid Schema JSON');
+                return;
+            }
+            try {
+                parsedData = JSON.parse(dataText);
+            } catch (e) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Invalid Data', 'The provided data is not a valid JSON string.');
+                else alert('Invalid Data JSON');
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Validating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'jsv-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/json_schema_validator_demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        json_text: parsedData,
+                        schema_text: parsedSchema
+                    })
+                });
+                const result = await response.json();
+                lastValidationResult = result;
+
+                const loader = document.getElementById('jsv-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Validate JSON'; }
+                    return;
+                }
+
+                const isValid = result.data.is_valid;
+                const errors = result.data.errors || [];
+
+                // Update UI Result-State
+                if (isValid) {
+                    badge.className = 'jsv-result-badge jsv-result-valid';
+                    badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> JSON is Valid';
+                    errorList.style.display = 'none';
+                    errorList.innerHTML = '';
+                } else {
+                    badge.className = 'jsv-result-badge jsv-result-invalid';
+                    badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> Validation Failed';
+                    
+                    errorList.style.display = 'block';
+                    errorList.innerHTML = '';
+                    errors.forEach(err => {
+                        const li = document.createElement('li');
+                        li.innerText = err;
+                        errorList.appendChild(li);
+                    });
+                }
+
+                resultState.style.display = 'block';
+                document.getElementById('jsv-copy-btn').style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Validate JSON'; }
+
+            } catch (err) {
+                const loader = document.getElementById('jsv-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Validate JSON'; }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Box -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; color: var(--primary-color);">API Integration</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            You can use the JSON Schema Validator via API. Send a POST request to the endpoint below.
+        </p>
+
+        <div style="background: var(--surface-color); padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; font-family: monospace; border: 1px solid var(--border-color);">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/json_schema_validator_demo
+        </div>
+
+        <h4 style="margin-bottom: 0.5rem;">Request Example</h4>
+        <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;"><code>{
+  "json_text": {
+    "name": "John Doe",
+    "age": 30
+  },
+  "schema_text": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "name": { "type": "string" },
+      "age": { "type": "integer", "minimum": 0 }
+    },
+    "required": ["name", "age"]
+  }
+}</code></pre>
+
+        <h4 style="margin-bottom: 0.5rem;">Response Example (Valid)</h4>
+        <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;"><code>{
+  "status": "success",
+  "message": "JSON Schema validated successfully",
+  "data": {
+    "is_valid": true,
+    "errors": []
+  }
+}</code></pre>
+
+        <h4 style="margin-bottom: 0.5rem;">Response Example (Invalid)</h4>
+        <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; border: 1px solid var(--border-color);"><code>{
+  "status": "success",
+  "message": "JSON Schema validated successfully",
+  "data": {
+    "is_valid": false,
+    "errors": [
+      "'age' is a required property"
+    ]
+  }
+}</code></pre>
+    </div>
+</div>

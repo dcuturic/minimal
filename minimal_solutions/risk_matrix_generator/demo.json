@@ -1,0 +1,19 @@
+{
+  "risks": [
+    {
+      "name": "Data Breach",
+      "probability": "Medium",
+      "impact": "High"
+    },
+    {
+      "name": "Server Outage",
+      "probability": "Low",
+      "impact": "High"
+    },
+    {
+      "name": "Third-Party API Downtime",
+      "probability": "High",
+      "impact": "Medium"
+    }
+  ]
+}

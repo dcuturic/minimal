@@ -1,0 +1,32 @@
+{
+    "title": "OpenAPI Endpoint Stub Generator Demo-Daten",
+    "examples": [
+        {
+            "name": "User erstellen (POST)",
+            "request": {
+                "path": "/api/users",
+                "method": "POST",
+                "summary": "Legt einen neuen Benutzer an",
+                "request_fields": "username, email, password"
+            }
+        },
+        {
+            "name": "User abrufen (GET)",
+            "request": {
+                "path": "/api/users/{id}",
+                "method": "GET",
+                "summary": "Holt die Details eines Benutzers",
+                "request_fields": "id"
+            }
+        },
+        {
+            "name": "User aktualisieren (PUT)",
+            "request": {
+                "path": "/api/users/{id}",
+                "method": "PUT",
+                "summary": "Aktualisiert die Daten eines Benutzers",
+                "request_fields": "email, status"
+            }
+        }
+    ]
+}

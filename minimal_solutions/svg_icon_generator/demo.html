@@ -1,0 +1,306 @@
+<div class="sig-container" style="width: 100%;">
+    <style>
+        .sig-input-group { margin-bottom: 1.5rem; }
+        .sig-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .sig-input, .sig-select { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; }
+        .sig-input:focus, .sig-select:focus { outline: none; border-color: var(--primary-color); }
+        
+        .sig-color-picker { display: flex; align-items: center; gap: 0.5rem; }
+        .sig-color-picker input[type="color"] { width: 40px; height: 40px; padding: 0; border: none; border-radius: 4px; cursor: pointer; background: transparent; }
+        .sig-color-picker input[type="text"] { flex-grow: 1; }
+
+        .sig-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .sig-result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .sig-svg-wrapper {
+            background: var(--bg-color);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .sig-svg-wrapper svg {
+            width: 120px;
+            height: 120px;
+        }
+
+        .sig-controls { display: flex; gap: 1rem; justify-content: center; }
+        .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .sig-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="sig-grid">
+        <div class="sig-form-section">
+            <div class="sig-input-group">
+                <label>Icon Shape</label>
+                <select id="sig-shape" class="sig-select">
+                    <option value="circle">Circle</option>
+                    <option value="square">Square</option>
+                    <option value="rounded">Rounded Square</option>
+                    <option value="star">Star</option>
+                    <option value="hexagon">Hexagon</option>
+                    <option value="triangle">Triangle</option>
+                    <option value="diamond">Diamond</option>
+                    <option value="shield">Shield</option>
+                </select>
+            </div>
+
+            <div class="sig-input-group">
+                <label>Primary Color</label>
+                <div class="sig-color-picker">
+                    <input type="color" id="sig-color-picker" value="#3b82f6" oninput="document.getElementById('sig-color').value = this.value">
+                    <input type="text" id="sig-color" class="sig-input" value="#3b82f6" oninput="document.getElementById('sig-color-picker').value = this.value">
+                </div>
+            </div>
+
+            <div class="sig-input-group">
+                <label>Icon Label (Optional Text inside, max 2 chars)</label>
+                <input type="text" id="sig-label" class="sig-input" placeholder="e.g. A" maxlength="2">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateSvgIcon(this)">
+                Generate Icon
+            </button>
+        </div>
+
+        <div class="sig-preview-section">
+            <div class="sig-preview-box" id="sig-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="sig-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Select shape, color, label and click generate.</p>
+                </div>
+                
+                <div id="sig-result-state" style="display: none; width: 100%;">
+                    <div class="sig-result-container">
+                        <div class="sig-svg-wrapper" id="sig-svg-output">
+                            <!-- SVG goes here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sig-controls" style="display: none;" id="sig-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copySvgCode(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy SVG
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadSvg(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sig-api-doc-section" style="margin-top: 3rem;">
+        <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">You can use this tool via our API to generate SVG icons programmatically. Send a POST request to the endpoint below.</p>
+        
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; font-family: monospace; font-size: 0.9rem; overflow-x: auto; margin-bottom: 1rem;">
+            <div style="color: #10b981; font-weight: bold; margin-bottom: 0.5rem;">POST /api/minimal-solutions/svg_icon_generator</div>
+            
+            <div style="margin-top: 1rem; color: var(--text-color);"><strong>Request Example:</strong></div>
+            <pre style="margin: 0.5rem 0; color: #e5e7eb;">{
+  "shape": "circle",
+  "color": "#3b82f6",
+  "label": "A"
+}</pre>
+
+            <div style="margin-top: 1.5rem; color: var(--text-color);"><strong>Response Example:</strong></div>
+            <pre style="margin: 0.5rem 0; color: #e5e7eb;">{
+  "status": "success",
+  "data": {
+    "svg_code": "&lt;svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" width=\"100%\" height=\"100%\"&gt;&lt;circle cx=\"50\" cy=\"50\" r=\"50\" fill=\"#3b82f6\" /&gt;&lt;text x=\"50\" y=\"50\" font-family=\"Arial, sans-serif\" font-size=\"40\" fill=\"#ffffff\" text-anchor=\"middle\" dominant-baseline=\"central\" font-weight=\"bold\"&gt;A&lt;/text&gt;&lt;/svg&gt;",
+    "shape": "circle",
+    "color": "#3b82f6",
+    "label": "A"
+  }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        let currentSvgCode = '';
+
+        async function generateSvgIcon(btn) {
+            const shape = document.getElementById('sig-shape').value;
+            const color = document.getElementById('sig-color').value;
+            const label = document.getElementById('sig-label').value;
+            
+            const container = document.getElementById('sig-preview-container');
+            const controls = document.getElementById('sig-result-controls');
+            const emptyState = document.getElementById('sig-empty-state');
+            const resultState = document.getElementById('sig-result-state');
+            
+            // Error-State Validation
+            if (!color || !/^#([0-9A-F]{3}){1,2}$/i.test(color)) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a valid HEX color code.');
+                } else {
+                    alert('Invalid color code');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'sig-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/svg_icon_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        shape: shape,
+                        color: color,
+                        label: label
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('sig-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Icon'; }
+                    return;
+                }
+
+                currentSvgCode = result.data.svg_code;
+
+                // Update UI Result-State
+                const svgOutput = document.getElementById('sig-svg-output');
+                svgOutput.innerHTML = currentSvgCode;
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Icon'; }
+                
+                const resultBox = document.querySelector('.result-box');
+                if(resultBox) {
+                    const escapedSvg = currentSvgCode.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    resultBox.innerHTML = `
+                        <div style="text-align: center; width: 100%;">
+                            <p style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">Generated Successfully!</p>
+                            <pre class="code-block" style="text-align: left; background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">
+{
+  "status": "success",
+  "data": {
+    "svg_code": "${escapedSvg.replace(/\n/g, '\\n')}",
+    "shape": "${shape}",
+    "color": "${color}",
+    "label": "${label}"
+  }
+}
+                            </pre>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                const loader = document.getElementById('sig-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Icon'; }
+            }
+        }
+
+        function copySvgCode(btn) {
+            if (!currentSvgCode) return;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(currentSvgCode).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                // Fallback
+                const textArea = document.createElement("textarea");
+                textArea.value = currentSvgCode;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function downloadSvg(btn) {
+            if (!currentSvgCode) return;
+            const blob = new Blob([currentSvgCode], { type: 'image/svg+xml' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'icon.svg';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</div>

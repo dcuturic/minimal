@@ -1,0 +1,354 @@
+<div class="tts-script-gen-container" style="width: 100%;">
+    <style>
+        .tts-script-gen-input-group { margin-bottom: 1.5rem; }
+        .tts-script-gen-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .tts-script-gen-input, .tts-script-gen-select {
+            width: 100%;
+            padding: 0.65rem 1rem;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .tts-script-gen-input:focus, .tts-script-gen-select:focus { outline: none; border-color: var(--primary-color); }
+
+        .tts-script-gen-select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+        }
+
+        .tts-script-gen-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .tts-script-gen-result-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tts-script-gen-result-box {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            text-align: left;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+        }
+
+        .tts-script-gen-copy-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            align-self: flex-start;
+        }
+
+        .tts-script-gen-copy-btn:hover {
+            background: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+
+        .tts-script-gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .tts-script-gen-grid { grid-template-columns: 1fr; } }
+
+        .tts-script-gen-error-box {
+            width: 100%;
+            background: rgba(255, 60, 60, 0.08);
+            border: 1px solid rgba(255, 60, 60, 0.3);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            display: none;
+        }
+        .tts-script-gen-error-box p { margin: 0; color: #ff5c5c; font-size: 0.9rem; }
+        .tts-script-gen-error-box strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #ff5c5c;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tts-script-gen-loading-box {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .tts-script-gen-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color, var(--text-color));
+            border-radius: 50%;
+            animation: tts-script-gen-spin 0.8s linear infinite;
+        }
+        @keyframes tts-script-gen-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tts-script-gen-loading-text { color: var(--text-muted); font-size: 0.85rem; }
+    </style>
+
+    <div class="tts-script-gen-grid">
+        <div class="tts-script-gen-form-section">
+            <div class="tts-script-gen-input-group">
+                <label>Topic / Subject</label>
+                <input type="text" id="tts-script-gen-topic" class="tts-script-gen-input" placeholder="e.g. The benefits of AI in healthcare">
+            </div>
+
+            <div class="tts-script-gen-input-group">
+                <label>Voice Style</label>
+                <select id="tts-script-gen-style" class="tts-script-gen-select">
+                    <option value="professional">Professional</option>
+                    <option value="energetic">Energetic</option>
+                    <option value="calm">Calm</option>
+                    <option value="funny">Funny</option>
+                    <option value="dramatic">Dramatic</option>
+                </select>
+            </div>
+
+            <div class="tts-script-gen-input-group">
+                <label>Duration</label>
+                <select id="tts-script-gen-duration" class="tts-script-gen-select">
+                    <option value="15s">15 Seconds (Short)</option>
+                    <option value="30s">30 Seconds (Medium)</option>
+                    <option value="60s">60 Seconds (Long)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processTTSScriptGen(this)">
+                Generate Script
+            </button>
+        </div>
+
+        <div class="tts-script-gen-preview-section">
+            <div class="tts-script-gen-preview-box" id="tts-script-gen-preview-container">
+                <!-- Empty State -->
+                <div style="text-align: center; color: var(--text-muted);" id="tts-script-gen-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure parameters to generate a TTS script.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="tts-script-gen-loading-box" id="tts-script-gen-loading-state">
+                    <div class="tts-script-gen-spinner"></div>
+                    <span class="tts-script-gen-loading-text">Generating script…</span>
+                </div>
+
+                <!-- Error State -->
+                <div class="tts-script-gen-error-box" id="tts-script-gen-error-state">
+                    <strong id="tts-script-gen-error-title">Error</strong>
+                    <p id="tts-script-gen-error-message"></p>
+                </div>
+
+                <!-- Result State -->
+                <div id="tts-script-gen-result-state" style="display: none; width: 100%;">
+                    <div class="tts-script-gen-result-container">
+                        <div class="tts-script-gen-result-box" id="tts-script-gen-script-output">
+                        </div>
+                        <button class="tts-script-gen-copy-btn" onclick="copyTTSScriptGen()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Script
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="tts-script-gen-api-docs" id="tts-script-gen-api-docs-container" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color); font-size: 1.2rem;">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            You can use this tool via our REST API. Send a POST request with the topic, voice_style, and duration.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="display: block; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--primary-color);">POST /api/minimal-solutions/tts_script_generator</code>
+        </div>
+        
+        <div class="tts-script-gen-grid">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+                <pre style="margin: 0; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace; font-size: 0.85rem;">{
+  "topic": "Benefits of AI",
+  "voice_style": "professional",
+  "duration": "30s"
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+                <pre style="margin: 0; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace; font-size: 0.85rem;">{
+  "status": "success",
+  "data": {
+    "script": "Artificial Intelligence is transforming our world. In healthcare, algorithms analyze data to detect diseases earlier than ever. By optimizing processes..."
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function ttsScriptGenShowState(state) {
+            const empty = document.getElementById('tts-script-gen-empty-state');
+            const loading = document.getElementById('tts-script-gen-loading-state');
+            const error = document.getElementById('tts-script-gen-error-state');
+            const result = document.getElementById('tts-script-gen-result-state');
+
+            empty.style.display = 'none';
+            loading.style.display = 'none';
+            error.style.display = 'none';
+            result.style.display = 'none';
+
+            switch (state) {
+                case 'empty': empty.style.display = 'block'; break;
+                case 'loading': loading.style.display = 'flex'; break;
+                case 'error': error.style.display = 'block'; break;
+                case 'result': result.style.display = 'block'; break;
+            }
+        }
+
+        function ttsScriptGenShowError(title, message) {
+            document.getElementById('tts-script-gen-error-title').textContent = title;
+            document.getElementById('tts-script-gen-error-message').textContent = message;
+            ttsScriptGenShowState('error');
+        }
+
+        async function processTTSScriptGen(btn) {
+            const topic = document.getElementById('tts-script-gen-topic').value.trim();
+            const voiceStyle = document.getElementById('tts-script-gen-style').value;
+            const duration = document.getElementById('tts-script-gen-duration').value;
+
+            if (!topic) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a topic.');
+                } else {
+                    ttsScriptGenShowError('Validation', 'Please provide a topic.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+
+            ttsScriptGenShowState('loading');
+
+            try {
+                const response = await fetch('/api/minimal-solutions/tts_script_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        voice_style: voiceStyle,
+                        duration: duration
+                    })
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok || result.status === 'error') {
+                    let errorMsg = result.message || 'Unknown error occurred.';
+                    if (result.details) {
+                        if (typeof result.details === 'object') {
+                            const detailsStr = Object.values(result.details).join(', ');
+                            if (detailsStr) errorMsg += ' - ' + detailsStr;
+                        } else if (Array.isArray(result.details)) {
+                            errorMsg += ' - ' + result.details.join(', ');
+                        } else {
+                            errorMsg += ' - ' + result.details;
+                        }
+                    }
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', errorMsg);
+                    } else {
+                        ttsScriptGenShowError('API Error', errorMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Script'; }
+                    return;
+                }
+
+                renderTTSScript(result.data.script || 'No script generated.');
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Script'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    ttsScriptGenShowError('Network Error', 'Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Script'; }
+            }
+        }
+
+        function renderTTSScript(scriptText) {
+            document.getElementById('tts-script-gen-script-output').innerText = scriptText;
+            ttsScriptGenShowState('result');
+        }
+
+        function copyTTSScriptGen() {
+            const text = document.getElementById('tts-script-gen-script-output').innerText;
+            const btn = document.querySelector('.tts-script-gen-copy-btn');
+            const originalHtml = btn.innerHTML;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                } catch (err) {}
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

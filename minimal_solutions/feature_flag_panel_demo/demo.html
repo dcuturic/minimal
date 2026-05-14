@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feature Flag Panel Demo</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --surface-hover: #2d2d2d;
+            --border-color: #333;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --primary-accent: #00ffcc;
+            --primary-accent-glow: rgba(0, 255, 204, 0.2);
+            --error-color: #ff4444;
+            --error-glow: rgba(255, 68, 68, 0.2);
+            --success-color: #00C851;
+            --radius: 8px;
+            --font-family: 'Inter', -apple-system, sans-serif;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, #aaa);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 0.9rem;
+            min-height: 120px;
+            resize: vertical;
+            transition: var(--transition);
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 2px var(--primary-accent-glow);
+        }
+
+        .btn {
+            background-color: var(--primary-accent);
+            color: #000;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius);
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px var(--primary-accent-glow);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* States */
+        .state-container {
+            margin-top: 2rem;
+            padding: 2rem;
+            border-radius: var(--radius);
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .empty-state {
+            color: var(--text-secondary);
+        }
+
+        .loading-state {
+            display: none;
+            color: var(--primary-accent);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0, 255, 204, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-state {
+            display: none;
+            color: var(--error-color);
+            background-color: rgba(255, 68, 68, 0.1);
+            border: 1px solid var(--error-color);
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-top: 1rem;
+        }
+
+        .result-state {
+            display: none;
+            text-align: left;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Toggle Switch List */
+        .flag-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .flag-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+
+        .flag-item:hover {
+            border-color: #555;
+        }
+
+        .flag-name {
+            font-weight: 500;
+            font-family: monospace;
+            color: var(--text-primary);
+        }
+
+        .flag-description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+        }
+
+        /* Toggle Switch CSS */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-secondary);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-accent-glow);
+            border-color: var(--primary-accent);
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 0 2px var(--primary-accent-glow);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            background-color: var(--primary-accent);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Feature Flag Panel Demo</h1>
+        <p>Define your feature flags and generate a toggle panel.</p>
+    </div>
+
+    <div class="card">
+        <form id="flagForm">
+            <div class="input-group">
+                <label for="flagsInput">Feature Flags (one per line)</label>
+                <textarea id="flagsInput" placeholder="enable_new_dashboard&#10;beta_search_v2&#10;experimental_dark_mode" required>enable_new_dashboard
+beta_search_v2
+experimental_dark_mode</textarea>
+            </div>
+            <button type="submit" id="generateBtn" class="btn">Generate Panel</button>
+        </form>
+
+        <div id="errorState" class="error-state"></div>
+    </div>
+
+    <div class="state-container">
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <circle cx="14" cy="12" r="2"></circle>
+            </svg>
+            <p>Your feature flag panel will appear here.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Generating panel...</p>
+        </div>
+
+        <!-- Result State -->
+        <div id="resultState" class="result-state">
+            <div class="result-header">
+                <h3>Feature Flag Panel</h3>
+                <button type="button" id="copyBtn" class="btn" style="width: auto; padding: 0.4rem 1rem; font-size: 0.8rem; display: none;">Copy Config</button>
+            </div>
+            <div id="panelContainer" class="flag-list">
+                <!-- Toggles will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="card api-docs" style="margin-top: 2rem;">
+        <h2 style="margin-bottom: 1rem;">API Integration</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Use this interface externally to validate and parse feature flags.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Endpoint</h3>
+            <code style="display: block; background: var(--bg-color); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border-color); color: var(--primary-accent); font-family: monospace;">POST /api/minimal-solutions/feature_flag_panel_demo</code>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Request Example</h3>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border-color); overflow-x: auto;"><code style="color: var(--text-secondary); font-family: monospace;">{
+  "flags": [
+    "enable_new_dashboard",
+    "beta_search_v2",
+    "experimental_dark_mode"
+  ]
+}</code></pre>
+        </div>
+
+        <div>
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Response Example</h3>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border-color); overflow-x: auto;"><code style="color: var(--text-secondary); font-family: monospace;">{
+  "status": "success",
+  "data": {
+    "flags": [
+      {
+        "name": "enable_new_dashboard",
+        "enabled": false
+      },
+      {
+        "name": "beta_search_v2",
+        "enabled": false
+      },
+      {
+        "name": "experimental_dark_mode",
+        "enabled": false
+      }
+    ]
+  }
+}</code></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('flagForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const flagsText = document.getElementById('flagsInput').value.trim();
+        const btn = document.getElementById('generateBtn');
+        
+        const emptyState = document.getElementById('emptyState');
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const resultState = document.getElementById('resultState');
+        const panelContainer = document.getElementById('panelContainer');
+        
+        if (!flagsText) {
+            showError("Please provide at least one feature flag.");
+            return;
+        }
+
+        const flags = flagsText.split('\n').map(f => f.trim()).filter(f => f);
+        
+        if (flags.length === 0) {
+            showError("Please provide at least one valid feature flag.");
+            return;
+        }
+
+        // Hide all states
+        emptyState.style.display = 'none';
+        errorState.style.display = 'none';
+        resultState.style.display = 'none';
+        loadingState.style.display = 'block';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/minimal-solutions/feature_flag_panel_demo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ flags })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || data.status === 'error') {
+                let errorMsg = data.message || "An error occurred";
+                if (data.details) {
+                    errorMsg += " - " + JSON.stringify(data.details);
+                }
+                throw new Error(errorMsg);
+            }
+            
+            // Build the panel HTML
+            let panelHtml = '';
+            
+            const flagList = data.data.flags || flags.map(name => ({ name, enabled: false }));
+            
+            flagList.forEach((flag, index) => {
+                const isChecked = flag.enabled ? 'checked' : '';
+                panelHtml += `
+                    <div class="flag-item">
+                        <div>
+                            <div class="flag-name">${escapeHtml(flag.name)}</div>
+                            <div class="flag-description">Toggle this feature on or off.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="flag_${index}" ${isChecked} onchange="updateFlagConfig('${escapeHtml(flag.name)}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                `;
+            });
+            
+            panelContainer.innerHTML = panelHtml;
+            
+            // Store current config state for copying
+            window.currentFlagConfig = {};
+            flagList.forEach(f => {
+                window.currentFlagConfig[f.name] = f.enabled || false;
+            });
+            
+            loadingState.style.display = 'none';
+            resultState.style.display = 'block';
+            document.getElementById('copyBtn').style.display = 'inline-block';
+            
+        } catch (err) {
+            loadingState.style.display = 'none';
+            showError(err.message || "An unexpected error occurred.");
+            emptyState.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+        }
+
+        function showError(msg) {
+            if (typeof showErrorPanel === 'function') {
+                showErrorPanel('Feature Flag Panel Error', msg);
+            } else {
+                errorState.textContent = msg;
+                errorState.style.display = 'block';
+            }
+        }
+        
+        function escapeHtml(unsafe) {
+            return String(unsafe)
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+    });
+
+    // Function to update global config when toggles change
+    window.updateFlagConfig = function(name, isChecked) {
+        if (window.currentFlagConfig) {
+            window.currentFlagConfig[name] = isChecked;
+        }
+    };
+
+    document.getElementById('copyBtn')?.addEventListener('click', () => {
+        if (window.currentFlagConfig) {
+            navigator.clipboard.writeText(JSON.stringify(window.currentFlagConfig, null, 2))
+                .then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = originalText; }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+        }
+    });
+</script>
+
+</body>
+</html>

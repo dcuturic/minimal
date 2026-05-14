@@ -1,0 +1,249 @@
+<div class="hsl-container" style="width: 100%;">
+    <style>
+        .hsl-input-group { margin-bottom: 1.5rem; }
+        .hsl-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .hsl-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; }
+        .hsl-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .hsl-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .hsl-result-content {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .hsl-status-code {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+
+        .hsl-status-message {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+
+        .hsl-status-description {
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .hsl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .hsl-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="hsl-grid">
+        <div class="hsl-form-section">
+            <div class="hsl-input-group">
+                <label>HTTP Status Code</label>
+                <input type="number" id="hsl-code" class="hsl-input" placeholder="z. B. 200, 404, 500" min="100" max="599">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="lookupStatus(this)">
+                Status abfragen
+            </button>
+        </div>
+
+        <div class="hsl-preview-section">
+            <div class="hsl-preview-box" id="hsl-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="hsl-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Gib einen HTTP Statuscode ein, um seine Bedeutung zu sehen.</p>
+                </div>
+                
+                <div id="hsl-result-state" style="display: none; width: 100%;">
+                    <div class="hsl-result-content">
+                        <div class="hsl-status-code" id="hsl-result-code"></div>
+                        <div class="hsl-status-message" id="hsl-result-message"></div>
+                        <div class="hsl-status-description" id="hsl-result-description"></div>
+                        <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
+                            <button class="btn btn-secondary btn-sm" onclick="copyHttpStatus()" style="display: flex; align-items: center;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                Kopieren
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Dokumentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            Du kannst diese Funktion auch über unsere REST-API nutzen. Sende dazu einen <code>POST</code>-Request an den unten stehenden Endpunkt.
+        </p>
+
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem; font-family: monospace; display: flex; justify-content: space-between; align-items: center;">
+            <span><span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/http_status_lookup</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Request Beispiel</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status_code": 404
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Response Beispiel (Erfolg)</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "status_code": 404,
+    "message": "Not Found",
+    "description": "The server can not find the requested resource..."
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function lookupStatus(btn) {
+            const codeInput = document.getElementById('hsl-code').value;
+            const statusCode = parseInt(codeInput);
+            
+            const container = document.getElementById('hsl-preview-container');
+            const emptyState = document.getElementById('hsl-empty-state');
+            const resultState = document.getElementById('hsl-result-state');
+            
+            // Error-State Validation
+            if (!codeInput || isNaN(statusCode) || statusCode < 100 || statusCode > 599) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validierung', 'Bitte gib einen gültigen HTTP Statuscode ein (100-599).');
+                } else {
+                    alert('Ungültiger Statuscode');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Frage ab...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'hsl-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/http_status_lookup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status_code: statusCode
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('hsl-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Fehler', result.message || 'Ein unbekannter Fehler ist aufgetreten.');
+                    } else {
+                        alert(result.message || 'Ein unbekannter Fehler ist aufgetreten.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Status abfragen'; }
+                    return;
+                }
+
+                const data = result.data || {};
+                const message = data.message || result.message || 'Unbekannter Status';
+                const description = data.description || result.description || 'Keine Beschreibung für diesen Statuscode verfügbar.';
+                const code = data.status_code || statusCode;
+
+                // Update UI Result-State
+                document.getElementById('hsl-result-code').innerText = code;
+                document.getElementById('hsl-result-message').innerText = message;
+                document.getElementById('hsl-result-description').innerText = description;
+
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Status abfragen'; }
+                
+                const resultBox = document.querySelector('.result-box');
+                if(resultBox) {
+                    resultBox.innerHTML = `
+                        <div style="text-align: center; width: 100%;">
+                            <p style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">Erfolgreich abgerufen!</p>
+                            <pre class="code-block" style="text-align: left; background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">
+{
+  "status": "success",
+  "data": ${JSON.stringify(data, null, 2)}
+}
+                            </pre>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                const loader = document.getElementById('hsl-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Netzwerkfehler', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Status abfragen'; }
+            }
+        }
+
+        async function copyHttpStatus() {
+            const code = document.getElementById('hsl-result-code').innerText;
+            const message = document.getElementById('hsl-result-message').innerText;
+            const desc = document.getElementById('hsl-result-description').innerText;
+            const textToCopy = `${code} ${message}\n${desc}`;
+            
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                if (typeof showToast === 'function') {
+                    showToast('Status Info kopiert!', 'success');
+                } else {
+                    alert('Status Info kopiert!');
+                }
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Fehler', 'Konnte Text nicht kopieren.');
+                } else {
+                    console.error('Kopieren fehlgeschlagen', err);
+                }
+            }
+        }
+    </script>
+</div>

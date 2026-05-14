@@ -1,0 +1,1 @@
+from .seo_normalizer_validation import validate_seo_normalizer_request

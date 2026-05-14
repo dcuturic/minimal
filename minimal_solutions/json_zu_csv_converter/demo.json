@@ -1,0 +1,4 @@
+{
+  "json_text": "[\n  {\n    \"id\": 1,\n    \"name\": \"Danijel\",\n    \"role\": \"Admin\",\n    \"active\": true\n  },\n  {\n    \"id\": 2,\n    \"name\": \"Alice\",\n    \"role\": \"User\",\n    \"active\": false\n  },\n  {\n    \"id\": 3,\n    \"name\": \"Bob\",\n    \"role\": \"Editor\",\n    \"active\": true\n  }\n]",
+  "delimiter": ","
+}

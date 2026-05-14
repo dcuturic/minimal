@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Generator - Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        .glow:focus-within {
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex items-center justify-center">
+
+    <div class="w-full max-w-2xl mx-auto p-6 sm:p-8 bg-white shadow-xl rounded-2xl border border-gray-100">
+        <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-gray-900 tracking-tight">Countdown Generator</h1>
+        <p class="text-sm text-gray-500 mb-8">Erstelle eine dynamische Countdown-Vorschau bis zu einem bestimmten Datum.</p>
+        
+        <form id="countdown-form" class="space-y-5">
+            <div>
+                <label for="label" class="block text-sm font-medium text-gray-700 mb-1">Label (optional, z.B. Launch Tag)</label>
+                <input type="text" id="label" name="label" placeholder="Launch Tag"
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all">
+            </div>
+            <div>
+                <label for="target_date" class="block text-sm font-medium text-gray-700 mb-1">Zieldatum</label>
+                <input type="datetime-local" id="target_date" name="target_date" required
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:bg-white transition-all">
+            </div>
+            
+            <button type="submit" 
+                class="w-full bg-black text-white py-3.5 rounded-xl shadow-md hover:bg-gray-800 transition-colors mt-4 font-medium flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">timer</span>
+                Countdown Anzeigen
+            </button>
+        </form>
+        
+        <!-- States Container -->
+        <div class="w-full mt-10 p-8 bg-gray-50 rounded-2xl border border-gray-100 min-h-[250px] flex items-center justify-center relative overflow-hidden transition-all duration-300" id="result-container">
+            
+            <!-- Empty State -->
+            <div id="state-empty" class="flex flex-col items-center justify-center w-full text-center">
+                <span class="material-symbols-outlined text-5xl text-gray-300 mb-4">hourglass_empty</span>
+                <p class="text-gray-400 text-sm font-medium">Gib ein Zieldatum ein, um den Countdown zu starten.</p>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="state-loading" class="hidden flex-col items-center justify-center w-full text-center">
+                <div class="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin mb-4"></div>
+                <p class="text-gray-500 text-sm font-medium animate-pulse">Berechne Zeitdifferenz...</p>
+            </div>
+            
+            <!-- Error State -->
+            <div id="state-error" class="hidden flex-col items-center justify-center w-full text-center">
+                <span class="material-symbols-outlined text-4xl text-red-500 mb-3">error_outline</span>
+                <p id="error-message" class="text-red-600 text-sm font-medium bg-red-50 py-2 px-4 rounded-lg">Ein Fehler ist aufgetreten.</p>
+            </div>
+            
+            <!-- Result State -->
+            <div id="state-result" class="hidden flex-col w-full items-center justify-center">
+                <h2 id="result-title" class="text-2xl font-bold text-gray-900 mb-8 text-center tracking-tight">Countdown</h2>
+                
+                <div class="flex justify-center gap-3 sm:gap-6 w-full max-w-lg mx-auto">
+                    <!-- Days -->
+                    <div class="flex flex-col items-center justify-center bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 min-w-[70px] sm:min-w-[90px] transform hover:scale-105 transition-transform">
+                        <span id="val-days" class="text-4xl sm:text-5xl font-black text-black">00</span>
+                        <span class="text-[10px] sm:text-xs text-gray-400 font-bold tracking-widest mt-2 uppercase">Tage</span>
+                    </div>
+                    
+                    <!-- Hours -->
+                    <div class="flex flex-col items-center justify-center bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 min-w-[70px] sm:min-w-[90px] transform hover:scale-105 transition-transform">
+                        <span id="val-hours" class="text-4xl sm:text-5xl font-black text-black">00</span>
+                        <span class="text-[10px] sm:text-xs text-gray-400 font-bold tracking-widest mt-2 uppercase">Std</span>
+                    </div>
+                    
+                    <!-- Minutes -->
+                    <div class="flex flex-col items-center justify-center bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 min-w-[70px] sm:min-w-[90px] transform hover:scale-105 transition-transform">
+                        <span id="val-mins" class="text-4xl sm:text-5xl font-black text-black">00</span>
+                        <span class="text-[10px] sm:text-xs text-gray-400 font-bold tracking-widest mt-2 uppercase">Min</span>
+                    </div>
+                    
+                    <!-- Seconds -->
+                    <div class="flex flex-col items-center justify-center bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 min-w-[70px] sm:min-w-[90px] transform hover:scale-105 transition-transform">
+                        <span id="val-secs" class="text-4xl sm:text-5xl font-black text-black">00</span>
+                        <span class="text-[10px] sm:text-xs text-gray-400 font-bold tracking-widest mt-2 uppercase">Sek</span>
+                    </div>
+                </div>
+
+                <!-- Copy / Share Actions -->
+                <div class="mt-10 flex gap-3">
+                    <button id="copy-btn" type="button" class="flex items-center gap-2 bg-white text-gray-800 px-5 py-2.5 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors text-sm font-medium">
+                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                        <span id="copy-text">Kopieren</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Documentation Box -->
+        <div class="mt-12 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center gap-2">
+                <span class="material-symbols-outlined text-gray-500">api</span>
+                <h3 class="text-lg font-semibold text-gray-900 tracking-tight">API Dokumentation</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-600 mb-6">Diese Minimal-Lösung ist auch als REST-API verfügbar. Du kannst Anfragen direkt an den Server senden und erhältst die Antwort im JSON-Format.</p>
+                
+                <div class="space-y-6">
+                    <!-- Endpoint -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wider">Endpunkt</h4>
+                        <div class="flex items-center gap-3">
+                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">POST</span>
+                            <code class="text-sm font-mono bg-gray-100 px-3 py-1.5 rounded text-gray-800">/api/minimal-solutions/countdown_generator</code>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Request Example -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wider">Request (JSON)</h4>
+                            <div class="bg-gray-900 rounded-xl overflow-hidden">
+                                <pre class="p-4 text-xs font-mono text-gray-300 overflow-x-auto"><code>{
+  "target_date": "2027-01-01T00:00:00",
+  "label": "Neujahr"
+}</code></pre>
+                            </div>
+                        </div>
+
+                        <!-- Response Example -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wider">Response (JSON)</h4>
+                            <div class="bg-gray-900 rounded-xl overflow-hidden">
+                                <pre class="p-4 text-xs font-mono text-green-400 overflow-x-auto"><code>{
+  "status": "success",
+  "data": {
+    "title": "Neujahr",
+    "days": 234,
+    "hours": 5,
+    "minutes": 34,
+    "seconds": 8
+  }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('countdown-form');
+            const stateEmpty = document.getElementById('state-empty');
+            const stateLoading = document.getElementById('state-loading');
+            const stateError = document.getElementById('state-error');
+            const stateResult = document.getElementById('state-result');
+            const errorMessage = document.getElementById('error-message');
+            
+            const resultTitle = document.getElementById('result-title');
+            const valDays = document.getElementById('val-days');
+            const valHours = document.getElementById('val-hours');
+            const valMins = document.getElementById('val-mins');
+            const valSecs = document.getElementById('val-secs');
+            
+            const copyBtn = document.getElementById('copy-btn');
+            const copyText = document.getElementById('copy-text');
+
+            function showState(state) {
+                stateEmpty.classList.add('hidden');
+                stateEmpty.classList.remove('flex');
+                
+                stateLoading.classList.add('hidden');
+                stateLoading.classList.remove('flex');
+                
+                stateError.classList.add('hidden');
+                stateError.classList.remove('flex');
+                
+                stateResult.classList.add('hidden');
+                stateResult.classList.remove('flex');
+
+                if (state === 'empty') {
+                    stateEmpty.classList.remove('hidden');
+                    stateEmpty.classList.add('flex');
+                } else if (state === 'loading') {
+                    stateLoading.classList.remove('hidden');
+                    stateLoading.classList.add('flex');
+                } else if (state === 'error') {
+                    stateError.classList.remove('hidden');
+                    stateError.classList.add('flex');
+                } else if (state === 'result') {
+                    stateResult.classList.remove('hidden');
+                    stateResult.classList.add('flex');
+                }
+            }
+
+            function showError(msg) {
+                errorMessage.textContent = msg;
+                showState('error');
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                showState('loading');
+                
+                const targetDate = document.getElementById('target_date').value;
+                const label = document.getElementById('label').value;
+
+                try {
+                    const response = await fetch('/api/minimal-solutions/countdown_generator', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            target_date: targetDate,
+                            label: label
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.status === 'success') {
+                        const resData = data.data;
+                        resultTitle.textContent = resData.title || "Countdown";
+                        valDays.textContent = resData.days;
+                        valHours.textContent = resData.hours;
+                        valMins.textContent = resData.minutes;
+                        valSecs.textContent = resData.seconds;
+                        
+                        showState('result');
+                        
+                        // Reset copy button
+                        copyBtn.classList.remove('bg-green-50', 'text-green-700', 'border-green-200');
+                        copyBtn.classList.add('bg-white', 'text-gray-800', 'border-gray-200');
+                        copyText.textContent = "Kopieren";
+                        copyBtn.querySelector('span').textContent = "content_copy";
+                    } else {
+                        let errStr = "Ein unbekannter Fehler ist aufgetreten.";
+                        if (data.details) {
+                            if (typeof data.details === 'object' && !Array.isArray(data.details)) {
+                                const msgs = [];
+                                for (const key in data.details) {
+                                    msgs.push(data.details[key].join(', '));
+                                }
+                                errStr = msgs.join(' | ');
+                            } else {
+                                errStr = JSON.stringify(data.details);
+                            }
+                        } else if (data.message) {
+                            errStr = data.message;
+                        }
+                        showError(errStr);
+                    }
+                } catch (error) {
+                    showError("Netzwerkfehler: Server nicht erreichbar.");
+                }
+            });
+
+            copyBtn.addEventListener('click', async () => {
+                const textToCopy = `${resultTitle.textContent}: ${valDays.textContent} Tage, ${valHours.textContent} Stunden, ${valMins.textContent} Minuten, ${valSecs.textContent} Sekunden`;
+                try {
+                    await navigator.clipboard.writeText(textToCopy);
+                    copyText.textContent = "Kopiert!";
+                    copyBtn.querySelector('span').textContent = "check";
+                    copyBtn.classList.remove('bg-white', 'text-gray-800', 'border-gray-200');
+                    copyBtn.classList.add('bg-green-50', 'text-green-700', 'border-green-200');
+                    
+                    setTimeout(() => {
+                        copyText.textContent = "Kopieren";
+                        copyBtn.querySelector('span').textContent = "content_copy";
+                        copyBtn.classList.remove('bg-green-50', 'text-green-700', 'border-green-200');
+                        copyBtn.classList.add('bg-white', 'text-gray-800', 'border-gray-200');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    alert("Kopieren fehlgeschlagen.");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

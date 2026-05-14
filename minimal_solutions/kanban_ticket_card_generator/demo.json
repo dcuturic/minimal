@@ -1,0 +1,6 @@
+{
+  "title": "Implement User Authentication",
+  "description": "Add JWT-based user authentication and login endpoint.",
+  "priority": "high",
+  "status": "in_progress"
+}

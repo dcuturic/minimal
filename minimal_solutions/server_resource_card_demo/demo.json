@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Normal Load",
+    "request": {
+      "cpu": 25,
+      "ram": 40,
+      "disk": 50
+    }
+  },
+  {
+    "name": "High CPU Load",
+    "request": {
+      "cpu": 95,
+      "ram": 60,
+      "disk": 55
+    }
+  },
+  {
+    "name": "Critical Resources",
+    "request": {
+      "cpu": 90,
+      "ram": 85,
+      "disk": 92
+    }
+  }
+]

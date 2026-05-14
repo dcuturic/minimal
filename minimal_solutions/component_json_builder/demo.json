@@ -1,0 +1,8 @@
+{
+  "template": "<div class=\"custom-alert\">\n  <span class=\"icon\">⚠️</span>\n  <span class=\"message\">{{message}}</span>\n</div>",
+  "env": {
+    "message": "This is a custom alert component."
+  },
+  "css": ".custom-alert {\n  background-color: #fff3cd;\n  color: #856404;\n  padding: 12px 20px;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n  gap: 10px;\n}\n.custom-alert .icon {\n  font-size: 1.2em;\n}",
+  "js": "console.log('Alert initialized');"
+}

@@ -1,0 +1,294 @@
+<div class="webhook-container" style="width: 100%;">
+    <style>
+        .webhook-input-group { margin-bottom: 1.5rem; }
+        .webhook-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .webhook-textarea { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: monospace; font-size: 0.9rem; resize: vertical; min-height: 200px; line-height: 1.4; }
+        .webhook-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .webhook-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .webhook-result-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            width: 100%;
+            text-align: left;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .webhook-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .webhook-card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+        }
+
+        .webhook-card-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .webhook-json-view {
+            background: var(--surface-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .webhook-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .webhook-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="webhook-grid">
+        <div class="webhook-form-section">
+            <div class="webhook-input-group">
+                <label>Webhook JSON Payload</label>
+                <textarea id="wh-payload" class="webhook-textarea" placeholder="Paste your webhook JSON payload here...">
+{
+  "event": "user.created",
+  "timestamp": "2026-05-12T14:00:00Z",
+  "data": {
+    "user_id": "usr_12345",
+    "email": "test@example.com"
+  }
+}
+                </textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="validateWebhook(this)">
+                Validate Payload
+            </button>
+            <div id="wh-error-state" style="display:none; color: var(--error-color, #ff4d4d); margin-top: 1rem; font-size: 0.9rem;"></div>
+        </div>
+
+        <div class="webhook-preview-section">
+            <div class="webhook-preview-box" id="wh-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="wh-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter a payload and validate to see results.</p>
+                </div>
+                
+                <div id="wh-result-state" style="display: none; width: 100%;">
+                    <div class="webhook-result-card" id="wh-result-card">
+                        <div class="webhook-card-header">
+                            <h4 class="webhook-card-title">Validation Result</h4>
+                            <span class="webhook-card-badge" id="res-status">Valid</span>
+                        </div>
+                        <div style="margin-bottom: 1rem; position: relative;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <strong style="color: var(--text-color); font-size: 0.9rem;">Parsed JSON Payload</strong>
+                                <button onclick="copyWebhookResult()" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.25rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; cursor: pointer;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            <div class="webhook-json-view" id="res-json"></div>
+                        </div>
+                        <div id="res-message" style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function validateWebhook(btn) {
+            const payloadInput = document.getElementById('wh-payload').value;
+            
+            const container = document.getElementById('wh-preview-container');
+            const emptyState = document.getElementById('wh-empty-state');
+            const resultState = document.getElementById('wh-result-state');
+            const errorState = document.getElementById('wh-error-state');
+            const resultCard = document.getElementById('wh-result-card');
+            
+            if (errorState) errorState.style.display = 'none';
+
+            if (!payloadInput.trim()) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'JSON Payload is required.');
+                } else if (errorState) {
+                    errorState.innerText = 'JSON Payload is required.';
+                    errorState.style.display = 'block';
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Validating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'wh-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/webhook_payload_tester', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        payload_json: payloadInput
+                    })
+                });
+                
+                const result = await response.json();
+                
+                const loader = document.getElementById('wh-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('Validation Error', result.message || 'Invalid webhook payload.');
+                    } else if (errorState) {
+                        errorState.innerText = result.message || 'Invalid webhook payload.';
+                        errorState.style.display = 'block';
+                    }
+                    emptyState.style.display = 'flex';
+                } else if (result.status === 'success' && result.data) {
+                    const data = result.data;
+                    const parsedPayload = data.parsed_payload || data.payload || {};
+                    const is_valid = data.is_valid !== false;
+
+                    document.getElementById('res-json').textContent = JSON.stringify(parsedPayload, null, 2);
+                    
+                    const badge = document.getElementById('res-status');
+                    if (is_valid) {
+                        badge.textContent = 'Valid';
+                        badge.style.color = '#4caf50';
+                        badge.style.borderColor = '#4caf50';
+                        resultCard.style.borderLeftColor = '#4caf50';
+                        document.getElementById('res-message').textContent = data.message || 'The webhook payload is valid and correctly formatted.';
+                    } else {
+                        badge.textContent = 'Invalid';
+                        badge.style.color = 'var(--error-color, #ff4d4d)';
+                        badge.style.borderColor = 'var(--error-color, #ff4d4d)';
+                        resultCard.style.borderLeftColor = 'var(--error-color, #ff4d4d)';
+                        document.getElementById('res-message').textContent = data.message || 'The webhook payload validation failed.';
+                    }
+
+                    resultState.style.display = 'block';
+                } else {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', 'Unexpected response format.');
+                    } else if (errorState) {
+                        errorState.innerText = 'Unexpected response format.';
+                        errorState.style.display = 'block';
+                    }
+                    emptyState.style.display = 'flex';
+                }
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Validate Payload'; }
+
+            } catch (err) {
+                const loader = document.getElementById('wh-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else if (errorState) {
+                    errorState.innerText = 'Failed to connect to the API.';
+                    errorState.style.display = 'block';
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Validate Payload'; }
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        function copyWebhookResult() {
+            const resultText = document.getElementById('res-json').textContent;
+            if (!resultText) return;
+            
+            navigator.clipboard.writeText(resultText).then(() => {
+                if (typeof showToast === 'function') {
+                    showToast('Copied to clipboard!', 'success');
+                } else {
+                    alert('Copied to clipboard!');
+                }
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+    </script>
+
+    <div class="api-docs-section" style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You can use this tool via API. Send a POST request to <code>/api/minimal-solutions/webhook_payload_tester</code>.</p>
+        
+        <div class="api-docs-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div class="api-docs-req">
+                <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Request Example</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto;">{
+  "payload_json": "{\n  \"event\": \"user.created\",\n  \"data\": {\n    \"user_id\": \"123\"\n  }\n}"
+}</pre>
+            </div>
+            <div class="api-docs-res">
+                <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Response Example</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "is_valid": true,
+    "message": "The webhook payload is valid and correctly formatted.",
+    "parsed_payload": {
+      "event": "user.created",
+      "data": {
+        "user_id": "123"
+      }
+    }
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @media (max-width: 768px) {
+            .api-docs-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</div>

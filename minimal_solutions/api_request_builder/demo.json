@@ -1,0 +1,13 @@
+{
+  "method": "POST",
+  "url": "https://api.crafthoster.com/v1/servers",
+  "headers": {
+    "Authorization": "Bearer secret_token_123",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "name": "Minecraft Survival",
+    "plan": "premium_4gb",
+    "location": "fra1"
+  }
+}

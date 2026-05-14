@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<section class="hero error-page">
+    <h2>404</h2>
+    <p>{{ message | default("The requested page was not found.") }}</p>
+    <div class="controls-bar" style="justify-content: center; margin-top: 2rem;">
+        <a href="{{ url_for('main.home') }}" class="btn btn-primary">Back to Home</a>
+        <a href="{{ url_for('main.solutions_overview') }}" class="btn btn-secondary">View Solutions</a>
+    </div>
+</section>
+{% endblock %}

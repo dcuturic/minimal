@@ -1,0 +1,260 @@
+<div class="api-key-masker-container" style="width: 100%;">
+    <style>
+        .akm-input-group { margin-bottom: 1.5rem; }
+        .akm-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .akm-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .akm-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .akm-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .akm-result-text {
+            font-family: monospace;
+            font-size: 1.2rem;
+            word-break: break-all;
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        .akm-controls { display: flex; gap: 1rem; justify-content: center; }
+        .akm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .akm-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="akm-grid">
+        <div class="akm-form-section">
+            <div class="akm-input-group">
+                <label>Secret Key</label>
+                <input type="text" id="akm-secret" class="akm-input" placeholder="e.g. sk_live_1234567890abcdef">
+            </div>
+
+            <div class="akm-grid" style="gap: 1rem;">
+                <div class="akm-input-group">
+                    <label>Visible Start</label>
+                    <input type="number" id="akm-visible-start" class="akm-input" value="4" min="0">
+                </div>
+                <div class="akm-input-group">
+                    <label>Visible End</label>
+                    <input type="number" id="akm-visible-end" class="akm-input" value="4" min="0">
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processMasking(this)">
+                Mask Key
+            </button>
+        </div>
+
+        <div class="akm-preview-section">
+            <div class="akm-preview-box" id="akm-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="akm-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter a key and click mask.</p>
+                </div>
+                
+                <div id="akm-result-state" style="display: none; width: 100%;">
+                    <div class="akm-result-text" id="akm-text-result"></div>
+                </div>
+            </div>
+            
+            <div class="akm-controls" style="display: none;" id="akm-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyMasked(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Box -->
+    <div class="api-doku-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; color: var(--primary-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">You can also use this tool via our REST API. Send a POST request to the following endpoint.</p>
+        
+        <div style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; margin-bottom: 1.5rem;">
+            POST /api/minimal-solutions/api_key_masker
+        </div>
+
+        <div class="akm-grid">
+            <div>
+                <h4 style="margin-top: 0;">Request Example</h4>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-size: 0.9rem;"><code>{
+  "secret": "sk_live_1234567890abcdef",
+  "visible_start": 4,
+  "visible_end": 4
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0;">Response Example</h4>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-size: 0.9rem;"><code>{
+  "status": "success",
+  "data": {
+    "result": "sk_l****************cdef",
+    "masked_key": "sk_l****************cdef"
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processMasking(btn) {
+            const secretInput = document.getElementById('akm-secret').value.trim();
+            const visibleStart = parseInt(document.getElementById('akm-visible-start').value, 10);
+            const visibleEnd = parseInt(document.getElementById('akm-visible-end').value, 10);
+            
+            const container = document.getElementById('akm-preview-container');
+            const controls = document.getElementById('akm-result-controls');
+            const emptyState = document.getElementById('akm-empty-state');
+            const resultState = document.getElementById('akm-result-state');
+            
+            if (!secretInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a secret key.');
+                } else {
+                    alert('Please provide a secret key.');
+                }
+                return;
+            }
+
+            if (isNaN(visibleStart) || isNaN(visibleEnd) || visibleStart < 0 || visibleEnd < 0) {
+                 if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Visible lengths must be valid positive numbers or zero.');
+                } else {
+                    alert('Visible lengths must be valid positive numbers or zero.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Masking...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'akm-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const payload = {
+                    secret: secretInput,
+                    visible_start: visibleStart,
+                    visible_end: visibleEnd
+                };
+
+                const response = await fetch('/api/minimal-solutions/api_key_masker', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('akm-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Mask Key'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const outputText = result.data.result;
+
+                document.getElementById('akm-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Mask Key'; }
+
+            } catch (err) {
+                const loader = document.getElementById('akm-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Mask Key'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyMasked(btn) {
+            const outputText = document.getElementById('akm-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

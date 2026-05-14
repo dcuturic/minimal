@@ -1,0 +1,339 @@
+<div class="og-preview-container" style="width: 100%;">
+    <style>
+        .og-input-group { margin-bottom: 1.5rem; }
+        .og-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .og-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .og-input:focus { outline: none; border-color: var(--primary-color); }
+        .og-textarea {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .og-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .og-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .og-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-color);
+            width: 100%;
+            max-width: 450px;
+            text-align: left;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .og-card:hover {
+            transform: translateY(-2px);
+        }
+        .og-card-image {
+            width: 100%;
+            height: 220px;
+            background-color: var(--surface-color);
+            background-size: cover;
+            background-position: center;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+        .og-card-content {
+            padding: 1.25rem;
+        }
+        .og-card-domain {
+            text-transform: lowercase;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .og-card-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+        .og-card-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
+        }
+
+        .og-controls { display: flex; gap: 1rem; justify-content: center; }
+        .og-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .og-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="og-grid">
+        <div class="og-form-section">
+            <div class="og-input-group">
+                <label>Title</label>
+                <input type="text" id="og-title" class="og-input" placeholder="e.g. My Awesome Website">
+            </div>
+            
+            <div class="og-input-group">
+                <label>Description</label>
+                <textarea id="og-desc" class="og-textarea" placeholder="e.g. This is an awesome website about cool things."></textarea>
+            </div>
+
+            <div class="og-input-group">
+                <label>Image URL</label>
+                <input type="text" id="og-image" class="og-input" placeholder="e.g. https://example.com/image.png">
+            </div>
+
+            <div class="og-input-group">
+                <label>Domain</label>
+                <input type="text" id="og-domain" class="og-input" placeholder="e.g. example.com">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processOg(this)">
+                Generate Preview
+            </button>
+        </div>
+
+        <div class="og-preview-section">
+            <div class="og-preview-box" id="og-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="og-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill the fields to see the OpenGraph preview.</p>
+                </div>
+                
+                <div id="og-result-state" style="display: none; width: 100%; justify-content: center; flex-direction: column; align-items: center;">
+                    <div class="og-card">
+                        <div class="og-card-image" id="og-res-image-container">
+                            <span id="og-res-image-fallback">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            </span>
+                        </div>
+                        <div class="og-card-content">
+                            <div class="og-card-domain" id="og-res-domain">example.com</div>
+                            <div class="og-card-title" id="og-res-title">My Awesome Website</div>
+                            <div class="og-card-desc" id="og-res-desc">This is an awesome website about cool things.</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; width: 100%; max-width: 450px;">
+                        <textarea id="og-res-meta" class="og-textarea" readonly style="font-family: monospace; font-size: 0.85rem; min-height: 120px; background: var(--bg-color); cursor: text;" onclick="this.select()"></textarea>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button class="btn btn-secondary" style="flex: 1;" onclick="copyMetaTags(this)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                Copy Meta Tags
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; padding: 2rem; background: var(--surface-color); border-radius: 8px; border: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Use the API to generate OpenGraph preview data programmatically.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="color: var(--text-color);">Endpoint:</strong><br>
+            <code style="background: var(--bg-color); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: var(--primary-color);">POST /api/minimal-solutions/opengraph_preview</code>
+        </div>
+        
+        <div class="og-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <strong style="color: var(--text-color);">Request Example:</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color); font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "title": "My Awesome Website",
+  "description": "This is an awesome website about cool things.",
+  "image_url": "https://example.com/image.png",
+  "domain": "example.com"
+}</pre>
+            </div>
+            <div>
+                <strong style="color: var(--text-color);">Response Example:</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color); font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "status": "success",
+  "data": {
+    "title": "My Awesome Website",
+    "description": "This is an awesome website about cool things.",
+    "image_url": "https://example.com/image.png",
+    "domain": "example.com"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateMetaTags(data) {
+            let tags = [];
+            if (data.title) {
+                tags.push(`<meta property="og:title" content="${data.title.replace(/"/g, '&quot;')}" />`);
+            }
+            if (data.description) {
+                tags.push(`<meta property="og:description" content="${data.description.replace(/"/g, '&quot;')}" />`);
+            }
+            if (data.image_url) {
+                tags.push(`<meta property="og:image" content="${data.image_url.replace(/"/g, '&quot;')}" />`);
+            }
+            if (data.domain) {
+                tags.push(`<meta property="og:url" content="https://${data.domain}" />`);
+            }
+            tags.push(`<meta property="og:type" content="website" />`);
+            return tags.join('\n');
+        }
+
+        async function copyMetaTags(btn) {
+            const metaText = document.getElementById('og-res-meta').value;
+            if (!metaText) return;
+            
+            try {
+                await navigator.clipboard.writeText(metaText);
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem; vertical-align: middle;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+            } catch (err) {
+                alert('Failed to copy text.');
+            }
+        }
+
+        async function processOg(btn) {
+            const title = document.getElementById('og-title').value.trim();
+            const desc = document.getElementById('og-desc').value.trim();
+            const imageUrl = document.getElementById('og-image').value.trim();
+            const domain = document.getElementById('og-domain').value.trim();
+            
+            const container = document.getElementById('og-preview-container');
+            const emptyState = document.getElementById('og-empty-state');
+            const resultState = document.getElementById('og-result-state');
+            
+            if (typeof hideErrorPanel === 'function') hideErrorPanel();
+
+            if (!title) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide a Title for the preview.');
+                } else {
+                    alert('Please provide a Title for the preview.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'og-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/opengraph_preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        description: desc,
+                        image_url: imageUrl,
+                        domain: domain
+                    })
+                });
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error('Invalid JSON response from server');
+                }
+
+                if (!response.ok || result.status === 'error') {
+                    throw new Error(result.message || 'API Error');
+                }
+
+                const finalData = result.data;
+
+                const loader = document.getElementById('og-temp-loader');
+                if (loader) loader.remove();
+
+                document.getElementById('og-res-title').innerText = finalData.title || title;
+                document.getElementById('og-res-desc').innerText = finalData.description || desc || 'No description provided.';
+                document.getElementById('og-res-domain').innerText = finalData.domain || domain || 'example.com';
+                document.getElementById('og-res-meta').value = generateMetaTags({
+                    title: finalData.title || title,
+                    description: finalData.description || desc,
+                    image_url: finalData.image_url || imageUrl,
+                    domain: finalData.domain || domain
+                });
+                
+                const imgContainer = document.getElementById('og-res-image-container');
+                const imgFallback = document.getElementById('og-res-image-fallback');
+                
+                if (finalData.image_url || imageUrl) {
+                    imgContainer.style.backgroundImage = 'url(' + (finalData.image_url || imageUrl) + ')';
+                    imgFallback.style.display = 'none';
+                } else {
+                    imgContainer.style.backgroundImage = 'none';
+                    imgFallback.style.display = 'flex';
+                }
+                
+                resultState.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Preview'; }
+
+            } catch (err) {
+                const loader = document.getElementById('og-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('API Error', err.message || 'Failed to generate preview.');
+                } else {
+                    alert(err.message || 'Failed to generate preview.');
+                }
+                emptyState.style.display = 'block';
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Preview'; }
+            }
+        }
+    </script>
+</div>

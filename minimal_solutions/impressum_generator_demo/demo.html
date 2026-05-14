@@ -1,0 +1,287 @@
+<div class="igd-container" style="width: 100%;">
+    <style>
+        .igd-input-group { margin-bottom: 1.5rem; }
+        .igd-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .igd-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .igd-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .igd-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .igd-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-word;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .igd-controls { display: flex; gap: 1rem; justify-content: center; width: 100%; }
+        .igd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .igd-grid { grid-template-columns: 1fr; } }
+        
+        .igd-disclaimer {
+            font-size: 0.85rem;
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 4px;
+            text-align: center;
+            width: 100%;
+        }
+    </style>
+
+    <div class="igd-grid">
+        <div class="igd-form-section">
+            <div class="igd-input-group">
+                <label>Unternehmensname (Company)</label>
+                <input type="text" id="igd-company" class="igd-input" placeholder="Muster GmbH" />
+            </div>
+            
+            <div class="igd-input-group">
+                <label>Adresse (Address)</label>
+                <input type="text" id="igd-address" class="igd-input" placeholder="Musterstraße 1, 12345 Musterstadt" />
+            </div>
+            
+            <div class="igd-input-group">
+                <label>E-Mail</label>
+                <input type="email" id="igd-email" class="igd-input" placeholder="info@mustergmbh.de" />
+            </div>
+            
+            <div class="igd-input-group">
+                <label>Telefon (Phone)</label>
+                <input type="text" id="igd-phone" class="igd-input" placeholder="+49 123 456789" />
+            </div>
+            
+            <div class="igd-input-group">
+                <label>Vertreter (Representative)</label>
+                <input type="text" id="igd-representative" class="igd-input" placeholder="Max Mustermann" />
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateImpressum(this)">
+                Impressum generieren
+            </button>
+        </div>
+
+        <div class="igd-preview-section">
+            <div class="igd-preview-box" id="igd-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="igd-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fülle das Formular aus und klicke auf "Impressum generieren".</p>
+                </div>
+                
+                <div id="igd-result-state" style="display: none; width: 100%;">
+                    <div class="igd-disclaimer">
+                        <strong>Hinweis:</strong> Dieses Dokument ist ein automatisch generierter Entwurf und stellt keine Rechtsberatung dar.
+                    </div>
+                    <pre class="igd-result-text" id="igd-impressum-result"></pre>
+                </div>
+            </div>
+            
+            <div class="igd-controls" style="display: none;" id="igd-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyImpressum(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Impressum kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateImpressum(btn) {
+            const company = document.getElementById('igd-company').value.trim();
+            const address = document.getElementById('igd-address').value.trim();
+            const email = document.getElementById('igd-email').value.trim();
+            const phone = document.getElementById('igd-phone').value.trim();
+            const representative = document.getElementById('igd-representative').value.trim();
+            
+            const container = document.getElementById('igd-preview-container');
+            const controls = document.getElementById('igd-result-controls');
+            const emptyState = document.getElementById('igd-empty-state');
+            const resultState = document.getElementById('igd-result-state');
+            
+            // Validation Error-State
+            if (!company || !address || !email || !representative) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Bitte fülle mindestens Unternehmen, Adresse, E-Mail und Vertreter aus.');
+                } else {
+                    alert('Bitte fülle mindestens Unternehmen, Adresse, E-Mail und Vertreter aus.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generiere...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'igd-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/impressum_generator_demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        company: company,
+                        address: address,
+                        email: email,
+                        phone: phone,
+                        representative: representative
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('igd-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Ein Fehler ist aufgetreten.');
+                    } else {
+                        alert(result.message || 'Ein Fehler ist aufgetreten.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Impressum generieren'; }
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                // Update UI Result-State
+                document.getElementById('igd-impressum-result').innerText = result.data.impressum_text || 'Impressum generiert (API Stub)';
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Impressum generieren'; }
+
+            } catch (err) {
+                const loader = document.getElementById('igd-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Netzwerkfehler', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Impressum generieren'; }
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyImpressum(btn) {
+            const textOutput = document.getElementById('igd-impressum-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textOutput).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textOutput;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert ein Impressum basierend auf den übergebenen Unternehmensdaten zu generieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/impressum_generator_demo</code>
+        </div>
+
+        <div class="igd-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "company": "Muster GmbH",
+  "address": "Musterstraße 1, 12345 Musterstadt",
+  "email": "info@mustergmbh.de",
+  "phone": "+49 123 456789",
+  "representative": "Max Mustermann"
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `phone` ist optional, die restlichen Felder sind Pflichtfelder.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "impressum_text": "Impressum\n\nMuster GmbH\nMusterstraße 1, 12345 Musterstadt\n..."
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

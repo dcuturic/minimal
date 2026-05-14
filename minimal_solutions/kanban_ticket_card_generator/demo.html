@@ -1,0 +1,330 @@
+<div class="ktcg-container" style="width: 100%;">
+    <style>
+        .ktcg-input-group { margin-bottom: 1.5rem; }
+        .ktcg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ktcg-input, .ktcg-select {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .ktcg-input:focus, .ktcg-select:focus { outline: none; border-color: var(--primary-color); }
+        
+        .ktcg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ktcg-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 350px;
+            text-align: left;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .ktcg-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .ktcg-card-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin: 0;
+            word-break: break-word;
+        }
+        
+        .ktcg-card-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        
+        .ktcg-card-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        
+        .ktcg-card-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .priority-high { color: #e74c3c; border-color: #e74c3c; }
+        .priority-medium { color: #f39c12; border-color: #f39c12; }
+        .priority-low { color: #2ecc71; border-color: #2ecc71; }
+
+        .ktcg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ktcg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="ktcg-grid">
+        <div class="ktcg-form-section">
+            <div class="ktcg-input-group">
+                <label>Title</label>
+                <input type="text" id="ktcg-title-input" class="ktcg-input" placeholder="e.g. Fix Navigation Bug" />
+            </div>
+            <div class="ktcg-input-group">
+                <label>Description</label>
+                <textarea id="ktcg-desc-input" class="ktcg-input" placeholder="e.g. Navigation is broken on mobile" rows="3"></textarea>
+            </div>
+            <div class="ktcg-input-group">
+                <label>Priority</label>
+                <select id="ktcg-priority-input" class="ktcg-select">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <div class="ktcg-input-group">
+                <label>Status</label>
+                <select id="ktcg-status-input" class="ktcg-select">
+                    <option value="todo" selected>To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="review">Review</option>
+                    <option value="done">Done</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processKtcg(this)">
+                Generate Card
+            </button>
+        </div>
+
+        <div class="ktcg-preview-section">
+            <div class="ktcg-preview-box" id="ktcg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ktcg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter details to generate preview.</p>
+                </div>
+                
+                <div id="ktcg-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0; color: var(--text-color);">Card Preview</h4>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: center; width: 100%; margin-bottom: 1.5rem;">
+                        <div class="ktcg-card" id="ktcg-card-preview">
+                            <div class="ktcg-card-header">
+                                <h3 class="ktcg-card-title" id="ktcg-card-title-display">Title</h3>
+                                <span class="ktcg-card-badge" id="ktcg-card-status-display">TODO</span>
+                            </div>
+                            <div class="ktcg-card-desc" id="ktcg-card-desc-display">
+                                Description
+                            </div>
+                            <div class="ktcg-card-footer">
+                                <span>Priority: <strong id="ktcg-card-priority-display">Medium</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; justify-content: center; width: 100%;">
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="copyKtcgHtml()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy HTML
+                        </button>
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="downloadKtcgJson()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Download JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0;">API Usage</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            You can use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        <div style="background: var(--surface-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/kanban_ticket_card_generator
+        </div>
+        
+        <div class="ktcg-grid" style="gap: 1rem; margin-top: 1rem;">
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Request Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "title": "Fix Navigation Bug",
+  "description": "Navigation is broken on mobile",
+  "priority": "high",
+  "status": "todo"
+}</pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Response Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "card": {
+      "title": "Fix Navigation Bug",
+      "description": "Navigation is broken on mobile",
+      "priority": "high",
+      "status": "todo"
+    },
+    "html_preview": "&lt;div class=\"card\"...&gt;&lt;/div&gt;"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processKtcg(btn) {
+            const titleInput = document.getElementById('ktcg-title-input').value.trim();
+            const descInput = document.getElementById('ktcg-desc-input').value.trim();
+            const priorityInput = document.getElementById('ktcg-priority-input').value;
+            const statusInput = document.getElementById('ktcg-status-input').value;
+            
+            const container = document.getElementById('ktcg-preview-container');
+            const emptyState = document.getElementById('ktcg-empty-state');
+            const resultState = document.getElementById('ktcg-result-state');
+            
+            if (!titleInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Title is required.');
+                } else {
+                    alert('Title is required.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ktcg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const requestData = {
+                    title: titleInput,
+                    description: descInput,
+                    priority: priorityInput,
+                    status: statusInput
+                };
+                
+                const response = await fetch('/api/minimal-solutions/kanban_ticket_card_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('ktcg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Card'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const cardData = result.data.card || requestData;
+                window.lastKtcgData = result.data;
+                
+                document.getElementById('ktcg-card-title-display').innerText = cardData.title;
+                document.getElementById('ktcg-card-desc-display').innerText = cardData.description || 'No description provided.';
+                
+                const statusSpan = document.getElementById('ktcg-card-status-display');
+                statusSpan.innerText = cardData.status.toUpperCase().replace('_', ' ');
+                
+                const prioritySpan = document.getElementById('ktcg-card-priority-display');
+                prioritySpan.innerText = cardData.priority.charAt(0).toUpperCase() + cardData.priority.slice(1);
+                
+                // Priority coloring
+                prioritySpan.className = 'ktcg-card-badge';
+                if (cardData.priority === 'high') prioritySpan.classList.add('priority-high');
+                else if (cardData.priority === 'medium') prioritySpan.classList.add('priority-medium');
+                else if (cardData.priority === 'low') prioritySpan.classList.add('priority-low');
+                
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Card'; }
+
+            } catch (err) {
+                const loader = document.getElementById('ktcg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Card'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        async function copyKtcgHtml() {
+            if (!window.lastKtcgData || !window.lastKtcgData.html_preview) return;
+            try {
+                await navigator.clipboard.writeText(window.lastKtcgData.html_preview);
+                if (typeof showToast === 'function') {
+                    showToast('HTML copied to clipboard!');
+                } else {
+                    alert('HTML copied to clipboard!');
+                }
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+
+        function downloadKtcgJson() {
+            if (!window.lastKtcgData || !window.lastKtcgData.card) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.lastKtcgData.card, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "kanban_ticket.json");
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+        }
+    </script>
+</div>

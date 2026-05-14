@@ -1,0 +1,6 @@
+{
+  "text": "The quick brown fox jumps over the lazy dog. If the dog reacted, was it really lazy?",
+  "search": "dog",
+  "replace": "cat",
+  "case_sensitive": false
+}

@@ -1,0 +1,42 @@
+{
+    "title": "Border Radius Generator Demo",
+    "description": "Beispiele für verschiedene Border Radius Konfigurationen",
+    "examples": [
+        {
+            "name": "Standard Rundung (10px)",
+            "request": {
+                "top_left": 10,
+                "top_right": 10,
+                "bottom_right": 10,
+                "bottom_left": 10
+            },
+            "response": {
+                "css": "10px 10px 10px 10px"
+            }
+        },
+        {
+            "name": "Pillen-Form (50px)",
+            "request": {
+                "top_left": 50,
+                "top_right": 50,
+                "bottom_right": 50,
+                "bottom_left": 50
+            },
+            "response": {
+                "css": "50px 50px 50px 50px"
+            }
+        },
+        {
+            "name": "Asymmetrisches Blatt",
+            "request": {
+                "top_left": 50,
+                "top_right": 0,
+                "bottom_right": 50,
+                "bottom_left": 0
+            },
+            "response": {
+                "css": "50px 0px 50px 0px"
+            }
+        }
+    ]
+}

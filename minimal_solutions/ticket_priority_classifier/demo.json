@@ -1,0 +1,5 @@
+{
+  "high_priority_example": "Das System ist komplett offline, wir haben einen kritischen Ausfall und alle Mitarbeiter können nicht arbeiten. Bitte dringend beheben!",
+  "medium_priority_example": "Es gibt einen kleinen Bug in der Ansicht, das Problem tritt nur manchmal auf, funktioniert aber sonst.",
+  "low_priority_example": "Hallo, können Sie mir bitte sagen, wo ich meine Rechnungen finden kann? Vielen Dank."
+}

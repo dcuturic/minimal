@@ -1,0 +1,263 @@
+<div class="health-container" style="width: 100%;">
+    <style>
+        .health-input-group { margin-bottom: 1.5rem; }
+        .health-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .health-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .health-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .health-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .health-result-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .health-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .health-stat-row:last-child {
+            border-bottom: none;
+        }
+        .health-stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .health-stat-value {
+            color: var(--text-color);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .health-status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .status-up {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        .status-down {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .health-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .health-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="health-grid">
+        <div class="health-form-section">
+            <div class="health-input-group">
+                <label>Website URL</label>
+                <input type="url" id="health-url-input" class="health-input" placeholder="https://example.com" required>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processHealthCheck(this)">
+                Check Health
+            </button>
+        </div>
+
+        <div class="health-preview-section">
+            <div class="health-preview-box" id="health-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="health-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter a URL and click check health.</p>
+                </div>
+                
+                <div id="health-result-state" style="display: none; width: 100%;">
+                    <div class="health-result-card">
+                        <div class="health-stat-row">
+                            <span class="health-stat-label">Status</span>
+                            <span class="health-stat-value" id="health-status-result">-</span>
+                        </div>
+                        <div class="health-stat-row">
+                            <span class="health-stat-label">HTTP Code</span>
+                            <span class="health-stat-value" id="health-code-result">-</span>
+                        </div>
+                        <div class="health-stat-row">
+                            <span class="health-stat-label">Response Time</span>
+                            <span class="health-stat-value" id="health-time-result">-</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline" style="width: 100%; margin-top: 1rem;" onclick="copyHealthResult()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy Result JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem;">
+        <h3>API-Dokumentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Diese Minimal-Lösung kann auch direkt als API in externe Anwendungen, Monitoring-Systeme oder Dashboards integriert werden.</p>
+        
+        <div class="health-result-card" style="background: var(--surface-color);">
+            <h4 style="margin-top: 0; color: var(--primary-color);">POST /api/minimal-solutions/website_health_check_demo</h4>
+            
+            <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Request-Beispiel (JSON)</h5>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-color); font-family: monospace; font-size: 0.9rem;"><code>{
+  "url": "https://example.com"
+}</code></pre>
+
+            <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Response-Beispiel (JSON)</h5>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-color); font-family: monospace; font-size: 0.9rem;"><code>{
+  "status": "success",
+  "data": {
+    "url": "https://example.com",
+    "is_up": true,
+    "status_code": 200,
+    "response_time_ms": 150,
+    "checked_at": "2026-05-12T08:50:00Z"
+  }
+}</code></pre>
+        </div>
+    </div>
+
+    <script>
+        let currentHealthData = null;
+
+        async function processHealthCheck(btn) {
+            const urlInput = document.getElementById('health-url-input').value.trim();
+            
+            const container = document.getElementById('health-preview-container');
+            const emptyState = document.getElementById('health-empty-state');
+            const resultState = document.getElementById('health-result-state');
+            
+            if (!urlInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide a valid URL to check.');
+                } else {
+                    alert('Please provide a valid URL.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Checking...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'health-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            currentHealthData = null;
+
+            try {
+                const response = await fetch('/api/minimal-solutions/website_health_check_demo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                const result = await response.json();
+
+                const loader = document.getElementById('health-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    const errorMsg = result.message || 'Ein Fehler ist aufgetreten.';
+                    let detailMsg = '';
+                    if (result.details && Array.isArray(result.details)) {
+                        detailMsg = result.details.map(d => d.msg || d).join(', ');
+                    }
+                    const fullError = detailMsg ? `${errorMsg} - ${detailMsg}` : errorMsg;
+                    
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', fullError);
+                    } else {
+                        alert(fullError);
+                    }
+                    emptyState.style.display = 'block';
+                } else {
+                    const data = result.data;
+                    currentHealthData = data;
+
+                    const statusEl = document.getElementById('health-status-result');
+                    const codeEl = document.getElementById('health-code-result');
+                    const timeEl = document.getElementById('health-time-result');
+
+                    if (data.is_up) {
+                        statusEl.innerHTML = '<span class="health-status-badge status-up">Online</span>';
+                    } else {
+                        statusEl.innerHTML = '<span class="health-status-badge status-down">Offline</span>';
+                    }
+                    
+                    codeEl.innerText = data.status_code || '-';
+                    timeEl.innerText = data.response_time_ms + ' ms';
+                    
+                    resultState.style.display = 'block';
+                }
+            } catch (error) {
+                const loader = document.getElementById('health-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Could not connect to the API.');
+                } else {
+                    alert('Network Error: Could not connect to the API.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Check Health'; }
+            }
+        }
+
+        async function copyHealthResult() {
+            if (!currentHealthData) return;
+            try {
+                await navigator.clipboard.writeText(JSON.stringify(currentHealthData, null, 2));
+                if (typeof showToast === 'function') {
+                    showToast('Ergebnis kopiert!', 'success');
+                } else {
+                    alert('Ergebnis kopiert!');
+                }
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Copy Failed', 'Failed to copy to clipboard.');
+                } else {
+                    alert('Failed to copy to clipboard.');
+                }
+            }
+        }
+    </script>
+</div>

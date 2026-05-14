@@ -1,0 +1,254 @@
+<div class="mr-container" style="width: 100%;">
+    <style>
+        .mr-input-group { margin-bottom: 1.5rem; }
+        .mr-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .mr-input { width: 100%; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.75rem; border-radius: 4px; font-family: inherit; font-size: 0.95rem; }
+        .mr-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 255, 213), 0.2); }
+        
+        .mr-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .mr-result-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .mr-result-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .mr-result-card.highlight {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(var(--primary-rgb, 0, 255, 213), 0.1);
+        }
+
+        .mr-result-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .mr-result-value {
+            color: var(--text-color);
+            font-size: 1.25rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .mr-controls { display: flex; gap: 1rem; justify-content: center; }
+        .mr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .mr-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="mr-grid">
+        <div class="mr-form-section">
+            <div class="mr-input-group">
+                <label for="mr-amount">Betrag (€)</label>
+                <input type="number" id="mr-amount" class="mr-input" placeholder="0.00" value="100.00" step="0.01" min="0">
+            </div>
+
+            <div class="mr-input-group">
+                <label for="mr-mode">Berechnungsart</label>
+                <select id="mr-mode" class="mr-input">
+                    <option value="net_to_gross">Netto zu Brutto (zzgl. MwSt)</option>
+                    <option value="gross_to_net">Brutto zu Netto (inkl. MwSt)</option>
+                </select>
+            </div>
+
+            <div class="mr-input-group">
+                <label for="mr-vat-rate">MwSt-Satz (%)</label>
+                <input type="number" id="mr-vat-rate" class="mr-input" value="19" step="0.1" min="0">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="calculateMwst(this)">
+                Berechnen
+            </button>
+        </div>
+
+        <div class="mr-preview-section">
+            <div class="mr-preview-box" id="mr-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="mr-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="2" y="3" width="20" height="18" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line><path d="M7 8h10"></path><path d="M7 12h10"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Werte eingeben und berechnen.</p>
+                </div>
+                
+                <div id="mr-result-state" style="display: none; width: 100%;">
+                    <div class="mr-result-grid">
+                        <div class="mr-result-card">
+                            <span class="mr-result-label">Nettobetrag</span>
+                            <span class="mr-result-value" id="mr-result-net">0.00 €</span>
+                        </div>
+                        <div class="mr-result-card">
+                            <span class="mr-result-label">MwSt-Betrag (<span id="mr-result-rate">19</span>%)</span>
+                            <span class="mr-result-value" id="mr-result-vat">0.00 €</span>
+                        </div>
+                        <div class="mr-result-card highlight">
+                            <span class="mr-result-label">Bruttobetrag</span>
+                            <span class="mr-result-value" id="mr-result-gross">0.00 €</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mr-controls" style="display: none;" id="mr-result-controls">
+                <button class="btn btn-secondary" onclick="copyMwstResult()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 3rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; color: var(--primary-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Nutze diese Lösung als externe Schnittstelle in deinen eigenen Applikationen.</p>
+        
+        <div style="margin-bottom: 1rem;">
+            <strong>Endpoint:</strong> <code style="background: var(--surface-color); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace;">POST /api/minimal-solutions/mwst_rechner</code>
+        </div>
+        
+        <div class="mr-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <strong>Request Example:</strong>
+                <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "amount": 100.0,
+  "mode": "net_to_gross",
+  "vat_rate": 19.0
+}</pre>
+            </div>
+            <div>
+                <strong>Response Example:</strong>
+                <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "status": "success",
+  "data": {
+    "net_amount": 100.0,
+    "vat_amount": 19.0,
+    "gross_amount": 119.0,
+    "amount": 100.0,
+    "mode": "net_to_gross",
+    "vat_rate": 19.0
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function calculateMwst(btn) {
+            const amount = parseFloat(document.getElementById('mr-amount').value);
+            const mode = document.getElementById('mr-mode').value;
+            const vatRate = parseFloat(document.getElementById('mr-vat-rate').value);
+            
+            const container = document.getElementById('mr-preview-container');
+            const emptyState = document.getElementById('mr-empty-state');
+            const resultState = document.getElementById('mr-result-state');
+            
+            // Validation
+            if (isNaN(amount) || amount < 0) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Bitte einen gültigen Betrag eingeben.');
+                else alert('Bitte einen gültigen Betrag eingeben.');
+                return;
+            }
+
+            if (isNaN(vatRate) || vatRate < 0) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Bitte einen gültigen MwSt-Satz eingeben.');
+                else alert('Bitte einen gültigen MwSt-Satz eingeben.');
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Berechne...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'mr-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+                const response = await fetch('/api/minimal-solutions/mwst_rechner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, mode, vat_rate: vatRate })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.status === 'error') {
+                    throw new Error(result.error?.message || result.message || 'Ein Fehler ist aufgetreten.');
+                }
+
+                const net = result.data.net_amount;
+                const gross = result.data.gross_amount;
+                const vatAmount = result.data.vat_amount;
+
+                const loader = document.getElementById('mr-temp-loader');
+                if (loader) loader.remove();
+
+                // Update UI
+                document.getElementById('mr-result-net').innerText = net.toFixed(2) + ' €';
+                document.getElementById('mr-result-rate').innerText = vatRate;
+                document.getElementById('mr-result-vat').innerText = vatAmount.toFixed(2) + ' €';
+                document.getElementById('mr-result-gross').innerText = gross.toFixed(2) + ' €';
+
+                resultState.style.display = 'block';
+                document.getElementById('mr-result-controls').style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Berechnen'; }
+
+            } catch (err) {
+                const loader = document.getElementById('mr-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('API Fehler', err.message);
+                } else {
+                    alert('Ein Fehler ist aufgetreten: ' + err.message);
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Berechnen'; }
+            }
+        }
+
+        function copyMwstResult() {
+            const net = document.getElementById('mr-result-net').innerText;
+            const rate = document.getElementById('mr-result-rate').innerText;
+            const vat = document.getElementById('mr-result-vat').innerText;
+            const gross = document.getElementById('mr-result-gross').innerText;
+            
+            const textToCopy = `MwSt-Berechnung:\nNettobetrag: ${net}\nMwSt-Betrag (${rate}%): ${vat}\nBruttobetrag: ${gross}`;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                if (typeof showToast === 'function') {
+                    showToast('Ergebnis kopiert!', 'success');
+                } else {
+                    alert('Ergebnis kopiert!');
+                }
+            }).catch(err => {
+                console.error('Copy failed', err);
+            });
+        }
+    </script>
+</div>

@@ -1,0 +1,301 @@
+<div class="server-card-container" style="width: 100%;">
+    <style>
+        .sc-input-group { margin-bottom: 1.5rem; }
+        .sc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .sc-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .sc-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .sc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .sc-result-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .sc-grid { grid-template-columns: 1fr; } }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+        .badge-online { background-color: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-offline { background-color: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        .mc-server-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .mc-server-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+        .mc-server-players {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .player-count-box {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            min-width: 100px;
+        }
+        .player-count-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .player-count-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+    </style>
+
+    <div class="sc-grid">
+        <div class="sc-form-section">
+            <div class="sc-input-group">
+                <label>Server Host</label>
+                <input type="text" id="mc-host-input" class="sc-input" placeholder="mc.hypixel.net" value="mc.hypixel.net" required>
+            </div>
+            <div class="sc-input-group">
+                <label>Server Port</label>
+                <input type="number" id="mc-port-input" class="sc-input" placeholder="25565" value="25565">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="checkServerStatus(this)">
+                Check Status
+            </button>
+        </div>
+
+        <div class="sc-preview-section">
+            <div class="sc-preview-box" id="mc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="mc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter server details and click Check Status.</p>
+                </div>
+                
+                <div id="mc-result-state" style="display: none; width: 100%;">
+                    <div class="sc-result-card" id="mc-status-card">
+                        <div class="mc-server-info">
+                            <div class="mc-server-title" id="mc-display-host">mc.hypixel.net</div>
+                            <div style="margin-top: 0.5rem;" id="mc-badge-container">
+                                <span class="badge badge-online">ONLINE</span>
+                            </div>
+                        </div>
+                        <div class="player-count-box" id="mc-players-box">
+                            <div class="player-count-value" id="mc-players-count">0 / 0</div>
+                            <div class="player-count-label">Players</div>
+                        </div>
+                    </div>
+                    
+                    <div class="sc-input-group">
+                        <label>JSON Data</label>
+                        <textarea id="mc-json-result" class="sc-input" rows="4" readonly></textarea>
+                    </div>
+                    
+                    <button class="btn btn-outline" style="width: 100%; margin-top: 1rem;" onclick="copyCardData()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="sc-api-docs" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The Minecraft Server Status functionality can also be accessed via API.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block; font-family: monospace;">POST /api/minimal-solutions/minecraft_server_status_demo</code>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "host": "mc.hypixel.net",
+  "port": 25565
+}</pre>
+        </div>
+        
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "status": "success",
+  "data": {
+    "host": "mc.hypixel.net",
+    "port": 25565,
+    "online": true,
+    "players_online": 35000,
+    "players_max": 100000,
+    "version": "1.20.1",
+    "motd": "A Minecraft Server"
+  }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        let currentCardData = null;
+
+        async function checkServerStatus(btn) {
+            const hostInput = document.getElementById('mc-host-input').value;
+            const portInput = document.getElementById('mc-port-input').value || 25565;
+            
+            const container = document.getElementById('mc-preview-container');
+            const emptyState = document.getElementById('mc-empty-state');
+            const resultState = document.getElementById('mc-result-state');
+            
+            if (!hostInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide a server host.');
+                } else {
+                    alert('Please provide a server host.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Checking...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'mc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            currentCardData = null;
+
+            try {
+                const response = await fetch('/api/minimal-solutions/minecraft_server_status_demo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        host: hostInput,
+                        port: parseInt(portInput, 10)
+                    })
+                });
+
+                const result = await response.json();
+
+                const loader = document.getElementById('mc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    const errorMsg = result.message || 'Ein Fehler ist aufgetreten.';
+                    let detailMsg = '';
+                    if (result.details && Array.isArray(result.details)) {
+                        detailMsg = result.details.map(d => d.msg || d).join(', ');
+                    }
+                    const fullError = detailMsg ? `${errorMsg} - ${detailMsg}` : errorMsg;
+                    
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', fullError);
+                    } else {
+                        alert(fullError);
+                    }
+                    emptyState.style.display = 'block';
+                } else {
+                    const data = result.data;
+                    currentCardData = data;
+
+                    document.getElementById('mc-display-host').textContent = `${data.host}${data.port !== 25565 ? ':' + data.port : ''}`;
+                    
+                    const badgeContainer = document.getElementById('mc-badge-container');
+                    const playersBox = document.getElementById('mc-players-box');
+                    const playersCount = document.getElementById('mc-players-count');
+                    
+                    if (data.online) {
+                        badgeContainer.innerHTML = '<span class="badge badge-online">ONLINE</span>';
+                        playersBox.style.display = 'block';
+                        playersCount.textContent = `${data.players_online || 0} / ${data.players_max || 0}`;
+                    } else {
+                        badgeContainer.innerHTML = '<span class="badge badge-offline">OFFLINE</span>';
+                        playersBox.style.display = 'none';
+                    }
+
+                    const jsonEl = document.getElementById('mc-json-result');
+                    jsonEl.value = JSON.stringify(data, null, 2);
+                    
+                    resultState.style.display = 'block';
+                }
+            } catch (error) {
+                const loader = document.getElementById('mc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Could not connect to the API.');
+                } else {
+                    alert('Network Error: Could not connect to the API.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Check Status'; }
+            }
+        }
+
+        async function copyCardData() {
+            if (!currentCardData) return;
+            const jsonText = document.getElementById('mc-json-result').value;
+            try {
+                await navigator.clipboard.writeText(jsonText);
+                if (typeof showToast === 'function') {
+                    showToast('JSON copied!', 'success');
+                } else {
+                    alert('JSON copied!');
+                }
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Copy Failed', 'Failed to copy to clipboard.');
+                } else {
+                    alert('Failed to copy to clipboard.');
+                }
+            }
+        }
+    </script>
+</div>

@@ -1,0 +1,224 @@
+<div class="hg-container" style="width: 100%;">
+    <style>
+        .hg-input-group { margin-bottom: 1.2rem; }
+        .hg-input-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+        .hg-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: inherit; font-size: 0.95rem; }
+        .hg-input:focus { outline: none; border-color: var(--primary-color); }
+        textarea.hg-input { resize: vertical; min-height: 100px; font-family: monospace; }
+        select.hg-input { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
+        
+        .hg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .hg-grid { grid-template-columns: 1fr; } }
+        
+        .hg-preview-area {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .hg-output {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+
+    <div class="hg-grid">
+        <div class="hg-form-section">
+            <div class="hg-input-group">
+                <label for="hg-source">Source (URL or Repository)</label>
+                <input type="text" id="hg-source" class="hg-input" placeholder="https://github.com/user/repo" value="">
+            </div>
+
+            <div class="hg-input-group">
+                <label for="hg-mode">Hosting Mode</label>
+                <select id="hg-mode" class="hg-input">
+                    <option value="docker">Docker</option>
+                    <option value="static">Static (Nginx)</option>
+                    <option value="nodejs">Node.js</option>
+                    <option value="python">Python (WSGI)</option>
+                </select>
+            </div>
+
+            <div class="hg-input-group">
+                <label for="hg-config">Additional Config (JSON)</label>
+                <textarea id="hg-config" class="hg-input" placeholder='{ "port": 8080 }'></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateAPIHostingData(this)">
+                Generate Hosting Data
+            </button>
+        </div>
+
+        <div class="hg-preview-section">
+            <div class="hg-preview-area">
+                <div id="hg-empty-state" style="text-align: center; padding: 3rem 1rem; display: block;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; color: var(--text-muted);"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+                     <p style="color: var(--text-muted); margin: 0;">Provide source, mode, and config to generate hosting data.</p>
+                </div>
+                
+                <div id="hg-result-state" style="display: none; height: 100%; flex-direction: column;">
+                    <h4 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color);">Generated Hosting Configuration</h4>
+                    <pre class="hg-output" id="hg-result-output"></pre>
+                    <div style="display: flex; gap: 1rem; margin-top: auto;">
+                        <button class="btn btn-secondary btn-sm" onclick="copyHostingResult(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyHostingResult(btn) {
+            const resultText = document.getElementById('hg-result-output').innerText;
+            navigator.clipboard.writeText(resultText).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            }).catch(e => {
+                const ta = document.createElement('textarea');
+                ta.value = resultText;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+
+        async function generateAPIHostingData(btn) {
+            const source = document.getElementById('hg-source').value;
+            const mode = document.getElementById('hg-mode').value;
+            let config = document.getElementById('hg-config').value;
+
+            if (!source || !mode) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Source and mode are required.');
+                } else {
+                    alert('Validation Error: Source and mode are required.');
+                }
+                return;
+            }
+
+            let parsedConfig = {};
+            if (config.trim() !== '') {
+                try {
+                    parsedConfig = JSON.parse(config);
+                } catch(e) {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('Validation Error', 'Config must be valid JSON.');
+                    } else {
+                        alert('Validation Error: Config must be valid JSON.');
+                    }
+                    return;
+                }
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+
+            document.getElementById('hg-empty-state').style.display = 'block';
+            document.getElementById('hg-result-state').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/minimal-solutions/hosting_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        source: source,
+                        mode: mode,
+                        config: parsedConfig
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown API error.');
+                    } else {
+                        alert('API Error: ' + (result.message || 'Unknown'));
+                    }
+                } else if (result.data) {
+                    // Update result box
+                    document.getElementById('hg-result-output').innerText = JSON.stringify(result.data, null, 2);
+                    
+                    document.getElementById('hg-empty-state').style.display = 'none';
+                    document.getElementById('hg-result-state').style.display = 'flex';
+                }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Network Error: Failed to connect to API.');
+                }
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Hosting Data'; }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um Hosting-Konfigurationsdaten für ein Projekt zu generieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/hosting_generator</code>
+        </div>
+
+        <div class="hg-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "source": "https://github.com/example/repo",
+  "mode": "docker",
+  "config": {
+    "port": 8080,
+    "env": "production"
+  }
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Parameter: <br><code>source</code>: Quellcode-Repository oder Verzeichnis<br><code>mode</code>: Hosting-Umgebung (docker, static, nodejs)<br><code>config</code>: Optionale Parameter als JSON.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "dockerfile": "FROM node:18\n...",
+    "commands": [
+      "docker build -t app .",
+      "docker run -p 8080:8080 app"
+    ],
+    "environment": "production"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,259 @@
+<div class="ug-container" style="width: 100%;">
+    <style>
+        .ug-input-group { margin-bottom: 1.5rem; }
+        .ug-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ug-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; }
+        .ug-input:focus { outline: none; border-color: var(--primary-color); }
+        .ug-select { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; appearance: none; }
+        .ug-select:focus { outline: none; border-color: var(--primary-color); }
+
+        .ug-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ug-result-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem 0;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .ug-result-item {
+            font-family: monospace;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+            word-break: break-all;
+            text-align: center;
+        }
+        .ug-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .ug-controls { display: flex; gap: 1rem; justify-content: center; }
+        .ug-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ug-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="ug-grid">
+        <div class="ug-form-section">
+            <div class="ug-input-group">
+                <label>Number of UUIDs to generate</label>
+                <input type="number" id="ug-count" class="ug-input" min="1" max="100" value="1">
+            </div>
+
+            <div class="ug-input-group">
+                <label>UUID Version</label>
+                <select id="ug-version" class="ug-select">
+                    <option value="1">Version 1 (Time-based)</option>
+                    <option value="3">Version 3 (MD5 hash)</option>
+                    <option value="4" selected>Version 4 (Random)</option>
+                    <option value="5">Version 5 (SHA-1 hash)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateUUIDs(this)">
+                Generate UUIDs
+            </button>
+        </div>
+
+        <div class="ug-preview-section">
+            <div class="ug-preview-box" id="ug-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ug-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Select version, count and click generate.</p>
+                </div>
+                
+                <div id="ug-result-state" style="display: none; width: 100%;">
+                    <ul class="ug-result-list" id="ug-uuid-list"></ul>
+                </div>
+            </div>
+            
+            <div class="ug-controls" style="display: none;" id="ug-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyAllUUIDs(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy All
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateUUIDs(btn) {
+            const count = parseInt(document.getElementById('ug-count').value);
+            const version = parseInt(document.getElementById('ug-version').value);
+            
+            const container = document.getElementById('ug-preview-container');
+            const controls = document.getElementById('ug-result-controls');
+            const emptyState = document.getElementById('ug-empty-state');
+            const resultState = document.getElementById('ug-result-state');
+            
+            // Error-State Validation
+            if (!count || count < 1 || count > 100) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a valid count between 1 and 100.');
+                } else {
+                    alert('Invalid count');
+                }
+                return;
+            }
+
+            if (![1, 3, 4, 5].includes(version)) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Invalid UUID version selected.');
+                } else {
+                    alert('Invalid version');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ug-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/uuid_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        count: count,
+                        version: version
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('ug-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate UUIDs'; }
+                    return;
+                }
+
+                const uuids = result.data.uuids;
+
+                // Update UI Result-State
+                const list = document.getElementById('ug-uuid-list');
+                list.innerHTML = '';
+                uuids.forEach(uuid => {
+                    const li = document.createElement('li');
+                    li.className = 'ug-result-item';
+                    li.innerText = uuid;
+                    list.appendChild(li);
+                });
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate UUIDs'; }
+                
+                const resultBox = document.querySelector('.result-box');
+                if(resultBox) {
+                    resultBox.innerHTML = `
+                        <div style="text-align: center; width: 100%;">
+                            <p style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">Generated Successfully!</p>
+                            <pre class="code-block" style="text-align: left; background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">
+{
+  "status": "success",
+  "data": {
+    "uuids": ${JSON.stringify(uuids, null, 2)},
+    "count": ${count},
+    "version": ${version}
+  }
+}
+                            </pre>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                const loader = document.getElementById('ug-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate UUIDs'; }
+            }
+        }
+
+        function copyAllUUIDs(btn) {
+            const listItems = document.querySelectorAll('.ug-result-item');
+            let uuids = [];
+            listItems.forEach(item => uuids.push(item.innerText));
+            const textToCopy = uuids.join('\\n');
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                // Fallback
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

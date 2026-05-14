@@ -1,0 +1,260 @@
+<div class="md-prev-container" style="width: 100%;">
+    <style>
+        .md-prev-input-group { margin-bottom: 1.5rem; height: 100%; display: flex; flex-direction: column; }
+        .md-prev-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .md-prev-textarea {
+            width: 100%;
+            flex-grow: 1;
+            min-height: 400px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        .md-prev-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .md-prev-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .md-prev-result-content {
+            width: 100%;
+            text-align: left;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .md-prev-result-content h1, .md-prev-result-content h2, .md-prev-result-content h3 {
+            margin-top: 0;
+            color: var(--text-color);
+        }
+        .md-prev-result-content a {
+            color: var(--primary-color);
+        }
+        .md-prev-result-content pre, .md-prev-result-content code {
+            background: var(--surface-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .md-prev-result-content pre {
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .md-prev-controls { display: flex; gap: 1rem; justify-content: center; }
+        .md-prev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch; }
+        @media (max-width: 768px) { .md-prev-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="md-prev-grid">
+        <div class="md-prev-form-section" style="display: flex; flex-direction: column;">
+            <div class="md-prev-input-group">
+                <label>Markdown Editor</label>
+                <textarea id="md-prev-text-input" class="md-prev-textarea" placeholder="# Willkommen zur Markdown Vorschau&#10;&#10;Schreibe hier deinen **Markdown** Text..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: auto;" onclick="processMdPrev(this)">
+                Render Preview
+            </button>
+        </div>
+
+        <div class="md-prev-preview-section">
+            <div class="md-prev-preview-box" id="md-prev-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="md-prev-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Kein Markdown eingegeben.</p>
+                </div>
+                
+                <div id="md-prev-result-state" style="display: none; width: 100%; height: 100%;">
+                    <div class="md-prev-result-content" id="md-prev-html-result"></div>
+                </div>
+            </div>
+            
+            <div class="md-prev-controls" style="display: none;" id="md-prev-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyMdHtml(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    HTML Kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processMdPrev(btn) {
+            const textInput = document.getElementById('md-prev-text-input').value.trim();
+            
+            const container = document.getElementById('md-prev-preview-container');
+            const controls = document.getElementById('md-prev-result-controls');
+            const emptyState = document.getElementById('md-prev-empty-state');
+            const resultState = document.getElementById('md-prev-result-state');
+            
+            if (!textInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Bitte Markdown-Text eingeben.');
+                } else {
+                    alert('Bitte Markdown-Text eingeben.');
+                }
+                
+                // Show empty state
+                emptyState.style.display = 'block';
+                resultState.style.display = 'none';
+                controls.style.display = 'none';
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Lade Vorschau...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'md-prev-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/markdown_preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        markdown_text: textInput
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('md-prev-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Fehler beim Parsen...');
+                    } else {
+                        alert(result.message || 'Fehler beim Parsen...');
+                    }
+                    emptyState.style.display = 'block'; // Fallback
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Render Preview'; }
+                    return;
+                }
+
+                const outputHtml = result.data.html || result.data.result || '';
+
+                document.getElementById('md-prev-html-result').innerHTML = outputHtml;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Render Preview'; }
+
+            } catch (err) {
+                const loader = document.getElementById('md-prev-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                emptyState.style.display = 'block'; // Fallback
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Render Preview'; }
+            }
+        }
+
+        function copyMdHtml(btn) {
+            const outputHtml = document.getElementById('md-prev-html-result').innerHTML;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputHtml).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputHtml;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <div class="api-docs-box" style="margin-top: 3rem; background: var(--surface-color); padding: 2rem; border-radius: 8px; border: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0; color: var(--text-color); margin-bottom: 1rem;">API Dokumentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Diese Minimal-Lösung kann auch über eine REST-Schnittstelle von externen Anwendungen genutzt werden. 
+            Senden Sie einen POST-Request an den Endpunkt mit dem Markdown-Text.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="color: var(--primary-color);">Endpoint:</strong><br>
+            <code style="background: var(--bg-color); padding: 0.5rem; border-radius: 4px; display: inline-block; margin-top: 0.5rem; border: 1px solid var(--border-color);">POST /api/minimal-solutions/markdown_preview</code>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+                <strong style="color: var(--text-color); display: block; margin-bottom: 0.5rem;">Request (JSON):</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-color); font-size: 0.85rem; margin: 0;">
+{
+  "markdown_text": "# Hello\n\n**World**"
+}</pre>
+            </div>
+            <div>
+                <strong style="color: var(--text-color); display: block; margin-bottom: 0.5rem;">Response (JSON):</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-color); font-size: 0.85rem; margin: 0;">
+{
+  "status": "success",
+  "data": {
+    "html": "&lt;h1&gt;Hello&lt;/h1&gt;\n&lt;p&gt;&lt;strong&gt;World&lt;/strong&gt;&lt;/p&gt;"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

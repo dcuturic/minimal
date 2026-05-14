@@ -1,0 +1,356 @@
+<div class="landingpage-summarizer-container" style="width: 100%;">
+    <style>
+        .landingpage-summarizer-input-group { margin-bottom: 1.5rem; }
+        .landingpage-summarizer-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .landingpage-summarizer-input, .landingpage-summarizer-textarea {
+            width: 100%;
+            padding: 0.65rem 1rem;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .landingpage-summarizer-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .landingpage-summarizer-input:focus, .landingpage-summarizer-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .landingpage-summarizer-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .landingpage-summarizer-result-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .landingpage-summarizer-result-box {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            text-align: left;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .landingpage-summarizer-copy-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            align-self: flex-start;
+        }
+
+        .landingpage-summarizer-copy-btn:hover {
+            background: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+
+        .landingpage-summarizer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .landingpage-summarizer-grid { grid-template-columns: 1fr; } }
+
+        .landingpage-summarizer-error-box {
+            width: 100%;
+            background: rgba(255, 60, 60, 0.08);
+            border: 1px solid rgba(255, 60, 60, 0.3);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            display: none;
+        }
+        .landingpage-summarizer-error-box p { margin: 0; color: #ff5c5c; font-size: 0.9rem; }
+        .landingpage-summarizer-error-box strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #ff5c5c;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .landingpage-summarizer-loading-box {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .landingpage-summarizer-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color, var(--text-color));
+            border-radius: 50%;
+            animation: landingpage-summarizer-spin 0.8s linear infinite;
+        }
+        @keyframes landingpage-summarizer-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .landingpage-summarizer-loading-text { color: var(--text-muted); font-size: 0.85rem; }
+    </style>
+
+    <div class="landingpage-summarizer-grid">
+        <div class="landingpage-summarizer-form-section">
+            <div class="landingpage-summarizer-input-group">
+                <label>Topic</label>
+                <input type="text" id="landingpage-summarizer-topic" class="landingpage-summarizer-input" placeholder="e.g. Modern AI SaaS">
+            </div>
+
+            <div class="landingpage-summarizer-input-group">
+                <label>Target Audience</label>
+                <input type="text" id="landingpage-summarizer-target" class="landingpage-summarizer-input" placeholder="e.g. Developers and Tech Founders">
+            </div>
+
+            <div class="landingpage-summarizer-input-group">
+                <label>Options / Key Points (Optional)</label>
+                <textarea id="landingpage-summarizer-options" class="landingpage-summarizer-textarea" placeholder="e.g. Highlight pricing, mention integrations"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processLandingpageSummarizer(this)">
+                Summarize Landingpage Data
+            </button>
+        </div>
+
+        <div class="landingpage-summarizer-preview-section">
+            <div class="landingpage-summarizer-preview-box" id="landingpage-summarizer-preview-container">
+                <!-- Empty State -->
+                <div style="text-align: center; color: var(--text-muted);" id="landingpage-summarizer-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter data to preview your Landingpage Summary.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="landingpage-summarizer-loading-box" id="landingpage-summarizer-loading-state">
+                    <div class="landingpage-summarizer-spinner"></div>
+                    <span class="landingpage-summarizer-loading-text">Summarizing Data…</span>
+                </div>
+
+                <!-- Error State -->
+                <div class="landingpage-summarizer-error-box" id="landingpage-summarizer-error-state">
+                    <strong id="landingpage-summarizer-error-title">Error</strong>
+                    <p id="landingpage-summarizer-error-message"></p>
+                </div>
+
+                <!-- Result State -->
+                <div id="landingpage-summarizer-result-state" style="display: none; width: 100%;">
+                    <div class="landingpage-summarizer-result-container">
+                        <div class="landingpage-summarizer-result-box" id="landingpage-summarizer-template-output">
+                        </div>
+                        <button class="landingpage-summarizer-copy-btn" onclick="copyLandingpageSummarizer()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="landingpage-summarizer-api-docs" id="landingpage-summarizer-api-docs-container" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color); font-size: 1.2rem;">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            You can use this tool via our REST API. Send a POST request with the topic, target, and options to summarize the data.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="display: block; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--primary-color);">POST /api/minimal-solutions/landingpage_summarizer</code>
+        </div>
+        
+        <div class="landingpage-summarizer-grid">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+                <pre style="margin: 0; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace; font-size: 0.85rem;">{
+  "topic": "Modern AI SaaS",
+  "target": "Developers and Tech Founders",
+  "options": "Highlight pricing"
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+                <pre style="margin: 0; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace; font-size: 0.85rem;">{
+  "status": "success",
+  "data": {
+    "summary": "This modern AI SaaS targets developers...",
+    "key_points": ["Point 1", "Point 2"],
+    "meta": {
+      "topic": "Modern AI SaaS",
+      "target": "Developers and Tech Founders"
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function landingpageSummarizerShowState(state) {
+            const empty = document.getElementById('landingpage-summarizer-empty-state');
+            const loading = document.getElementById('landingpage-summarizer-loading-state');
+            const error = document.getElementById('landingpage-summarizer-error-state');
+            const result = document.getElementById('landingpage-summarizer-result-state');
+
+            empty.style.display = 'none';
+            loading.style.display = 'none';
+            error.style.display = 'none';
+            result.style.display = 'none';
+
+            switch (state) {
+                case 'empty': empty.style.display = 'block'; break;
+                case 'loading': loading.style.display = 'flex'; break;
+                case 'error': error.style.display = 'block'; break;
+                case 'result': result.style.display = 'block'; break;
+            }
+        }
+
+        function landingpageSummarizerShowError(title, message) {
+            document.getElementById('landingpage-summarizer-error-title').textContent = title;
+            document.getElementById('landingpage-summarizer-error-message').textContent = message;
+            landingpageSummarizerShowState('error');
+        }
+
+        async function processLandingpageSummarizer(btn) {
+            const topic = document.getElementById('landingpage-summarizer-topic').value.trim();
+            const target = document.getElementById('landingpage-summarizer-target').value.trim();
+            const options = document.getElementById('landingpage-summarizer-options').value.trim();
+
+            if (!topic || !target) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide both Topic and Target Audience.');
+                } else {
+                    landingpageSummarizerShowError('Validation Error', 'Please provide both Topic and Target Audience.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Summarizing...'; }
+
+            landingpageSummarizerShowState('loading');
+
+            try {
+                const response = await fetch('/api/minimal-solutions/landingpage_summarizer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        target: target,
+                        options: options
+                    })
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok || result.status === 'error') {
+                    let errorMsg = result.message || 'Unknown error occurred.';
+                    if (result.details) {
+                        if (typeof result.details === 'object') {
+                            const detailsStr = Object.values(result.details).join(', ');
+                            if (detailsStr) errorMsg += ' - ' + detailsStr;
+                        } else if (Array.isArray(result.details)) {
+                            errorMsg += ' - ' + result.details.join(', ');
+                        } else {
+                            errorMsg += ' - ' + result.details;
+                        }
+                    }
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', errorMsg);
+                    } else {
+                        landingpageSummarizerShowError('API Error', errorMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Summarize Landingpage Data'; }
+                    return;
+                }
+
+                renderLandingpageSummarizer(result.data || 'Summary complete.');
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Summarize Landingpage Data'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    landingpageSummarizerShowError('Network Error', 'Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Summarize Landingpage Data'; }
+            }
+        }
+
+        function renderLandingpageSummarizer(data) {
+            const outputElement = document.getElementById('landingpage-summarizer-template-output');
+            
+            let outputText = data;
+            if (typeof data === 'object') {
+                outputText = JSON.stringify(data, null, 2);
+            }
+            outputElement.innerText = outputText;
+            
+            landingpageSummarizerShowState('result');
+        }
+
+        function copyLandingpageSummarizer() {
+            const outputElement = document.getElementById('landingpage-summarizer-template-output');
+            const text = outputElement.innerText;
+            const btn = document.querySelector('.landingpage-summarizer-copy-btn');
+            const originalHtml = btn.innerHTML;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+                } catch (err) {}
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

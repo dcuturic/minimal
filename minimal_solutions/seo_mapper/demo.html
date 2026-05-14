@@ -1,0 +1,192 @@
+<div class="sm-container" style="width: 100%;">
+    <style>
+        .sm-input-group { margin-bottom: 1.2rem; }
+        .sm-input-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.9rem; }
+        .sm-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); border-radius: 4px; font-family: inherit; }
+        .sm-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .sm-preview-area {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .sm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .sm-grid { grid-template-columns: 1fr; } }
+        
+        .sm-json-output {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+    </style>
+
+    <div class="sm-grid">
+        <div class="sm-form-section">
+            <div class="sm-input-group">
+                <label>Topic</label>
+                <input type="text" id="sm-topic" class="sm-input" placeholder="e.g. Content Marketing">
+            </div>
+
+            <div class="sm-input-group">
+                <label>Target</label>
+                <input type="text" id="sm-target" class="sm-input" placeholder="e.g. increase_traffic">
+            </div>
+
+            <div class="sm-input-group">
+                <label>Options (Optional)</label>
+                <input type="text" id="sm-options" class="sm-input" placeholder="e.g. deep_scan, fast_mode">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateAPIMapper(this)">
+                Map SEO Data
+            </button>
+        </div>
+
+        <div class="sm-preview-section">
+            <div id="sm-empty-state" style="text-align: center; padding: 2rem; display: block;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; color: var(--text-muted);"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                 <p style="color: var(--text-muted);">Enter topic and target to map SEO data</p>
+            </div>
+
+            <div id="sm-preview-container" class="sm-preview-area" style="display: none; flex-direction: column; align-items: stretch; justify-content: flex-start;">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color);">Mapped Result</h4>
+                <div class="sm-json-output" id="sm-json-result">{}</div>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button class="btn btn-secondary btn-sm" onclick="copyJSON(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy Result
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyJSON(btn) {
+            const jsonText = document.getElementById('sm-json-result').innerText;
+            navigator.clipboard.writeText(jsonText).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            }).catch(e => {
+                const ta = document.createElement('textarea');
+                ta.value = jsonText;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+
+        async function generateAPIMapper(btn) {
+            const topic = document.getElementById('sm-topic').value;
+            const target = document.getElementById('sm-target').value;
+            const options = document.getElementById('sm-options').value;
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Mapping...'; }
+
+            try {
+                const response = await fetch('/api/minimal-solutions/seo_mapper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        target: target,
+                        options: options
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown API error.', result.details);
+                    } else {
+                        alert('API Error: ' + (result.message || 'Unknown'));
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Map SEO Data'; }
+                    return;
+                }
+
+                if (result.data) {
+                    document.getElementById('sm-json-result').innerText = JSON.stringify(result.data, null, 2);
+                    
+                    document.getElementById('sm-empty-state').style.display = 'none';
+                    document.getElementById('sm-preview-container').style.display = 'flex';
+                }
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Map SEO Data'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Network Error: Failed to connect to API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Map SEO Data'; }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um SEO-Daten basierend auf einem Topic und Target zu mappen.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/seo_mapper</code>
+        </div>
+
+        <div class="sm-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "topic": "Content Marketing",
+  "target": "increase_traffic",
+  "options": "fast_mode"
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Parameter für das Mappen der SEO-Daten.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "topic": "Content Marketing",
+    "target": "increase_traffic",
+    "mapped_status": "success",
+    "message": "Daten für 'Content Marketing' erfolgreich gemappt."
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

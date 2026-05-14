@@ -1,0 +1,3 @@
+{
+  "log_text": "[2026-05-12 08:30:15] INFO  System starting up...\n[2026-05-12 08:30:16] DEBUG Initializing modules\n[2026-05-12 08:30:20] WARN  High memory usage detected on startup (85%)\n[2026-05-12 08:35:42] INFO  User 'admin' logged in successfully\n[2026-05-12 08:40:01] DEBUG Running scheduled cleanup task\n[2026-05-12 08:45:11] ERROR Failed to connect to database at 192.168.1.100\n[2026-05-12 08:45:12] FATAL Critical system failure, shutting down services"
+}

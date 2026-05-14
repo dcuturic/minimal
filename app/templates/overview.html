@@ -1,0 +1,163 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<section class="overview">
+    <h2>All Minimal Solutions</h2>
+    
+    <nav class="category-nav" style="display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+        <button class="category-nav-btn active" data-category="all">
+            All Categories <span class="badge">{{ total_count }}</span>
+        </button>
+        {% for cat, count in categories.items() %}
+        <button class="category-nav-btn" data-category="{{ cat }}">
+            {{ cat }} <span class="badge">{{ count }}</span>
+        </button>
+        {% endfor %}
+    </nav>
+
+    <div class="controls-bar">
+        <div class="search-box">
+            <input type="text" id="searchInput" class="input-field" placeholder="Search solutions by title...">
+        </div>
+        <div class="filter-box" style="display: flex; gap: 1rem;">
+            <button id="favoritesFilterBtn" class="btn" style="padding: 0.5rem 1rem;">★ Favorites</button>
+        </div>
+    </div>
+
+    <div class="solutions-grid" id="solutionsGrid">
+        {% if solutions %}
+            {% for solution in solutions %}
+            <a href="{{ solution.ui_route }}" class="card solution-card" data-title="{{ solution.title | lower }}" data-category="{{ solution.category }}" data-description="{{ solution.description | default('') | lower }}" data-tags="{{ solution.tags | default([]) | join(',') | lower }}" data-favorite="false">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h3 style="margin-right: 1rem;">{{ solution.title }}</h3>
+                    <div class="card-badges" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span class="badge status-{{ solution.status | lower | replace(' ', '-') }}">{{ solution.status }}</span>
+                        <button class="favorite-btn" data-id="{{ solution.identify }}" aria-label="Toggle Favorite" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted, #888); line-height: 1; padding: 0; transition: color 0.2s, transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">☆</button>
+                    </div>
+                </div>
+                <p class="category-text">{{ solution.category }}</p>
+                <div class="card-footer">
+                    <span class="view-btn">View Solution &rarr;</span>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>No solutions registered yet. They will appear here dynamically.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    const categoryNavBtns = document.querySelectorAll('.category-nav-btn');
+    const favoritesFilterBtn = document.getElementById('favoritesFilterBtn');
+    const cards = document.querySelectorAll('.solution-card');
+    const favoriteBtns = document.querySelectorAll('.favorite-btn');
+    
+    let showFavoritesOnly = false;
+    let selectedCategory = 'all';
+    let favorites = JSON.parse(localStorage.getItem('minimal_favorites') || '[]');
+
+    function updateFavoriteUI() {
+        favoriteBtns.forEach(btn => {
+            const id = btn.getAttribute('data-id');
+            if (favorites.includes(id)) {
+                btn.textContent = '★';
+                btn.style.color = 'var(--primary-color)';
+                btn.closest('.solution-card').setAttribute('data-favorite', 'true');
+            } else {
+                btn.textContent = '☆';
+                btn.style.color = 'var(--text-muted, #888)';
+                btn.closest('.solution-card').setAttribute('data-favorite', 'false');
+            }
+        });
+        
+        if (favoritesFilterBtn) {
+            if (showFavoritesOnly) {
+                favoritesFilterBtn.style.backgroundColor = 'var(--primary-color)';
+                favoritesFilterBtn.style.color = '#fff';
+                favoritesFilterBtn.style.borderColor = 'var(--primary-color)';
+            } else {
+                favoritesFilterBtn.style.backgroundColor = '';
+                favoritesFilterBtn.style.color = '';
+                favoritesFilterBtn.style.borderColor = '';
+            }
+        }
+    }
+
+    favoriteBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = btn.getAttribute('data-id');
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(favId => favId !== id);
+            } else {
+                favorites.push(id);
+            }
+            localStorage.setItem('minimal_favorites', JSON.stringify(favorites));
+            updateFavoriteUI();
+            filterCards();
+        });
+    });
+
+    if (favoritesFilterBtn) {
+        favoritesFilterBtn.addEventListener('click', () => {
+            showFavoritesOnly = !showFavoritesOnly;
+            updateFavoriteUI();
+            filterCards();
+        });
+    }
+
+    categoryNavBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryNavBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedCategory = btn.getAttribute('data-category');
+            filterCards();
+        });
+    });
+
+    function filterCards() {
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+        cards.forEach(card => {
+            const title = card.getAttribute('data-title') || '';
+            const category = card.getAttribute('data-category') || '';
+            const description = card.getAttribute('data-description') || '';
+            const tags = card.getAttribute('data-tags') || '';
+            const isFavorite = card.getAttribute('data-favorite') === 'true';
+            
+            const searchTerms = searchTerm.split(' ').filter(t => t.length > 0);
+            
+            let matchesSearch = true;
+            if (searchTerms.length > 0) {
+                matchesSearch = searchTerms.every(term => 
+                    title.includes(term) || 
+                    category.toLowerCase().includes(term) || 
+                    description.includes(term) || 
+                    tags.includes(term)
+                );
+            }
+            const matchesCategory = selectedCategory === 'all' || category === selectedCategory;
+            const matchesFavorite = !showFavoritesOnly || isFavorite;
+
+            if (matchesSearch && matchesCategory && matchesFavorite) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', filterCards);
+    }
+    
+    updateFavoriteUI();
+});
+</script>
+{% endblock %}

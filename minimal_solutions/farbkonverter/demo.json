@@ -1,0 +1,66 @@
+[
+  {
+    "title": "Standard HEX Rot",
+    "description": "Konvertiert einen HEX-Farbwert in RGB und HSL.",
+    "request": {
+      "color_value": "#FF0000"
+    },
+    "response": {
+      "success": true,
+      "data": {
+        "hex": "#FF0000",
+        "rgb": "rgb(255, 0, 0)",
+        "rgba": "rgba(255, 0, 0, 1)",
+        "hsl": "hsl(0, 100%, 50%)"
+      }
+    }
+  },
+  {
+    "title": "RGB Blau",
+    "description": "Konvertiert einen RGB-Farbwert in HEX und HSL.",
+    "request": {
+      "color_value": "rgb(0, 0, 255)"
+    },
+    "response": {
+      "success": true,
+      "data": {
+        "hex": "#0000FF",
+        "rgb": "rgb(0, 0, 255)",
+        "rgba": "rgba(0, 0, 255, 1)",
+        "hsl": "hsl(240, 100%, 50%)"
+      }
+    }
+  },
+  {
+    "title": "RGBA Halbtransparentes Grün",
+    "description": "Konvertiert einen RGBA-Farbwert.",
+    "request": {
+      "color_value": "rgba(0, 255, 0, 0.5)"
+    },
+    "response": {
+      "success": true,
+      "data": {
+        "hex": "#00FF007F",
+        "rgb": "rgb(0, 255, 0)",
+        "rgba": "rgba(0, 255, 0, 0.5)",
+        "hsl": "hsla(120, 100%, 50%, 0.5)"
+      }
+    }
+  },
+  {
+    "title": "HSL Lila",
+    "description": "Konvertiert einen HSL-Farbwert in HEX und RGB.",
+    "request": {
+      "color_value": "hsl(270, 100%, 50%)"
+    },
+    "response": {
+      "success": true,
+      "data": {
+        "hex": "#7F00FF",
+        "rgb": "rgb(127, 0, 255)",
+        "rgba": "rgba(127, 0, 255, 1)",
+        "hsl": "hsl(270, 100%, 50%)"
+      }
+    }
+  }
+]

@@ -1,0 +1,243 @@
+<div class="brg-container" style="width: 100%;">
+    <style>
+        .brg-input-group { margin-bottom: 1.2rem; }
+        .brg-input-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.9rem; }
+        .brg-slider-container { display: flex; align-items: center; gap: 1rem; }
+        .brg-slider { flex: 1; accent-color: var(--primary-color); }
+        .brg-slider-value { width: 3.5rem; text-align: center; font-weight: bold; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.25rem; font-size: 0.85rem;}
+
+        .brg-preview-area {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+            background-image: linear-gradient(45deg, var(--bg-color) 25%, transparent 25%), linear-gradient(-45deg, var(--bg-color) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--bg-color) 75%), linear-gradient(-45deg, transparent 75%, var(--bg-color) 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        .brg-box {
+            width: 200px;
+            height: 200px;
+            background: var(--primary-color);
+            transition: border-radius 0.1s ease;
+        }
+
+        .brg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .brg-grid { grid-template-columns: 1fr; } }
+        
+        .brg-css-output {
+            font-family: monospace;
+            font-size: 1rem;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+    </style>
+
+    <div class="brg-grid">
+        <div class="brg-form-section">
+            <div class="brg-input-group">
+                <label>Top Left (<span id="brg-tl-val">0</span>px)</label>
+                <div class="brg-slider-container">
+                    <input type="range" id="brg-tl" class="brg-slider" min="0" max="200" value="0" oninput="updateBorderRadius()">
+                    <div id="brg-tl-display" class="brg-slider-value">0px</div>
+                </div>
+            </div>
+
+            <div class="brg-input-group">
+                <label>Top Right (<span id="brg-tr-val">0</span>px)</label>
+                <div class="brg-slider-container">
+                    <input type="range" id="brg-tr" class="brg-slider" min="0" max="200" value="0" oninput="updateBorderRadius()">
+                    <div id="brg-tr-display" class="brg-slider-value">0px</div>
+                </div>
+            </div>
+
+            <div class="brg-input-group">
+                <label>Bottom Right (<span id="brg-br-val">0</span>px)</label>
+                <div class="brg-slider-container">
+                    <input type="range" id="brg-br" class="brg-slider" min="0" max="200" value="0" oninput="updateBorderRadius()">
+                    <div id="brg-br-display" class="brg-slider-value">0px</div>
+                </div>
+            </div>
+
+            <div class="brg-input-group">
+                <label>Bottom Left (<span id="brg-bl-val">0</span>px)</label>
+                <div class="brg-slider-container">
+                    <input type="range" id="brg-bl" class="brg-slider" min="0" max="200" value="0" oninput="updateBorderRadius()">
+                    <div id="brg-bl-display" class="brg-slider-value">0px</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateAPIBorderRadius(this)">
+                Generate Border Radius
+            </button>
+        </div>
+
+        <div class="brg-preview-section">
+            <div id="brg-empty-state" style="text-align: center; padding: 2rem; display: block;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; color: var(--text-muted);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                 <p style="color: var(--text-muted);">Configure settings and click Generate to see border-radius</p>
+            </div>
+
+            <div id="brg-preview-container" class="brg-preview-area" style="display: none;">
+                <div class="brg-box" id="brg-preview-box"></div>
+            </div>
+            
+            <div id="brg-result-state" style="display: none;">
+                <div class="brg-css-output" id="brg-css-result">border-radius: 0px 0px 0px 0px;</div>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button class="btn btn-secondary btn-sm" onclick="copyCSS(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy CSS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateBorderRadius() {
+            const tl = document.getElementById('brg-tl').value;
+            const tr = document.getElementById('brg-tr').value;
+            const br = document.getElementById('brg-br').value;
+            const bl = document.getElementById('brg-bl').value;
+
+            document.getElementById('brg-tl-val').innerText = tl;
+            document.getElementById('brg-tl-display').innerText = tl + 'px';
+            document.getElementById('brg-tr-val').innerText = tr;
+            document.getElementById('brg-tr-display').innerText = tr + 'px';
+            document.getElementById('brg-br-val').innerText = br;
+            document.getElementById('brg-br-display').innerText = br + 'px';
+            document.getElementById('brg-bl-val').innerText = bl;
+            document.getElementById('brg-bl-display').innerText = bl + 'px';
+        }
+
+        // Init values only
+        updateBorderRadius();
+
+        function copyCSS(btn) {
+            const css = document.getElementById('brg-css-result').innerText;
+            navigator.clipboard.writeText(css).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            }).catch(e => {
+                const ta = document.createElement('textarea');
+                ta.value = css;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+
+        async function generateAPIBorderRadius(btn) {
+            const tl = parseInt(document.getElementById('brg-tl').value);
+            const tr = parseInt(document.getElementById('brg-tr').value);
+            const br = parseInt(document.getElementById('brg-br').value);
+            const bl = parseInt(document.getElementById('brg-bl').value);
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+
+            try {
+                const response = await fetch('/api/minimal-solutions/border_radius_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        top_left: tl,
+                        top_right: tr,
+                        bottom_right: br,
+                        bottom_left: bl
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown API error.');
+                    } else {
+                        alert('API Error: ' + (result.message || 'Unknown'));
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Border Radius'; }
+                    return;
+                }
+
+                if (result.data && result.data.css) {
+                    const cssValue = result.data.css;
+                    document.getElementById('brg-preview-box').style.borderRadius = cssValue;
+                    document.getElementById('brg-css-result').innerText = `border-radius: ${cssValue};`;
+                    
+                    document.getElementById('brg-empty-state').style.display = 'none';
+                    document.getElementById('brg-preview-container').style.display = 'flex';
+                    document.getElementById('brg-result-state').style.display = 'block';
+                }
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Border Radius'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Network Error: Failed to connect to API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Border Radius'; }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um dynamisch CSS-Code für Border-Radius-Effekte auf Basis von Parametern zu generieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/border_radius_generator</code>
+        </div>
+
+        <div class="brg-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "top_left": 10,
+  "top_right": 20,
+  "bottom_right": 30,
+  "bottom_left": 40
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Parameter für die abgerundeten Ecken in Pixeln.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "css": "border-radius: 10px 20px 30px 40px;"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

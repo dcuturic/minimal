@@ -1,0 +1,34 @@
+{
+  "scenarios": [
+    {
+      "name": "A Record",
+      "description": "Ein Standard IPv4 A-Record",
+      "input": {
+        "type": "A",
+        "name": "example.com",
+        "value": "192.168.1.1",
+        "ttl": 3600
+      }
+    },
+    {
+      "name": "CNAME Record",
+      "description": "Ein CNAME Alias Record",
+      "input": {
+        "type": "CNAME",
+        "name": "www.example.com",
+        "value": "example.com",
+        "ttl": 7200
+      }
+    },
+    {
+      "name": "TXT Record",
+      "description": "Ein TXT Record mit Anführungszeichen (werden automatisch hinzugefügt falls fehlend)",
+      "input": {
+        "type": "TXT",
+        "name": "example.com",
+        "value": "v=spf1 include:_spf.google.com ~all",
+        "ttl": 300
+      }
+    }
+  ]
+}

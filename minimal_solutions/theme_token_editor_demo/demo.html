@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Token Editor Demo</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --surface-hover: #2d2d2d;
+            --border-color: #333;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --primary-accent: #00ffcc;
+            --primary-accent-glow: rgba(0, 255, 204, 0.2);
+            --error-color: #ff4444;
+            --error-glow: rgba(255, 68, 68, 0.2);
+            --success-color: #00C851;
+            --radius: 8px;
+            --font-family: 'Inter', -apple-system, sans-serif;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, #aaa);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 0.9rem;
+            min-height: 200px;
+            resize: vertical;
+            transition: var(--transition);
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 2px var(--primary-accent-glow);
+        }
+
+        .btn {
+            background-color: var(--primary-accent);
+            color: #000;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius);
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px var(--primary-accent-glow);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* States */
+        .state-container {
+            margin-top: 2rem;
+            padding: 2rem;
+            border-radius: var(--radius);
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .empty-state {
+            color: var(--text-secondary);
+        }
+
+        .loading-state {
+            display: none;
+            color: var(--primary-accent);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0, 255, 204, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-accent);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-state {
+            display: none;
+            color: var(--error-color);
+            background-color: rgba(255, 68, 68, 0.1);
+            border: 1px solid var(--error-color);
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-top: 1rem;
+        }
+
+        .result-state {
+            display: none;
+            text-align: left;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Token Editor List */
+        .token-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .token-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+
+        .token-item:hover {
+            border-color: #555;
+        }
+
+        .token-name {
+            font-weight: 500;
+            font-family: monospace;
+            color: var(--text-primary);
+        }
+
+        .token-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .color-preview {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid #555;
+        }
+
+        .color-input {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            font-family: monospace;
+            width: 100px;
+        }
+        
+        .color-input:focus {
+            outline: none;
+            border-color: var(--primary-accent);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Theme Token Editor Demo</h1>
+        <p>Edit your design tokens and generate a theme configuration.</p>
+    </div>
+
+    <div class="card">
+        <form id="tokenForm">
+            <div class="input-group">
+                <label for="tokensInput">Tokens (JSON Format)</label>
+                <textarea id="tokensInput" placeholder="{&#10;  &quot;primary&quot;: &quot;#00ffcc&quot;,&#10;  &quot;background&quot;: &quot;#121212&quot;,&#10;  &quot;text&quot;: &quot;#ffffff&quot;&#10;}" required>{
+  "primary": "#00ffcc",
+  "background": "#121212",
+  "text": "#ffffff",
+  "error": "#ff4444"
+}</textarea>
+            </div>
+            <button type="submit" id="generateBtn" class="btn">Load Tokens</button>
+        </form>
+
+        <div id="errorState" class="error-state"></div>
+    </div>
+
+    <div class="state-container">
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.5;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            <p>Your token editor will appear here.</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading editor...</p>
+        </div>
+
+        <!-- Result State -->
+        <div id="resultState" class="result-state">
+            <div class="result-header">
+                <h3>Token Editor</h3>
+                <button type="button" id="copyBtn" class="btn" style="width: auto; padding: 0.4rem 1rem; font-size: 0.8rem; display: none;">Copy Config</button>
+            </div>
+            <div id="panelContainer" class="token-list">
+                <!-- Tokens will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="card api-docs" style="margin-top: 2rem;">
+        <h2 style="margin-bottom: 1rem;">API Integration</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Use this interface externally to validate and parse theme tokens.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Endpoint</h3>
+            <code style="display: block; background: var(--bg-color); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border-color); color: var(--primary-accent); font-family: monospace;">POST /api/minimal-solutions/theme_token_editor_demo</code>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Request Example</h3>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border-color); overflow-x: auto;"><code style="color: var(--text-secondary); font-family: monospace;">{
+  "tokens": {
+    "primary": "#00ffcc",
+    "background": "#121212"
+  }
+}</code></pre>
+        </div>
+
+        <div>
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Response Example</h3>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border-color); overflow-x: auto;"><code style="color: var(--text-secondary); font-family: monospace;">{
+  "status": "success",
+  "data": {
+    "tokens": {
+      "primary": "#00ffcc",
+      "background": "#121212"
+    }
+  }
+}</code></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('tokenForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const tokensText = document.getElementById('tokensInput').value.trim();
+        const btn = document.getElementById('generateBtn');
+        
+        const emptyState = document.getElementById('emptyState');
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const resultState = document.getElementById('resultState');
+        const panelContainer = document.getElementById('panelContainer');
+        
+        if (!tokensText) {
+            showError("Please provide tokens in JSON format.");
+            return;
+        }
+
+        let tokensObj;
+        try {
+            tokensObj = JSON.parse(tokensText);
+        } catch(e) {
+            showError("Invalid JSON format.");
+            return;
+        }
+
+        // Hide all states
+        emptyState.style.display = 'none';
+        errorState.style.display = 'none';
+        resultState.style.display = 'none';
+        loadingState.style.display = 'block';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/minimal-solutions/theme_token_editor_demo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ tokens: tokensObj })
+            });
+
+            let data;
+            try {
+                data = await response.json();
+            } catch(e) {
+                throw new Error("Invalid response from server.");
+            }
+            
+            if (!response.ok || data.status === 'error') {
+                let errorMsg = data.message || "An error occurred";
+                if (data.details) {
+                    if (Array.isArray(data.details)) {
+                        errorMsg += " - " + data.details.map(d => d.message || JSON.stringify(d)).join(", ");
+                    } else if (typeof data.details === 'object') {
+                        let detailsStr = Object.values(data.details).map(v => Array.isArray(v) ? v.join(", ") : JSON.stringify(v)).join(" | ");
+                        if (detailsStr) {
+                            errorMsg += " - " + detailsStr;
+                        } else {
+                            errorMsg += " - " + JSON.stringify(data.details);
+                        }
+                    } else {
+                        errorMsg += " - " + JSON.stringify(data.details);
+                    }
+                }
+                throw new Error(errorMsg);
+            }
+            
+            const processedTokens = data.data.tokens;
+            
+            let panelHtml = '';
+            
+            Object.keys(processedTokens).forEach((key, index) => {
+                const value = processedTokens[key];
+                panelHtml += `
+                    <div class="token-item">
+                        <div class="token-name">${escapeHtml(key)}</div>
+                        <div class="token-controls">
+                            <div class="color-preview" style="background-color: ${escapeHtml(value)};" id="preview_${index}"></div>
+                            <input type="text" class="color-input" id="input_${index}" value="${escapeHtml(value)}" onchange="updateTokenColor('${escapeHtml(key)}', this.value, ${index})">
+                        </div>
+                    </div>
+                `;
+            });
+            
+            panelContainer.innerHTML = panelHtml;
+            
+            // Store current config state for copying
+            window.currentTokenConfig = Object.assign({}, processedTokens);
+            
+            loadingState.style.display = 'none';
+            resultState.style.display = 'block';
+            document.getElementById('copyBtn').style.display = 'inline-block';
+            
+        } catch (err) {
+            loadingState.style.display = 'none';
+            showError(err.message || "An unexpected error occurred.");
+            emptyState.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+        }
+
+        function showError(msg) {
+            if (typeof showErrorPanel === 'function') {
+                showErrorPanel('Token Editor Error', msg);
+            } else {
+                errorState.textContent = msg;
+                errorState.style.display = 'block';
+            }
+        }
+        
+        function escapeHtml(unsafe) {
+            return String(unsafe)
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+    });
+
+    // Function to update global config when tokens change
+    window.updateTokenColor = function(name, value, index) {
+        if (window.currentTokenConfig) {
+            window.currentTokenConfig[name] = value;
+            const preview = document.getElementById(`preview_${index}`);
+            if(preview) {
+                preview.style.backgroundColor = value;
+            }
+        }
+    };
+
+    document.getElementById('copyBtn')?.addEventListener('click', () => {
+        if (window.currentTokenConfig) {
+            navigator.clipboard.writeText(JSON.stringify(window.currentTokenConfig, null, 2))
+                .then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = originalText; }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+        }
+    });
+</script>
+
+</body>
+</html>

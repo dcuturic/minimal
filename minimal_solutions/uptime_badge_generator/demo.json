@@ -1,0 +1,26 @@
+[
+    {
+        "name": "Normaler Status",
+        "description": "API Status mit 99.9% Uptime",
+        "input": {
+            "status": "Operational",
+            "uptime_percent": 99.9
+        }
+    },
+    {
+        "name": "Ausfall",
+        "description": "Teilweiser Ausfall",
+        "input": {
+            "status": "Degraded",
+            "uptime_percent": 85.5
+        }
+    },
+    {
+        "name": "Kritisch",
+        "description": "Systemausfall",
+        "input": {
+            "status": "Major Outage",
+            "uptime_percent": 45.0
+        }
+    }
+]

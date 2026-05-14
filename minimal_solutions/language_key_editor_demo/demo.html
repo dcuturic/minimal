@@ -1,0 +1,358 @@
+<div class="lke-container" style="width: 100%;">
+    <style>
+        .lke-input-group { margin-bottom: 1.5rem; }
+        .lke-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .lke-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; }
+        .lke-input:focus { outline: none; border-color: var(--primary-color); }
+        .lke-textarea { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; resize: vertical; min-height: 100px; }
+        .lke-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .lke-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .lke-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .lke-table th, .lke-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            text-align: left;
+            color: var(--text-color);
+        }
+        .lke-table th {
+            background: var(--surface-color);
+            font-weight: 600;
+        }
+        .lke-table td:last-child, .lke-table th:last-child {
+            border-right: none;
+        }
+        .lke-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .lke-table-input {
+            width: 100%;
+            padding: 0.5rem;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            border-radius: 4px;
+        }
+        .lke-table-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: var(--surface-color);
+        }
+
+        .lke-controls { display: flex; gap: 1rem; justify-content: center; }
+        .lke-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; }
+        @media (max-width: 900px) { .lke-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="lke-grid">
+        <div class="lke-form-section">
+            <div class="lke-input-group">
+                <label>Keys (comma-separated)</label>
+                <textarea id="lke-keys" class="lke-textarea" placeholder="e.g. login.title, login.submit, error.not_found">login.title, login.submit</textarea>
+            </div>
+
+            <div class="lke-input-group">
+                <label>Languages (comma-separated)</label>
+                <input type="text" id="lke-languages" class="lke-input" value="en, de, fr" placeholder="e.g. en, de, fr, es">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateEditor(this)">
+                Generate Editor
+            </button>
+        </div>
+
+        <div class="lke-preview-section">
+            <div class="lke-preview-box" id="lke-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="lke-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Provide keys and languages to generate the editor.</p>
+                </div>
+                
+                <div id="lke-result-state" style="display: none; width: 100%; overflow-x: auto;">
+                    <table class="lke-table" id="lke-table">
+                        <thead id="lke-table-head"></thead>
+                        <tbody id="lke-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="lke-controls" style="display: none;" id="lke-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="exportJSON(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Export JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="lke-card api-docs" style="margin-top: 2rem; background: var(--surface-color); border: 1px dashed var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h2 style="margin-bottom: 1rem; color: var(--text-color);">API Integration</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Use this interface externally to generate language key editor translations.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem; color: var(--text-color);">Endpoint</h3>
+            <code style="display: block; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--primary-color); font-family: monospace;">POST /api/minimal-solutions/language_key_editor_demo</code>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem; color: var(--text-color);">Request Example</h3>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; margin: 0;"><code style="color: var(--text-muted); font-family: monospace;">{
+  "keys": [
+    "login.title",
+    "login.submit"
+  ],
+  "languages": [
+    "en",
+    "de"
+  ]
+}</code></pre>
+        </div>
+
+        <div>
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem; color: var(--text-color);">Response Example</h3>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; margin: 0;"><code style="color: var(--text-muted); font-family: monospace;">{
+  "status": "success",
+  "data": {
+    "translations": {
+      "login.title": {
+        "en": "",
+        "de": ""
+      },
+      "login.submit": {
+        "en": "",
+        "de": ""
+      }
+    }
+  }
+}</code></pre>
+        </div>
+    </div>
+
+    <script>
+        let currentData = {};
+        
+        async function generateEditor(btn) {
+            const keysRaw = document.getElementById('lke-keys').value;
+            const langsRaw = document.getElementById('lke-languages').value;
+            
+            const keys = keysRaw.split(',').map(k => k.trim()).filter(k => k);
+            const languages = langsRaw.split(',').map(l => l.trim()).filter(l => l);
+            
+            const container = document.getElementById('lke-preview-container');
+            const controls = document.getElementById('lke-result-controls');
+            const emptyState = document.getElementById('lke-empty-state');
+            const resultState = document.getElementById('lke-result-state');
+            
+            // Validation
+            if (keys.length === 0) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Please provide at least one key.');
+                else alert('Please provide at least one key.');
+                return;
+            }
+
+            if (languages.length === 0) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Please provide at least one language.');
+                else alert('Please provide at least one language.');
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'lke-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/language_key_editor_demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keys, languages })
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('lke-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    else alert(result.message || 'Unknown error occurred.');
+                    
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Editor'; }
+                    return;
+                }
+
+                currentData = result.data.translations || {};
+
+                renderTable(keys, languages, currentData);
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Editor'; }
+                
+                updateResultBox(keys, languages, currentData);
+
+            } catch (err) {
+                const loader = document.getElementById('lke-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') showErrorPanel('Network Error', 'API not ready. Showing mock UI.');
+                
+                currentData = {};
+                keys.forEach(k => {
+                    currentData[k] = {};
+                    languages.forEach(l => {
+                        currentData[k][l] = '';
+                    });
+                });
+                
+                renderTable(keys, languages, currentData);
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                updateResultBox(keys, languages, currentData);
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Editor'; }
+            }
+        }
+
+        function renderTable(keys, languages, data) {
+            const thead = document.getElementById('lke-table-head');
+            const tbody = document.getElementById('lke-table-body');
+            
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            const trHead = document.createElement('tr');
+            const thKey = document.createElement('th');
+            thKey.innerText = 'Key';
+            trHead.appendChild(thKey);
+            
+            languages.forEach(lang => {
+                const thLang = document.createElement('th');
+                thLang.innerText = lang.toUpperCase();
+                trHead.appendChild(thLang);
+            });
+            thead.appendChild(trHead);
+            
+            keys.forEach(key => {
+                const tr = document.createElement('tr');
+                const tdKey = document.createElement('td');
+                tdKey.innerText = key;
+                tdKey.style.fontWeight = '500';
+                tr.appendChild(tdKey);
+                
+                languages.forEach(lang => {
+                    const td = document.createElement('td');
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'lke-table-input';
+                    input.value = (data[key] && data[key][lang]) ? data[key][lang] : '';
+                    input.placeholder = `Translate to ${lang}...`;
+                    input.oninput = (e) => {
+                        if (!currentData[key]) currentData[key] = {};
+                        currentData[key][lang] = e.target.value;
+                        updateResultBox(keys, languages, currentData);
+                    };
+                    td.appendChild(input);
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateResultBox(keys, languages, data) {
+            const resultBox = document.querySelector('.result-box');
+            if(resultBox) {
+                resultBox.innerHTML = `
+                    <div style="text-align: center; width: 100%;">
+                        <p style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">Editor State Updated!</p>
+                        <pre class="code-block" style="text-align: left; background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">
+{
+  "status": "success",
+  "data": {
+    "translations": ${JSON.stringify(data, null, 2)}
+  }
+}
+                        </pre>
+                    </div>
+                `;
+            }
+        }
+
+        function exportJSON(btn) {
+            const jsonString = JSON.stringify(currentData, null, 2);
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(jsonString).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = jsonString;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

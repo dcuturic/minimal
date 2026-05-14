@@ -1,0 +1,269 @@
+<div class="jwt-container" style="width: 100%;">
+    <style>
+        .jwt-input-group { margin-bottom: 1.5rem; }
+        .jwt-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .jwt-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; font-family: monospace; resize: vertical; min-height: 100px; }
+        .jwt-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .jwt-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .jwt-result-content {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1.5rem;
+            text-align: left;
+            overflow-x: auto;
+        }
+
+        .jwt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .jwt-grid { grid-template-columns: 1fr; } }
+        
+        .jwt-section-title { font-size: 1rem; color: var(--primary-color); margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;}
+        
+        .jwt-json-block {
+            font-family: monospace;
+            white-space: pre-wrap;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .jwt-json-block:last-child { margin-bottom: 0; }
+    </style>
+
+    <div class="jwt-grid">
+        <div class="jwt-form-section">
+            <div class="jwt-input-group">
+                <label>JSON Web Token (JWT)</label>
+                <textarea id="jwt-input" class="jwt-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="decodeJwt(this)">
+                JWT decodieren
+            </button>
+        </div>
+
+        <div class="jwt-preview-section">
+            <div class="jwt-preview-box" id="jwt-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="jwt-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Gib einen JWT ein, um Header und Payload zu sehen.</p>
+                </div>
+                
+                <div id="jwt-result-state" style="display: none; width: 100%;">
+                    <div class="jwt-result-content" id="jwt-result-list">
+                        <!-- Results injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Dokumentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            Du kannst diese Funktion auch über unsere REST-API nutzen. Sende dazu einen <code>POST</code>-Request an den unten stehenden Endpunkt.
+        </p>
+
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem; font-family: monospace; display: flex; justify-content: space-between; align-items: center;">
+            <span><span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/jwt_decoder_demo</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Request Beispiel</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Response Beispiel (Erfolg)</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "header": {
+      "alg": "HS256",
+      "typ": "JWT"
+    },
+    "payload": {
+      "sub": "1234567890",
+      "name": "John Doe",
+      "iat": 1516239022
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function decodeJwt(btn) {
+            const jwtInput = document.getElementById('jwt-input').value.trim();
+            
+            const container = document.getElementById('jwt-preview-container');
+            const emptyState = document.getElementById('jwt-empty-state');
+            const resultState = document.getElementById('jwt-result-state');
+            const resultList = document.getElementById('jwt-result-list');
+            
+            // Error-State Validation
+            if (!jwtInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validierung', 'Bitte gib einen JWT ein.');
+                } else {
+                    alert('Bitte gib einen JWT ein.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Wird decodiert...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            resultList.innerHTML = '';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'jwt-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/jwt_decoder_demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jwt: jwtInput })
+                });
+                
+                const loader = document.getElementById('jwt-temp-loader');
+                if (loader) loader.remove();
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error("Ungültige Antwort vom Server");
+                }
+                
+                if (!response.ok || result.status === 'error') {
+                    const errorMsg = result.message || (result.detail && result.detail[0] && result.detail[0].msg) || 'Ein unbekannter Fehler ist aufgetreten.';
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Fehler', errorMsg);
+                    } else {
+                        alert('API Fehler: ' + errorMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'JWT decodieren'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const data = result.data || {};
+                
+                const headerStr = JSON.stringify(data.header || {}, null, 2);
+                const payloadStr = JSON.stringify(data.payload || {}, null, 2);
+                
+                resultList.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 class="jwt-section-title" style="margin: 0;">Header</h4>
+                        <button class="btn btn-secondary btn-sm" onclick="copyJwtText(this, 'jwt-header-text')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.25rem;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div class="jwt-json-block" id="jwt-header-text">${headerStr}</div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; margin-bottom: 1rem;">
+                        <h4 class="jwt-section-title" style="margin: 0;">Payload</h4>
+                        <button class="btn btn-secondary btn-sm" onclick="copyJwtText(this, 'jwt-payload-text')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.25rem;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div class="jwt-json-block" id="jwt-payload-text">${payloadStr}</div>
+                `;
+
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'JWT decodieren'; }
+
+            } catch (err) {
+                const loader = document.getElementById('jwt-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Netzwerkfehler', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'JWT decodieren'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyJwtText(btn, elementId) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const textToCopy = el.textContent || el.innerText;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = 'Kopiert!';
+                        setTimeout(() => btn.innerHTML = originalText, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "absolute";
+                textArea.style.left = "-999999px";
+                document.body.prepend(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = 'Kopiert!';
+                        setTimeout(() => btn.innerHTML = originalText, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                } finally {
+                    textArea.remove();
+                }
+            }
+        }
+    </script>
+</div>

@@ -1,0 +1,335 @@
+<div class="regex-tester-container" style="width: 100%;">
+    <style>
+        .regex-input-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; }
+        .regex-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .regex-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .regex-input:focus { outline: none; border-color: var(--primary-color); }
+        .regex-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        .regex-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .regex-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .regex-result-content {
+            width: 100%;
+            text-align: left;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: monospace;
+            line-height: 1.6;
+        }
+
+        .regex-result-content mark {
+            background-color: rgba(var(--primary-color-rgb, 100, 100, 255), 0.3);
+            color: var(--primary-color);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+        
+        .regex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch; }
+        @media (max-width: 768px) { .regex-grid { grid-template-columns: 1fr; } }
+
+        .regex-row { display: flex; gap: 1rem; }
+        .regex-col-pattern { flex-grow: 1; }
+        .regex-col-flags { width: 100px; }
+        
+        .regex-stats {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: left;
+            width: 100%;
+        }
+    </style>
+
+    <div class="regex-grid">
+        <div class="regex-form-section" style="display: flex; flex-direction: column;">
+            
+            <div class="regex-row">
+                <div class="regex-input-group regex-col-pattern">
+                    <label>Regulärer Ausdruck (Pattern)</label>
+                    <input type="text" id="regex-pattern-input" class="regex-input" placeholder="^[a-zA-Z0-9]+$" />
+                </div>
+                <div class="regex-input-group regex-col-flags">
+                    <label>Flags</label>
+                    <input type="text" id="regex-flags-input" class="regex-input" placeholder="gmi" value="g" />
+                </div>
+            </div>
+
+            <div class="regex-input-group" style="flex-grow: 1;">
+                <label>Test Text</label>
+                <textarea id="regex-text-input" class="regex-textarea" placeholder="Gib hier deinen Test-Text ein..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: auto;" onclick="processRegex(this)">
+                Testen
+            </button>
+        </div>
+
+        <div class="regex-preview-section">
+            <div class="regex-preview-box" id="regex-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="regex-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Kein Test durchgeführt.</p>
+                </div>
+                
+                <div id="regex-result-state" style="display: none; width: 100%; height: 100%;">
+                    <div class="regex-stats" id="regex-stats"></div>
+                    <div class="regex-result-content" id="regex-text-result"></div>
+                </div>
+            </div>
+
+            <div class="regex-controls" style="display: none; justify-content: center; gap: 1rem;" id="regex-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyRegexMatches(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Matches Kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Dokumentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            Du kannst diese Funktion auch über unsere REST-API nutzen. Sende dazu einen <code>POST</code>-Request an den unten stehenden Endpunkt.
+        </p>
+
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem; font-family: monospace; display: flex; justify-content: space-between; align-items: center;">
+            <span><span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/regex_tester</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Request Beispiel</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "pattern": "^[a-z]+$",
+  "flags": "i",
+  "text": "Hello World"
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Response Beispiel (Erfolg)</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "matches": [
+      {
+        "match": "Hello",
+        "start": 0,
+        "end": 5,
+        "groups": []
+      },
+      {
+        "match": "World",
+        "start": 6,
+        "end": 11,
+        "groups": []
+      }
+    ],
+    "count": 2
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window._lastRegexMatches = [];
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>'"]/g, function(tag) {
+                const charsToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+                return charsToReplace[tag] || tag;
+            });
+        }
+
+        async function processRegex(btn) {
+            const patternInput = document.getElementById('regex-pattern-input').value;
+            const flagsInput = document.getElementById('regex-flags-input').value;
+            const textInput = document.getElementById('regex-text-input').value;
+            
+            const container = document.getElementById('regex-preview-container');
+            const emptyState = document.getElementById('regex-empty-state');
+            const resultState = document.getElementById('regex-result-state');
+            const controls = document.getElementById('regex-result-controls');
+            
+            if (!patternInput || !textInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Bitte Pattern und Text eingeben.');
+                } else {
+                    alert('Bitte Pattern und Text eingeben.');
+                }
+                
+                emptyState.style.display = 'block';
+                resultState.style.display = 'none';
+                controls.style.display = 'none';
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Teste...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'regex-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/regex_tester', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pattern: patternInput,
+                        flags: flagsInput,
+                        text: textInput
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('regex-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Fehler bei der Verarbeitung...');
+                    } else {
+                        alert(result.message || 'Fehler bei der Verarbeitung...');
+                    }
+                    emptyState.style.display = 'block';
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Testen'; }
+                    return;
+                }
+
+                const matches = result.data.matches || [];
+                const matchCount = result.data.count || 0;
+                
+                window._lastRegexMatches = matches;
+
+                let highlightedHtml = '';
+                let lastIndex = 0;
+                matches.forEach(m => {
+                    highlightedHtml += escapeHtml(textInput.substring(lastIndex, m.start));
+                    highlightedHtml += '<mark>' + escapeHtml(m.match) + '</mark>';
+                    lastIndex = m.end;
+                });
+                highlightedHtml += escapeHtml(textInput.substring(lastIndex));
+
+                const displayDiv = document.getElementById('regex-text-result');
+                displayDiv.innerHTML = highlightedHtml || escapeHtml(textInput); 
+                
+                const statsDiv = document.getElementById('regex-stats');
+                statsDiv.innerHTML = `<strong>${matchCount}</strong> Treffer gefunden.`;
+
+                resultState.style.display = 'block';
+                if (matchCount > 0) {
+                    controls.style.display = 'flex';
+                }
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Testen'; }
+
+            } catch (err) {
+                const loader = document.getElementById('regex-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                emptyState.style.display = 'block';
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Testen'; }
+            }
+        }
+
+        function copyRegexMatches(btn) {
+            const matchesText = window._lastRegexMatches.map(m => m.match).join('\n');
+            if (!matchesText) return;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(matchesText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = matchesText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

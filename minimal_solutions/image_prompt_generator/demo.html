@@ -1,0 +1,284 @@
+<div class="ipg-container" style="width: 100%;">
+    <style>
+        .ipg-input-group { margin-bottom: 1.5rem; }
+        .ipg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ipg-input, .ipg-select, .ipg-textarea {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .ipg-textarea { min-height: 100px; resize: vertical; }
+        .ipg-input:focus, .ipg-select:focus, .ipg-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .ipg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ipg-result-text {
+            font-family: monospace;
+            font-size: 1rem;
+            word-break: break-word;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .ipg-controls { display: flex; gap: 1rem; justify-content: center; width: 100%; }
+        .ipg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ipg-grid { grid-template-columns: 1fr; } }
+        
+        /* Loading Spinner */
+        .loader-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+        }
+        .loader {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+
+    <div class="ipg-grid">
+        <div class="ipg-form-section">
+            <div class="ipg-input-group">
+                <label>Subject</label>
+                <textarea id="ipg-subject" class="ipg-textarea" placeholder="A futuristic city with flying cars..."></textarea>
+            </div>
+            
+            <div class="ipg-input-group">
+                <label>Style</label>
+                <input type="text" id="ipg-style" class="ipg-input" placeholder="Cyberpunk, Watercolor, Photorealistic...">
+            </div>
+
+            <div class="ipg-input-group">
+                <label>Mood</label>
+                <input type="text" id="ipg-mood" class="ipg-input" placeholder="Dark and gloomy, Bright and cheerful...">
+            </div>
+
+            <div class="ipg-input-group">
+                <label>Aspect Ratio</label>
+                <select id="ipg-aspect-ratio" class="ipg-select">
+                    <option value="1:1">1:1 (Square)</option>
+                    <option value="16:9">16:9 (Landscape)</option>
+                    <option value="9:16">9:16 (Portrait)</option>
+                    <option value="4:3">4:3</option>
+                    <option value="3:4">3:4</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generatePrompt(this)">
+                Generate Prompt
+            </button>
+        </div>
+
+        <div class="ipg-preview-section">
+            <div class="ipg-preview-box" id="ipg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ipg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill out the details and click generate.</p>
+                </div>
+                
+                <div id="ipg-result-state" style="display: none; width: 100%;">
+                    <div style="margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Generated Prompt</div>
+                    <div class="ipg-result-text" id="ipg-prompt-result"></div>
+                </div>
+            </div>
+            
+            <div class="ipg-controls" style="display: none;" id="ipg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyPrompt(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Prompt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem;">
+        <h3>API-Dokumentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Diese Minimal-Lösung kann auch direkt als API in externe Anwendungen integriert werden.</p>
+        
+        <div style="background: var(--surface-color); width: 100%; max-width: none; border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+            <h4 style="margin-top: 0; color: var(--primary-color);">POST /api/minimal-solutions/image_prompt_generator</h4>
+            
+            <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Request-Beispiel (JSON)</h5>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-color); font-family: monospace; font-size: 0.9rem;"><code>{
+  "subject": "A futuristic city with flying cars",
+  "style": "Cyberpunk",
+  "mood": "Dark and gloomy",
+  "aspect_ratio": "16:9"
+}</code></pre>
+
+            <h5 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Response-Beispiel (JSON)</h5>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-color); font-family: monospace; font-size: 0.9rem;"><code>{
+  "status": "success",
+  "data": {
+    "prompt": "A futuristic city with flying cars, Cyberpunk style, Dark and gloomy mood, --ar 16:9 --v 6.0"
+  }
+}</code></pre>
+        </div>
+    </div>
+
+    <script>
+        async function generatePrompt(btn) {
+            const subject = document.getElementById('ipg-subject').value.trim();
+            const style = document.getElementById('ipg-style').value.trim();
+            const mood = document.getElementById('ipg-mood').value.trim();
+            const aspectRatio = document.getElementById('ipg-aspect-ratio').value;
+            
+            const container = document.getElementById('ipg-preview-container');
+            const controls = document.getElementById('ipg-result-controls');
+            const emptyState = document.getElementById('ipg-empty-state');
+            const resultState = document.getElementById('ipg-result-state');
+            
+            // Validation Error-State
+            if (!subject) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a subject for the prompt.');
+                } else {
+                    alert('Please provide a subject.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ipg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/image_prompt_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject: subject,
+                        style: style,
+                        mood: mood,
+                        aspect_ratio: aspectRatio
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('ipg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Prompt'; }
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                // Update UI Result-State
+                document.getElementById('ipg-prompt-result').innerText = result.data.prompt;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Prompt'; }
+
+            } catch (err) {
+                const loader = document.getElementById('ipg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Prompt'; }
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyPrompt(btn) {
+            const promptText = document.getElementById('ipg-prompt-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(promptText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = promptText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

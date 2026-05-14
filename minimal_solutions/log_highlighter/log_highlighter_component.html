@@ -1,0 +1,278 @@
+<div class="logh-container" style="width: 100%;">
+    <style>
+        .logh-input-group { margin-bottom: 1.5rem; }
+        .logh-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .logh-textarea {
+            width: 100%;
+            min-height: 300px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .logh-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .logh-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .logh-result-text {
+            font-family: monospace;
+            font-size: 0.85rem;
+            text-align: left;
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .log-line {
+            display: block;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        .log-line:hover { background: rgba(255,255,255,0.05); }
+
+        .log-level-error, .log-level-fatal, .log-level-critical { color: #ff5555; font-weight: bold; }
+        .log-level-warn, .log-level-warning { color: #ffb86c; font-weight: bold; }
+        .log-level-info { color: #8be9fd; }
+        .log-level-debug, .log-level-trace { color: #6272a4; }
+        .log-level-unknown { color: var(--text-color); }
+
+        .logh-controls { display: flex; gap: 1rem; justify-content: center; }
+        .logh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .logh-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="logh-grid">
+        <div class="logh-form-section">
+            <div class="logh-input-group">
+                <label>Log Text</label>
+                <textarea id="logh-text-input" class="logh-textarea" placeholder="Paste your raw log text here..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processLogs(this)">
+                Highlight Logs
+            </button>
+        </div>
+
+        <div class="logh-preview-section">
+            <div class="logh-preview-box" id="logh-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="logh-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Paste logs and click Highlight Logs.</p>
+                </div>
+                
+                <div id="logh-result-state" style="display: none; width: 100%; height: 100%;">
+                    <div class="logh-result-text" id="logh-text-result"></div>
+                </div>
+            </div>
+            
+            <div class="logh-controls" style="display: none;" id="logh-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyLogs(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy HTML
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Documentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            You can also use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; font-family: monospace; border: 1px solid var(--border-color);">
+                POST /api/minimal-solutions/log_highlighter
+            </code>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Request</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "log_text": "2023-10-27 10:00:00 INFO  App started\n2023-10-27 10:00:01 ERROR Database disconnected"
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Response</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "html": "&lt;span class=\"log-line log-level-info\"&gt;...&lt;/span&gt;",
+    "lines": [
+      {
+        "text": "2023-10-27 10:00:00 INFO  App started\n",
+        "level": "INFO"
+      }
+    ]
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processLogs(btn) {
+            const textInput = document.getElementById('logh-text-input').value.trim();
+            
+            const container = document.getElementById('logh-preview-container');
+            const controls = document.getElementById('logh-result-controls');
+            const emptyState = document.getElementById('logh-empty-state');
+            const resultState = document.getElementById('logh-result-state');
+            
+            if (!textInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide log text to highlight.');
+                } else {
+                    alert('Please provide log text.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Processing...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'logh-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/log_highlighter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        log_text: textInput
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('logh-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Highlight Logs'; }
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const resultContainer = document.getElementById('logh-text-result');
+                resultContainer.innerHTML = '';
+                
+                // Assuming the API returns a list of lines with level
+                // Example: { "lines": [ { "text": "...", "level": "ERROR" } ] }
+                // OR returning pre-rendered HTML in `data.html`
+                if (result.data && result.data.html) {
+                    resultContainer.innerHTML = result.data.html;
+                } else if (result.data && result.data.lines) {
+                    result.data.lines.forEach(lineObj => {
+                        const span = document.createElement('span');
+                        span.className = 'log-line log-level-' + (lineObj.level ? lineObj.level.toLowerCase() : 'unknown');
+                        span.textContent = lineObj.text;
+                        resultContainer.appendChild(span);
+                    });
+                } else {
+                    resultContainer.textContent = result.data ? (result.data.result || JSON.stringify(result.data)) : "No data returned";
+                }
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Highlight Logs'; }
+
+            } catch (err) {
+                const loader = document.getElementById('logh-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Highlight Logs'; }
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyLogs(btn) {
+            const outputHTML = document.getElementById('logh-text-result').innerHTML;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputHTML).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputHTML;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

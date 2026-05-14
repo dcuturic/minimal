@@ -1,0 +1,246 @@
+<div class="sla-container" style="width: 100%;">
+    <style>
+        .sla-input-group { margin-bottom: 1.5rem; }
+        .sla-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .sla-input, .sla-select {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.8rem 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .sla-input:focus, .sla-select:focus { outline: none; border-color: var(--primary-color); }
+        
+        .sla-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .sla-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .sla-grid { grid-template-columns: 1fr; } }
+        
+        .sla-controls { display: flex; gap: 1rem; justify-content: center; }
+
+        /* Deadline Card Styles */
+        .deadline-card {
+            background: linear-gradient(135deg, #111, #222);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .deadline-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: var(--primary-color);
+        }
+        .deadline-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+        .deadline-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(255,255,255,0.1);
+        }
+        .deadline-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+    </style>
+
+    <div class="sla-grid">
+        <div class="sla-form-section">
+            <div class="sla-input-group">
+                <label>Priority</label>
+                <select id="sla-priority" class="sla-select">
+                    <option value="" disabled selected>Select priority level...</option>
+                    <option value="p1">P1 - Critical (1 Hour SLA)</option>
+                    <option value="p2">P2 - High (4 Hours SLA)</option>
+                    <option value="p3">P3 - Medium (24 Hours SLA)</option>
+                    <option value="p4">P4 - Low (48 Hours SLA)</option>
+                </select>
+            </div>
+            
+            <div class="sla-input-group">
+                <label>Start Time</label>
+                <input type="datetime-local" id="sla-start-time" class="sla-input" />
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="calculateSLA(this)">
+                Calculate SLA Deadline
+            </button>
+        </div>
+
+        <div class="sla-preview-section">
+            <div class="sla-preview-box" id="sla-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="sla-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Select priority and start time to calculate deadline.</p>
+                </div>
+                
+                <div id="sla-result-state" style="display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center;">
+                    <div class="deadline-card">
+                        <div class="deadline-label">Resolution Deadline</div>
+                        <div id="sla-deadline-value" class="deadline-value">--</div>
+                        <div class="deadline-meta">
+                            <span id="sla-priority-badge">--</span>
+                            <span id="sla-time-remaining">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sla-controls" style="display: none;" id="sla-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copySLAResult(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Deadline
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSLAResult = null;
+
+        // Initialize start time with current local time
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('sla-start-time').value = now.toISOString().slice(0,16);
+        });
+
+        async function calculateSLA(btn) {
+            const priority = document.getElementById('sla-priority').value;
+            const startTime = document.getElementById('sla-start-time').value;
+            
+            const container = document.getElementById('sla-preview-container');
+            const controls = document.getElementById('sla-result-controls');
+            const emptyState = document.getElementById('sla-empty-state');
+            const resultState = document.getElementById('sla-result-state');
+            
+            if (!priority || !startTime) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide both Priority and Start Time.');
+                } else {
+                    alert('Please provide both Priority and Start Time.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Calculating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'sla-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const payload = { priority: priority, start_time: startTime };
+
+                const response = await fetch('/api/minimal-solutions/sla_rechner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const loader = document.getElementById('sla-temp-loader');
+                if (loader) loader.remove();
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error('Invalid JSON response from server.');
+                }
+
+                // Temporary mock handling since the API might just return a generic success message
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Unknown error occurred.');
+                }
+
+                // Extract data or use mock data for the UI Demo
+                let data = result.data || {};
+
+                currentSLAResult = data;
+                
+                document.getElementById('sla-deadline-value').textContent = data.deadline;
+                document.getElementById('sla-priority-badge').textContent = data.priority_label;
+                document.getElementById('sla-time-remaining').textContent = data.time_remaining;
+                
+                resultState.style.display = 'flex';
+                controls.style.display = 'flex';
+                
+            } catch (err) {
+                const loader = document.getElementById('sla-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Error', err.message || 'Failed to calculate SLA.');
+                } else {
+                    alert(err.message || 'Failed to calculate SLA.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Calculate SLA Deadline'; }
+            }
+        }
+
+        function copySLAResult(btn) {
+            if (!currentSLAResult || !currentSLAResult.deadline) return;
+            const textToCopy = `SLA Deadline: ${currentSLAResult.deadline} (${currentSLAResult.priority_label})`;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                } catch (err) { }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

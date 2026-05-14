@@ -1,0 +1,5 @@
+{
+  "context": "Wir müssen uns für ein Framework zur Entwicklung der neuen Minimal Solutions Plattform entscheiden.",
+  "decision": "Flask (Python) mit Jinja2 und Vanilla JS",
+  "reason": "Das Team hat viel Erfahrung mit Python. Flask ist leichtgewichtig und ermöglicht es, ohne großen Overhead schnelle APIs zu bauen. Durch den Einsatz von Vanilla CSS und JS vermeiden wir Abhängigkeiten von schweren Frontend-Frameworks und halten die Architektur sehr simpel und wartbar."
+}

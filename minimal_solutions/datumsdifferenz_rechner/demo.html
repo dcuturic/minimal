@@ -1,0 +1,330 @@
+<div class="ddr-container" style="width: 100%;">
+    <style>
+        .ddr-input-group { margin-bottom: 1.5rem; }
+        .ddr-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ddr-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .ddr-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .ddr-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ddr-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .ddr-stat-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .ddr-stat-card strong {
+            display: block;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+        
+        .ddr-stat-card span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ddr-details {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+
+        .ddr-details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ddr-details-row:last-child {
+            border-bottom: none;
+        }
+
+        .ddr-controls { display: flex; gap: 1rem; justify-content: center; width: 100%; }
+        .ddr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ddr-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="ddr-grid">
+        <div class="ddr-form-section">
+            <div class="ddr-input-group">
+                <label for="ddr-start-date">Startdatum</label>
+                <input type="date" id="ddr-start-date" class="ddr-input">
+            </div>
+
+            <div class="ddr-input-group">
+                <label for="ddr-end-date">Enddatum</label>
+                <input type="date" id="ddr-end-date" class="ddr-input">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="calculateDateDifference(this)">
+                Differenz berechnen
+            </button>
+        </div>
+
+        <div class="ddr-preview-section">
+            <div class="ddr-preview-box" id="ddr-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ddr-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Daten eingeben und auf Berechnen klicken.</p>
+                </div>
+                
+                <div id="ddr-result-state" style="display: none; width: 100%;">
+                    <div class="ddr-stats" id="ddr-stats-container">
+                        <div class="ddr-stat-card">
+                            <strong id="ddr-stat-years">0</strong>
+                            <span>Jahre</span>
+                        </div>
+                        <div class="ddr-stat-card">
+                            <strong id="ddr-stat-months">0</strong>
+                            <span>Monate</span>
+                        </div>
+                        <div class="ddr-stat-card">
+                            <strong id="ddr-stat-days">0</strong>
+                            <span>Tage</span>
+                        </div>
+                    </div>
+                    
+                    <div class="ddr-details">
+                        <div class="ddr-details-row">
+                            <span style="color: var(--text-muted);">Gesamt in Tagen:</span>
+                            <strong id="ddr-detail-total-days">0 Tage</strong>
+                        </div>
+                        <div class="ddr-details-row">
+                            <span style="color: var(--text-muted);">Gesamt in Wochen:</span>
+                            <strong id="ddr-detail-total-weeks">0 Wochen</strong>
+                        </div>
+                        <div class="ddr-details-row">
+                            <span style="color: var(--text-muted);">Gesamt in Monaten:</span>
+                            <strong id="ddr-detail-total-months">0 Monate</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ddr-controls" style="display: none;" id="ddr-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyDdrResult(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Ergebnis kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs-section" style="margin-top: 3rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            You can use this tool programmatically via our API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem;">
+                <span class="badge badge-primary" style="font-family: monospace; font-size: 0.85rem; padding: 0.25rem 0.5rem; background: var(--primary-color); color: #fff; border-radius: 4px;">POST</span>
+                <code style="color: var(--text-color); font-size: 0.9rem;">/api/minimal-solutions/datumsdifferenz_rechner</code>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-color);">
+                <div style="background: var(--surface-color); padding: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Request Example</h4>
+                    <pre style="margin: 0; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-size: 0.85rem; color: var(--text-color);">fetch('/api/minimal-solutions/datumsdifferenz_rechner', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        "start_date": "2023-01-01",
+        "end_date": "2023-12-31"
+    })
+});</code></pre>
+                </div>
+                <div style="background: var(--surface-color); padding: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Response Example</h4>
+                    <pre style="margin: 0; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-size: 0.85rem; color: var(--text-color);">{
+    "status": "success",
+    "data": {
+        "years": 0,
+        "months": 11,
+        "days": 30,
+        "total_days": 364,
+        "total_weeks": 52,
+        "total_months": 11
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function calculateDateDifference(btn) {
+            const startDate = document.getElementById('ddr-start-date').value;
+            const endDate = document.getElementById('ddr-end-date').value;
+            
+            const container = document.getElementById('ddr-preview-container');
+            const controls = document.getElementById('ddr-result-controls');
+            const emptyState = document.getElementById('ddr-empty-state');
+            const resultState = document.getElementById('ddr-result-state');
+            
+            // Validation Error-State
+            if (!startDate || !endDate) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validierung', 'Bitte Start- und Enddatum eingeben.');
+                } else {
+                    alert('Bitte Start- und Enddatum eingeben.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Berechne...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ddr-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/datumsdifferenz_rechner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        start_date: startDate,
+                        end_date: endDate
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('ddr-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Fehler', result.message || 'Ein unbekannter Fehler ist aufgetreten.');
+                    } else {
+                        alert(result.message || 'Ein unbekannter Fehler ist aufgetreten.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Differenz berechnen'; }
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                // Update UI Result-State
+                const data = result.data || {};
+                
+                document.getElementById('ddr-stat-years').innerText = data.years !== undefined ? data.years : '0';
+                document.getElementById('ddr-stat-months').innerText = data.months !== undefined ? data.months : '0';
+                document.getElementById('ddr-stat-days').innerText = data.days !== undefined ? data.days : '0';
+                
+                document.getElementById('ddr-detail-total-days').innerText = (data.total_days !== undefined ? data.total_days : '0') + ' Tage';
+                document.getElementById('ddr-detail-total-weeks').innerText = (data.total_weeks !== undefined ? data.total_weeks : '0') + ' Wochen';
+                document.getElementById('ddr-detail-total-months').innerText = (data.total_months !== undefined ? data.total_months : '0') + ' Monate';
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Differenz berechnen'; }
+
+            } catch (err) {
+                const loader = document.getElementById('ddr-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Netzwerkfehler', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Differenz berechnen'; }
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyDdrResult(btn) {
+            const y = document.getElementById('ddr-stat-years').innerText;
+            const m = document.getElementById('ddr-stat-months').innerText;
+            const d = document.getElementById('ddr-stat-days').innerText;
+            const td = document.getElementById('ddr-detail-total-days').innerText;
+            
+            const textToCopy = `Differenz: ${y} Jahre, ${m} Monate, ${d} Tage\n${td}`;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

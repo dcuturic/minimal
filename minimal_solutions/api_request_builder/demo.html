@@ -1,0 +1,311 @@
+<div class="api-builder-container" style="width: 100%;">
+    <style>
+        .api-input-group { margin-bottom: 1.5rem; }
+        .api-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .api-input, .api-textarea {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+        .api-input:focus, .api-textarea:focus { outline: none; border-color: var(--primary-color); }
+        .api-textarea { min-height: 120px; resize: vertical; }
+        .api-input-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .api-input-row .api-input-group { margin-bottom: 0; flex: 1; }
+        
+        .api-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .api-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .api-controls { display: flex; gap: 1rem; justify-content: center; }
+        .api-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .api-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="api-grid">
+        <div class="api-form-section">
+            <div class="api-input-row">
+                <div class="api-input-group" style="flex: 0 0 120px;">
+                    <label>Method</label>
+                    <select id="api-method-input" class="api-input">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="PATCH">PATCH</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+                <div class="api-input-group" style="flex: 1;">
+                    <label>URL</label>
+                    <input type="text" id="api-url-input" class="api-input" placeholder="https://api.example.com/v1/users">
+                </div>
+            </div>
+
+            <div class="api-input-group">
+                <label>Headers (JSON)</label>
+                <textarea id="api-headers-input" class="api-textarea" placeholder='{"Authorization": "Bearer token", "Content-Type": "application/json"}'></textarea>
+            </div>
+
+            <div class="api-input-group">
+                <label>Body (JSON)</label>
+                <textarea id="api-body-input" class="api-textarea" placeholder='{"name": "John Doe", "email": "john@example.com"}'></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="processApiRequest(this)">
+                Generate Request Preview
+            </button>
+        </div>
+
+        <div class="api-preview-section">
+            <div class="api-preview-box" id="api-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="api-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill in the details and click generate.</p>
+                </div>
+                
+                <div id="api-result-state" style="display: none; width: 100%;">
+                    <pre class="api-result-text" id="api-text-result"></pre>
+                </div>
+            </div>
+            
+            <div class="api-controls" style="display: none;" id="api-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyApiRequest(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Preview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="api-builder-api-docs" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The API Request Builder functionality can also be accessed via API.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block; font-family: monospace;">POST /api/minimal-solutions/api_request_builder</code>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "method": "POST",
+  "url": "https://api.example.com/v1/users",
+  "headers": {
+    "Authorization": "Bearer token",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "name": "John Doe",
+    "email": "john@example.com"
+  }
+}</pre>
+        </div>
+        
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "status": "success",
+  "data": {
+    "preview": "POST /v1/users HTTP/1.1\nHost: api.example.com\nAuthorization: Bearer token\nContent-Type: application/json\n\n{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\"\n}",
+    "method": "POST",
+    "url": "https://api.example.com/v1/users",
+    "headers": {
+      "Authorization": "Bearer token",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "name": "John Doe",
+      "email": "john@example.com"
+    }
+  }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        async function processApiRequest(btn) {
+            const method = document.getElementById('api-method-input').value;
+            const url = document.getElementById('api-url-input').value.trim();
+            const headersStr = document.getElementById('api-headers-input').value.trim();
+            const bodyStr = document.getElementById('api-body-input').value.trim();
+            
+            const container = document.getElementById('api-preview-container');
+            const controls = document.getElementById('api-result-controls');
+            const emptyState = document.getElementById('api-empty-state');
+            const resultState = document.getElementById('api-result-state');
+            
+            if (!url) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide a URL.');
+                } else {
+                    alert('Please provide a URL.');
+                }
+                return;
+            }
+
+            let headersObj = {};
+            if (headersStr) {
+                try {
+                    headersObj = JSON.parse(headersStr);
+                } catch (e) {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('Validation Error', 'Headers must be a valid JSON object.');
+                    } else {
+                        alert('Headers must be a valid JSON object.');
+                    }
+                    return;
+                }
+            }
+
+            let bodyObj = null;
+            if (bodyStr && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+                try {
+                    bodyObj = JSON.parse(bodyStr);
+                } catch (e) {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('Validation Error', 'Body must be a valid JSON object or array.');
+                    } else {
+                        alert('Body must be a valid JSON object or array.');
+                    }
+                    return;
+                }
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'api-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/api_request_builder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: method,
+                        url: url,
+                        headers: headersObj,
+                        body: bodyObj
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('api-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Request Preview'; }
+                    return;
+                }
+
+                // Assume the result object contains a formatted string representing the curl or raw request
+                const outputText = result.data.preview || JSON.stringify(result.data, null, 2);
+
+                document.getElementById('api-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Request Preview'; }
+
+            } catch (err) {
+                const loader = document.getElementById('api-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Request Preview'; }
+            }
+        }
+
+        function copyApiRequest(btn) {
+            const outputText = document.getElementById('api-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

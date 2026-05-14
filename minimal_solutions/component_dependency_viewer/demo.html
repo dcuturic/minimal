@@ -1,0 +1,280 @@
+<div class="cdv-container" style="width: 100%;">
+    <style>
+        .cdv-input-group { margin-bottom: 1.5rem; }
+        .cdv-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .cdv-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .cdv-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .cdv-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .cdv-result-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .cdv-result-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .cdv-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .cdv-result-item::before {
+            content: "•";
+            color: var(--primary-color);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-right: 0.5rem;
+        }
+
+        .cdv-controls { display: flex; gap: 1rem; justify-content: center; }
+        .cdv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .cdv-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="cdv-grid">
+        <div class="cdv-form-section">
+            <div class="cdv-input-group">
+                <label>Component JSON</label>
+                <textarea id="cdv-component-json-input" class="cdv-textarea" placeholder='{&#10;  "name": "MyComponent",&#10;  "dependencies": ["Button", "Icon"]&#10;}'></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processCdv(this)">
+                View Dependencies
+            </button>
+        </div>
+
+        <div class="cdv-preview-section">
+            <div class="cdv-preview-box" id="cdv-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="cdv-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter Component JSON to view dependencies.</p>
+                </div>
+                
+                <div id="cdv-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0; color: var(--text-color);">Dependencies</h4>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-sm" onclick="copyDependenciesCdv()" title="Copy to Clipboard" style="padding: 0.25rem 0.5rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                            <button class="btn btn-sm" onclick="downloadDependenciesCdv()" title="Download JSON" style="padding: 0.25rem 0.5rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <ul class="cdv-result-list" id="cdv-dependency-list">
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0;">API Usage</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            You can use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        <div style="background: var(--surface-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/component_dependency_viewer
+        </div>
+        
+        <div class="cdv-grid" style="gap: 1rem; margin-top: 1rem;">
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Request Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "component_json": {
+    "name": "MyComponent",
+    "dependencies": [
+      "Button",
+      "Icon"
+    ]
+  }
+}</pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Response Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "dependencies": [
+      "Button",
+      "Icon"
+    ]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processCdv(btn) {
+            const jsonInputStr = document.getElementById('cdv-component-json-input').value.trim();
+            
+            const container = document.getElementById('cdv-preview-container');
+            const emptyState = document.getElementById('cdv-empty-state');
+            const resultState = document.getElementById('cdv-result-state');
+            const dependencyList = document.getElementById('cdv-dependency-list');
+            
+            if (!jsonInputStr) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Component JSON is required.');
+                } else {
+                    alert('Component JSON is required.');
+                }
+                return;
+            }
+
+            let parsedJson;
+            try {
+                parsedJson = JSON.parse(jsonInputStr);
+            } catch (e) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Invalid JSON provided.');
+                } else {
+                    alert('Invalid JSON provided.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Analyzing...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            dependencyList.innerHTML = '';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'cdv-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const requestData = {
+                    component_json: parsedJson
+                };
+                
+                const response = await fetch('/api/minimal-solutions/component_dependency_viewer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('cdv-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'View Dependencies'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const dependencies = result.data.dependencies || [];
+                window.currentCdvDependencies = dependencies;
+                
+                if (dependencies.length === 0) {
+                    const li = document.createElement('li');
+                    li.className = 'cdv-result-item';
+                    li.style.color = 'var(--text-muted)';
+                    li.innerText = 'No dependencies found.';
+                    dependencyList.appendChild(li);
+                } else {
+                    dependencies.forEach(dep => {
+                        const li = document.createElement('li');
+                        li.className = 'cdv-result-item';
+                        li.innerText = dep;
+                        dependencyList.appendChild(li);
+                    });
+                }
+                
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'View Dependencies'; }
+
+            } catch (err) {
+                const loader = document.getElementById('cdv-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'View Dependencies'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyDependenciesCdv() {
+            if (!window.currentCdvDependencies || window.currentCdvDependencies.length === 0) return;
+            const textToCopy = JSON.stringify(window.currentCdvDependencies, null, 2);
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                if (typeof showToast === 'function') {
+                    showToast('Dependencies copied to clipboard!', 'success');
+                } else {
+                    alert('Copied to clipboard');
+                }
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        function downloadDependenciesCdv() {
+            if (!window.currentCdvDependencies || window.currentCdvDependencies.length === 0) return;
+            const textToDownload = JSON.stringify(window.currentCdvDependencies, null, 2);
+            const blob = new Blob([textToDownload], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dependencies.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</div>

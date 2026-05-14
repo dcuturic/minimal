@@ -1,0 +1,1 @@
+"""SEO Builder Minimal Solution"""

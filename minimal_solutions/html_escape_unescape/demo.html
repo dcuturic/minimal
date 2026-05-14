@@ -1,0 +1,274 @@
+<div class="html-esc-container" style="width: 100%;">
+    <style>
+        .html-esc-input-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; }
+        .html-esc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .html-esc-textarea {
+            width: 100%;
+            min-height: 250px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        .html-esc-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .html-esc-radio-group {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .html-esc-radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        
+        .html-esc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .html-esc-result-content {
+            width: 100%;
+            text-align: left;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        
+        .html-esc-controls { display: flex; gap: 1rem; justify-content: center; }
+        .html-esc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch; }
+        @media (max-width: 768px) { .html-esc-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="html-esc-grid">
+        <div class="html-esc-form-section" style="display: flex; flex-direction: column;">
+            
+            <div class="html-esc-radio-group">
+                <label class="html-esc-radio-label">
+                    <input type="radio" name="html_esc_mode" value="escape" checked>
+                    <span>HTML Escape</span>
+                </label>
+                <label class="html-esc-radio-label">
+                    <input type="radio" name="html_esc_mode" value="unescape">
+                    <span>HTML Unescape</span>
+                </label>
+            </div>
+
+            <div class="html-esc-input-group" style="flex-grow: 1;">
+                <label>Eingabe (HTML oder Escaped Text)</label>
+                <textarea id="html-esc-text-input" class="html-esc-textarea" placeholder="<div class=&quot;test&quot;>Hello World!</div>"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: auto;" onclick="processHtmlEsc(this)">
+                Verarbeiten
+            </button>
+        </div>
+
+        <div class="html-esc-preview-section">
+            <div class="html-esc-preview-box" id="html-esc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="html-esc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Kein Text eingegeben.</p>
+                </div>
+                
+                <div id="html-esc-result-state" style="display: none; width: 100%; height: 100%;">
+                    <div class="html-esc-result-content" id="html-esc-text-result"></div>
+                </div>
+            </div>
+            
+            <div class="html-esc-controls" style="display: none;" id="html-esc-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyHtmlEsc(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Ergebnis Kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; color: var(--text-color); margin-bottom: 1rem;">API Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">
+            Diese Minimal-Lösung bietet eine REST-API, die extern verwendet werden kann. 
+            Sende einen <code>POST</code>-Request mit einem JSON-Body an den Endpunkt, 
+            um Text zu escapen oder zu unescapen.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="color: var(--text-color);">Endpunkt:</strong><br>
+            <code style="background: var(--bg-color); padding: 0.2rem 0.4rem; border-radius: 4px; color: var(--primary-color); display: inline-block; margin-top: 0.5rem;">POST /api/minimal-solutions/html_escape_unescape</code>
+        </div>
+
+        <div class="html-esc-grid">
+            <div>
+                <strong style="color: var(--text-color); display: block; margin-bottom: 0.5rem;">Request Beispiel (JSON):</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color); overflow-x: auto; margin: 0; font-family: monospace; font-size: 0.9rem;">{
+  "html_text": "&lt;div class=\"test\"&gt;Hello World!&lt;/div&gt;",
+  "mode": "escape"
+}</pre>
+            </div>
+            <div>
+                <strong style="color: var(--text-color); display: block; margin-bottom: 0.5rem;">Response Beispiel (JSON):</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color); overflow-x: auto; margin: 0; font-family: monospace; font-size: 0.9rem;">{
+  "status": "success",
+  "data": {
+    "result": "&amp;lt;div class=&amp;quot;test&amp;quot;&amp;gt;Hello World!&amp;lt;/div&amp;gt;"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processHtmlEsc(btn) {
+            const textInput = document.getElementById('html-esc-text-input').value.trim();
+            const mode = document.querySelector('input[name="html_esc_mode"]:checked').value;
+            
+            const container = document.getElementById('html-esc-preview-container');
+            const controls = document.getElementById('html-esc-result-controls');
+            const emptyState = document.getElementById('html-esc-empty-state');
+            const resultState = document.getElementById('html-esc-result-state');
+            
+            if (!textInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Bitte Text eingeben.');
+                } else {
+                    alert('Bitte Text eingeben.');
+                }
+                
+                // Show empty state
+                emptyState.style.display = 'block';
+                resultState.style.display = 'none';
+                controls.style.display = 'none';
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Verarbeite...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'html-esc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/html_escape_unescape', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        html_text: textInput,
+                        mode: mode
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('html-esc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Fehler bei der Verarbeitung...');
+                    } else {
+                        alert(result.message || 'Fehler bei der Verarbeitung...');
+                    }
+                    emptyState.style.display = 'block'; // Fallback
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Verarbeiten'; }
+                    return;
+                }
+
+                const outputText = result.data.result || '';
+
+                // Text escape für sichere Anzeige
+                const displayDiv = document.getElementById('html-esc-text-result');
+                displayDiv.textContent = outputText; // textContent verhindert HTML-Injektion
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Verarbeiten'; }
+
+            } catch (err) {
+                const loader = document.getElementById('html-esc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                emptyState.style.display = 'block'; // Fallback
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Verarbeiten'; }
+            }
+        }
+
+        function copyHtmlEsc(btn) {
+            const outputText = document.getElementById('html-esc-text-result').textContent;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

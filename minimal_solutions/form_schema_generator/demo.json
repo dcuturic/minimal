@@ -1,0 +1,27 @@
+{
+  "fields": [
+    {
+      "name": "username",
+      "type": "string",
+      "required": true,
+      "description": "The unique username for the user."
+    },
+    {
+      "name": "email",
+      "type": "string",
+      "required": true,
+      "description": "User's email address."
+    },
+    {
+      "name": "age",
+      "type": "number",
+      "required": false,
+      "description": "User's age in years."
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "required": false
+    }
+  ]
+}

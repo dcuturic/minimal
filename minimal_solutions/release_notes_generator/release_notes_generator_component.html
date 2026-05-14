@@ -1,0 +1,278 @@
+<div class="release-notes-container" style="width: 100%;">
+    <style>
+        .release-notes-input-group { margin-bottom: 1.5rem; }
+        .release-notes-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .release-notes-input, .release-notes-textarea {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .release-notes-input:focus, .release-notes-textarea:focus { outline: none; border-color: var(--primary-color); }
+        .release-notes-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .release-notes-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .release-notes-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-word;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .release-notes-controls { display: flex; gap: 1rem; justify-content: center; }
+        .release-notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .release-notes-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="release-notes-grid">
+        <div class="release-notes-form-section">
+            <div class="release-notes-input-group">
+                <label>Version</label>
+                <input type="text" id="rn-version" class="release-notes-input" placeholder="e.g. 2.1.0">
+            </div>
+
+            <div class="release-notes-input-group">
+                <label>Features (One per line)</label>
+                <textarea id="rn-features" class="release-notes-textarea" placeholder="- New dashboard widget&#10;- Support for dark mode"></textarea>
+            </div>
+
+            <div class="release-notes-input-group">
+                <label>Fixes (One per line)</label>
+                <textarea id="rn-fixes" class="release-notes-textarea" placeholder="- Fixed login timeout issue&#10;- Corrected typo in settings"></textarea>
+            </div>
+
+            <div class="release-notes-input-group">
+                <label>Breaking Changes (One per line)</label>
+                <textarea id="rn-breaking" class="release-notes-textarea" placeholder="- API endpoint /v1/users removed"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processReleaseNotes(this)">
+                Generate Release Notes
+            </button>
+        </div>
+
+        <div class="release-notes-preview-section">
+            <div class="release-notes-preview-box" id="rn-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="rn-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill the form and click generate.</p>
+                </div>
+                
+                <div id="rn-result-state" style="display: none; width: 100%;">
+                    <pre class="release-notes-result-text" id="rn-text-result"></pre>
+                </div>
+            </div>
+            
+            <div class="release-notes-controls" style="display: none;" id="rn-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyReleaseNotes(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Markdown
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processReleaseNotes(btn) {
+            const versionInput = document.getElementById('rn-version').value.trim();
+            const featuresInput = document.getElementById('rn-features').value.trim();
+            const fixesInput = document.getElementById('rn-fixes').value.trim();
+            const breakingInput = document.getElementById('rn-breaking').value.trim();
+            
+            const container = document.getElementById('rn-preview-container');
+            const controls = document.getElementById('rn-result-controls');
+            const emptyState = document.getElementById('rn-empty-state');
+            const resultState = document.getElementById('rn-result-state');
+            
+            if (!versionInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a version.');
+                } else {
+                    alert('Please provide a version.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'rn-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                // Parse inputs
+                const featuresList = featuresInput ? featuresInput.split('\n').map(line => line.trim()).filter(line => line.length > 0) : [];
+                const fixesList = fixesInput ? fixesInput.split('\n').map(line => line.trim()).filter(line => line.length > 0) : [];
+                const breakingList = breakingInput ? breakingInput.split('\n').map(line => line.trim()).filter(line => line.length > 0) : [];
+
+                const payload = {
+                    version: versionInput,
+                    features: featuresList,
+                    fixes: fixesList,
+                    breaking_changes: breakingList
+                };
+
+                const response = await fetch('/api/minimal-solutions/release_notes_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('rn-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Release Notes'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const outputText = result.data.result;
+
+                document.getElementById('rn-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Release Notes'; }
+
+            } catch (err) {
+                const loader = document.getElementById('rn-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Release Notes'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyReleaseNotes(btn) {
+            const outputText = document.getElementById('rn-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <div class="api-docs-section" style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You can use this tool via API. Send a POST request to <code>/api/minimal-solutions/release_notes_generator</code>.</p>
+        
+        <div class="api-docs-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div class="api-docs-req">
+                <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Request Example</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto;">{
+  "version": "2.1.0",
+  "features": [
+    "New dashboard widget",
+    "Support for dark mode"
+  ],
+  "fixes": [
+    "Fixed login timeout issue"
+  ],
+  "breaking_changes": []
+}</pre>
+            </div>
+            <div class="api-docs-res">
+                <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Response Example</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "result": "## Release Notes v2.1.0\n\n### Features\n- New dashboard widget\n- Support for dark mode\n\n### Fixes\n- Fixed login timeout issue\n"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @media (max-width: 768px) {
+            .api-docs-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</div>

@@ -1,0 +1,312 @@
+<div class="vg-container" style="width: 100%;">
+    <style>
+        .vg-input-group { margin-bottom: 1.5rem; }
+        .vg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .vg-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; }
+        .vg-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .vg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .vg-result-box {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            overflow-x: auto;
+            color: var(--text-color);
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            margin-bottom: 1rem;
+        }
+
+        .vg-controls { display: flex; gap: 1rem; justify-content: center; }
+        .vg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .vg-grid { grid-template-columns: 1fr; } }
+        
+        .vg-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; width: 100%; }
+        .vg-tab { padding: 0.5rem 1rem; background: transparent; border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+        .vg-tab:hover { background: var(--surface-color); }
+        .vg-tab.active { background: var(--surface-color); color: var(--primary-color); border-color: var(--primary-color); }
+    </style>
+
+    <div class="vg-grid">
+        <div class="vg-form-section">
+            <div class="vg-input-group">
+                <label>Name (Pflichtfeld)</label>
+                <input type="text" id="vg-name" class="vg-input" placeholder="Max Mustermann" required>
+            </div>
+            
+            <div class="vg-input-group">
+                <label>E-Mail</label>
+                <input type="email" id="vg-email" class="vg-input" placeholder="max@example.com">
+            </div>
+            
+            <div class="vg-input-group">
+                <label>Telefon</label>
+                <input type="tel" id="vg-phone" class="vg-input" placeholder="+49 123 4567890">
+            </div>
+
+            <div class="vg-input-group">
+                <label>Firma</label>
+                <input type="text" id="vg-company" class="vg-input" placeholder="Musterfirma GmbH">
+            </div>
+
+            <div class="vg-input-group">
+                <label>Adresse</label>
+                <textarea id="vg-address" class="vg-input" placeholder="Musterstraße 1&#10;12345 Musterstadt" rows="3"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateVCard(this)">
+                vCard generieren
+            </button>
+        </div>
+
+        <div class="vg-preview-section">
+            <div class="vg-preview-box" id="vg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="vg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fülle das Formular aus und klicke auf generieren.</p>
+                </div>
+                
+                <div id="vg-result-state" style="display: none; width: 100%;">
+                    <div class="vg-tabs">
+                        <button class="vg-tab active" onclick="switchTab('vcard')" id="tab-vcard">vCard</button>
+                        <button class="vg-tab" onclick="switchTab('json')" id="tab-json">JSON</button>
+                    </div>
+                    <div class="vg-result-box" id="vg-vcard-output"></div>
+                    <div class="vg-result-box" id="vg-json-output" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="vg-controls" style="display: none;" id="vg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyVCard(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Kopieren
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="downloadVCard(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download .vcf
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Box -->
+    <div class="vg-api-docs" style="margin-top: 2.5rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+        <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; background: var(--bg-color);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-color);">API Dokumentation</h3>
+        </div>
+        <div style="padding: 1.5rem;">
+            <p style="margin-top: 0; margin-bottom: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Diese Minimal-Lösung ist auch als REST-API verfügbar. Sende einen POST-Request an den unten stehenden Endpunkt.</p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase; color: var(--text-color);">Endpunkt</h4>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">POST</span>
+                    <code style="background: var(--bg-color); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.9rem; border: 1px solid var(--border-color); color: var(--text-color);">/api/minimal-solutions/vcard_generator</code>
+                </div>
+            </div>
+
+            <div class="vg-grid" style="gap: 1.5rem;">
+                <div>
+                    <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase; color: var(--text-color);">Request (JSON)</h4>
+                    <pre style="background: #1a1a1a; color: #e5e5e5; padding: 1rem; border-radius: 6px; font-size: 0.85rem; overflow-x: auto; margin: 0;"><code>{
+  "name": "Max Mustermann",
+  "email": "max@example.com",
+  "phone": "+49 123 456789",
+  "company": "Muster GmbH",
+  "address": "Musterstraße 1\n12345 Musterstadt"
+}</code></pre>
+                </div>
+                <div>
+                    <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase; color: var(--text-color);">Response (JSON)</h4>
+                    <pre style="background: #1a1a1a; color: #4ade80; padding: 1rem; border-radius: 6px; font-size: 0.85rem; overflow-x: auto; margin: 0;"><code>{
+  "status": "success",
+  "data": {
+    "vcard": "BEGIN:VCARD...",
+    "json": {
+      "name": "Max Mustermann",
+      "email": "max@example.com",
+      "phone": "+49 123 456789",
+      "company": "Muster GmbH",
+      "address": "Musterstraße 1\n12345 Musterstadt"
+    }
+  }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResult = null;
+        let activeTab = 'vcard';
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('tab-vcard').classList.toggle('active', tab === 'vcard');
+            document.getElementById('tab-json').classList.toggle('active', tab === 'json');
+            
+            document.getElementById('vg-vcard-output').style.display = tab === 'vcard' ? 'block' : 'none';
+            document.getElementById('vg-json-output').style.display = tab === 'json' ? 'block' : 'none';
+        }
+
+        async function generateVCard(btn) {
+            const name = document.getElementById('vg-name').value.trim();
+            const email = document.getElementById('vg-email').value.trim();
+            const phone = document.getElementById('vg-phone').value.trim();
+            const company = document.getElementById('vg-company').value.trim();
+            const address = document.getElementById('vg-address').value.trim();
+            
+            const container = document.getElementById('vg-preview-container');
+            const controls = document.getElementById('vg-result-controls');
+            const emptyState = document.getElementById('vg-empty-state');
+            const resultState = document.getElementById('vg-result-state');
+            
+            if (!name) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Bitte gib mindestens einen Namen ein.');
+                } else {
+                    alert('Bitte gib mindestens einen Namen ein.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generiere...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'vg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/vcard_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email || null,
+                        phone: phone || null,
+                        company: company || null,
+                        address: address || null
+                    })
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('vg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Ein Fehler ist aufgetreten.');
+                    } else {
+                        alert(result.message || 'Ein Fehler ist aufgetreten.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'vCard generieren'; }
+                    return;
+                }
+
+                currentResult = result.data || result;
+                currentResult.json = { name, email, phone, company, address };
+
+                document.getElementById('vg-vcard-output').innerText = currentResult.vcard;
+                document.getElementById('vg-json-output').innerText = JSON.stringify(currentResult.json, null, 2);
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'vCard generieren'; }
+
+            } catch (err) {
+                const loader = document.getElementById('vg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Netzwerkfehler', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'vCard generieren'; }
+            }
+        }
+
+        function copyVCard(btn) {
+            if (!currentResult) return;
+            const textToCopy = activeTab === 'vcard' ? currentResult.vcard : JSON.stringify(currentResult.json || currentResult, null, 2);
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function downloadVCard() {
+            if (!currentResult || !currentResult.vcard) return;
+            const blob = new Blob([currentResult.vcard], { type: 'text/vcard' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            let safeName = 'contact';
+            if (currentResult.json && currentResult.json.name) {
+                safeName = currentResult.json.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            }
+            a.download = `${safeName}.vcf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</div>

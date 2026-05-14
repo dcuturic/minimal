@@ -1,0 +1,269 @@
+<div class="ems-container" style="width: 100%;">
+    <style>
+        .ems-input-group { margin-bottom: 1rem; }
+        .ems-input-group label { display: block; margin-bottom: 0.25rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ems-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-family: inherit;
+        }
+        .ems-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .ems-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ems-result-html {
+            width: 100%;
+            background: #ffffff;
+            color: #000000;
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            overflow-x: auto;
+        }
+        
+        .ems-result-code {
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .ems-controls { display: flex; gap: 1rem; justify-content: center; width: 100%; margin-top: 1rem; }
+        .ems-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; }
+        @media (max-width: 768px) { .ems-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="ems-grid">
+        <div class="ems-form-section">
+            <div class="ems-input-group">
+                <label>Name</label>
+                <input type="text" id="ems-name" class="ems-input" placeholder="Max Mustermann">
+            </div>
+            <div class="ems-input-group">
+                <label>Role</label>
+                <input type="text" id="ems-role" class="ems-input" placeholder="Software Engineer">
+            </div>
+            <div class="ems-input-group">
+                <label>Company</label>
+                <input type="text" id="ems-company" class="ems-input" placeholder="CraftHoster">
+            </div>
+            <div class="ems-input-group">
+                <label>Email</label>
+                <input type="email" id="ems-email" class="ems-input" placeholder="max@example.com">
+            </div>
+            <div class="ems-input-group">
+                <label>Phone</label>
+                <input type="text" id="ems-phone" class="ems-input" placeholder="+49 123 456789">
+            </div>
+            <div class="ems-input-group">
+                <label>Website</label>
+                <input type="text" id="ems-website" class="ems-input" placeholder="https://crafthoster.de">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateSignature(this)">
+                Generate Signature
+            </button>
+        </div>
+
+        <div class="ems-preview-section">
+            <div class="ems-preview-box" id="ems-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ems-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill the form to generate signature.</p>
+                </div>
+                
+                <div id="ems-result-state" style="display: none; width: 100%;">
+                    <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Live Preview:</div>
+                    <div class="ems-result-html" id="ems-preview-html"></div>
+                    
+                    <div style="margin-top: 1rem; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">HTML Source:</div>
+                    <div class="ems-result-code" id="ems-code-html"></div>
+                </div>
+            </div>
+            
+            <div class="ems-controls" style="display: none;" id="ems-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copySignatureCode(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy HTML
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="ems-api-doc-section" style="margin-top: 3rem;">
+        <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">You can use this tool via our API to generate email signatures programmatically.</p>
+        
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.5rem; font-family: monospace; font-size: 0.9rem; overflow-x: auto; margin-bottom: 1rem;">
+            <div style="color: #10b981; font-weight: bold; margin-bottom: 0.5rem;">POST /api/minimal-solutions/e_mail_signatur_generator</div>
+            
+            <div style="margin-top: 1rem; color: var(--text-color);"><strong>Request Example:</strong></div>
+            <pre style="margin: 0.5rem 0; color: #e5e7eb;">{
+  "name": "Max Mustermann",
+  "role": "Software Engineer",
+  "company": "CraftHoster",
+  "email": "max@example.com",
+  "phone": "+49 123 456789",
+  "website": "https://crafthoster.de"
+}</pre>
+
+            <div style="margin-top: 1.5rem; color: var(--text-color);"><strong>Response Example:</strong></div>
+            <pre style="margin: 0.5rem 0; color: #e5e7eb;">{
+  "status": "success",
+  "data": {
+    "signature_html": "&lt;div&gt;...&lt;/div&gt;"
+  }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        async function generateSignature(btn) {
+            const name = document.getElementById('ems-name').value.trim();
+            const role = document.getElementById('ems-role').value.trim();
+            const company = document.getElementById('ems-company').value.trim();
+            const email = document.getElementById('ems-email').value.trim();
+            const phone = document.getElementById('ems-phone').value.trim();
+            const website = document.getElementById('ems-website').value.trim();
+            
+            const container = document.getElementById('ems-preview-container');
+            const controls = document.getElementById('ems-result-controls');
+            const emptyState = document.getElementById('ems-empty-state');
+            const resultState = document.getElementById('ems-result-state');
+            
+            if (!name || !email) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Name and Email are required.');
+                } else {
+                    alert('Name and Email are required.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ems-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/e_mail_signatur_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name, role, company, email, phone, website
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('ems-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Signature'; }
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const signatureHtml = result.data.signature_html;
+
+                document.getElementById('ems-preview-html').innerHTML = signatureHtml;
+                document.getElementById('ems-code-html').textContent = signatureHtml;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Signature'; }
+
+            } catch (err) {
+                const loader = document.getElementById('ems-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Signature'; }
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copySignatureCode(btn) {
+            const htmlOutput = document.getElementById('ems-code-html').textContent;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(htmlOutput).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = htmlOutput;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

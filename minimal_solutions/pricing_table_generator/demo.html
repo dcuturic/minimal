@@ -1,0 +1,454 @@
+<div class="ptg-container" style="width: 100%;">
+    <style>
+        .ptg-input-group { margin-bottom: 1.5rem; }
+        .ptg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ptg-textarea {
+            width: 100%;
+            min-height: 250px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .ptg-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .ptg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ptg-controls { display: flex; gap: 1rem; justify-content: center; }
+        .ptg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ptg-grid { grid-template-columns: 1fr; } }
+        
+        /* Pricing Cards Styles */
+        .ptg-pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+        }
+        .ptg-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .ptg-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+        .ptg-card.popular {
+            border-color: var(--primary-color);
+            position: relative;
+        }
+        .ptg-popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: var(--bg-color);
+            font-size: 0.75rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .ptg-card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+        .ptg-card-price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+        .ptg-card-period {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+        .ptg-card-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.5rem 0;
+            text-align: left;
+            flex-grow: 1;
+        }
+        .ptg-card-features li {
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+        }
+        .ptg-card-features li::before {
+            content: "✓";
+            color: var(--primary-color);
+            margin-right: 8px;
+            font-weight: bold;
+        }
+        .ptg-btn {
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .ptg-btn:hover {
+            background: var(--primary-color);
+            color: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+        .ptg-card.popular .ptg-btn {
+            background: var(--primary-color);
+            color: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+    </style>
+
+    <div class="ptg-grid">
+        <div class="ptg-form-section">
+            <div class="ptg-input-group">
+                <label>Plans (JSON Array)</label>
+                <textarea id="ptg-plans-input" class="ptg-textarea" placeholder="Enter plans as JSON array...">[
+  {
+    "name": "Basic",
+    "price": "9",
+    "currency": "$",
+    "period": "/mo",
+    "features": ["1 User", "5GB Storage", "Community Support"],
+    "is_popular": false,
+    "button_text": "Get Started"
+  },
+  {
+    "name": "Pro",
+    "price": "29",
+    "currency": "$",
+    "period": "/mo",
+    "features": ["5 Users", "50GB Storage", "Priority Support", "Advanced Analytics"],
+    "is_popular": true,
+    "button_text": "Choose Pro"
+  },
+  {
+    "name": "Enterprise",
+    "price": "99",
+    "currency": "$",
+    "period": "/mo",
+    "features": ["Unlimited Users", "1TB Storage", "24/7 Phone Support", "Custom Integrations"],
+    "is_popular": false,
+    "button_text": "Contact Sales"
+  }
+]</textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generatePricingTable(this)">
+                Generate Pricing Table
+            </button>
+        </div>
+
+        <div class="ptg-preview-section">
+            <div class="ptg-preview-box" id="ptg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ptg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure plans and click generate.</p>
+                </div>
+                
+                <div id="ptg-result-state" style="display: none; width: 100%;">
+                    <div class="ptg-pricing-grid" id="ptg-pricing-grid">
+                        <!-- Pricing cards will be generated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ptg-controls" style="display: none; margin-top: 1.5rem;" id="ptg-result-controls">
+                <button class="btn" onclick="copyPricingTableHTML()">Copy HTML</button>
+                <button class="btn" onclick="downloadPricingTableJSON()">Download JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generatePricingTable(btn) {
+            const plansInputRaw = document.getElementById('ptg-plans-input').value.trim();
+            
+            const container = document.getElementById('ptg-preview-container');
+            const emptyState = document.getElementById('ptg-empty-state');
+            const resultState = document.getElementById('ptg-result-state');
+            
+            if (!plansInputRaw) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide plans configuration.');
+                } else {
+                    alert('Please provide plans configuration.');
+                }
+                return;
+            }
+            
+            let plans;
+            try {
+                plans = JSON.parse(plansInputRaw);
+                if (!Array.isArray(plans)) {
+                    throw new Error("Plans must be a JSON array.");
+                }
+            } catch (e) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('JSON Error', 'Invalid JSON format: ' + e.message);
+                } else {
+                    alert('Invalid JSON format: ' + e.message);
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ptg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/pricing_table_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plans: plans
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('ptg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Pricing Table'; }
+                    return;
+                }
+
+                // API might wrap the result or return it directly
+                const generatedPlans = result.data?.result || result.data?.plans || plans; 
+                renderPricingTable(generatedPlans);
+                
+                resultState.style.display = 'block';
+                document.getElementById('ptg-result-controls').style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Pricing Table'; }
+
+            } catch (err) {
+                const loader = document.getElementById('ptg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Pricing Table'; }
+            }
+        }
+
+        function renderPricingTable(plans) {
+            const grid = document.getElementById('ptg-pricing-grid');
+            grid.innerHTML = '';
+            
+            plans.forEach(plan => {
+                const card = document.createElement('div');
+                card.className = 'ptg-card' + (plan.is_popular ? ' popular' : '');
+                
+                let html = '';
+                if (plan.is_popular) {
+                    html += `<div class="ptg-popular-badge">Most Popular</div>`;
+                }
+                
+                html += `
+                    <div class="ptg-card-title">${plan.name || 'Plan'}</div>
+                    <div class="ptg-card-price">${plan.currency || ''}${plan.price || '0'}</div>
+                    <div class="ptg-card-period">${plan.period || '/mo'}</div>
+                    <ul class="ptg-card-features">
+                `;
+                
+                const features = Array.isArray(plan.features) ? plan.features : [];
+                features.forEach(f => {
+                    html += `<li>${f}</li>`;
+                });
+                
+                html += `
+                    </ul>
+                    <button class="ptg-btn">${plan.button_text || 'Select Plan'}</button>
+                `;
+                
+                card.innerHTML = html;
+                grid.appendChild(card);
+            });
+        }
+
+        async function copyPricingTableHTML() {
+            const grid = document.getElementById('ptg-pricing-grid');
+            if (!grid) return;
+            
+            // wir generieren ein sauberes HTML fuer den Copy
+            const clone = grid.cloneNode(true);
+            const htmlToCopy = `<style>
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+.pricing-card { border: 1px solid #ccc; border-radius: 8px; padding: 1.5rem; text-align: center; }
+.pricing-card.popular { border-color: #007bff; position: relative; }
+.popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #007bff; color: white; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+.card-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; }
+.card-price { font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; }
+.card-period { font-size: 0.9rem; color: #666; margin-bottom: 1.5rem; }
+.card-features { list-style: none; padding: 0; margin: 0 0 1.5rem 0; text-align: left; }
+.card-features li { margin-bottom: 0.5rem; font-size: 0.9rem; }
+.card-features li::before { content: "✓"; color: #007bff; margin-right: 8px; font-weight: bold; }
+.btn { background: #f8f9fa; border: 1px solid #ccc; padding: 0.75rem; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
+.pricing-card.popular .btn { background: #007bff; color: white; border-color: #007bff; }
+</style>
+<div class="pricing-grid">
+${clone.innerHTML.replace(/ptg-card/g, 'pricing-card').replace(/ptg-popular-badge/g, 'popular-badge').replace(/ptg-card-title/g, 'card-title').replace(/ptg-card-price/g, 'card-price').replace(/ptg-card-period/g, 'card-period').replace(/ptg-card-features/g, 'card-features').replace(/ptg-btn/g, 'btn')}
+</div>`;
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(htmlToCopy);
+                    if (typeof showSuccessToast === 'function') {
+                        showSuccessToast('HTML copied to clipboard');
+                    } else {
+                        alert('HTML copied to clipboard');
+                    }
+                } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = htmlToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(textArea);
+                    if (typeof showSuccessToast === 'function') {
+                        showSuccessToast('HTML copied to clipboard');
+                    } else {
+                        alert('HTML copied to clipboard');
+                    }
+                }
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Copy Error', 'Failed to copy HTML: ' + err.message);
+                } else {
+                    alert('Failed to copy HTML');
+                }
+            }
+        }
+
+        function downloadPricingTableJSON() {
+            const plansInputRaw = document.getElementById('ptg-plans-input').value.trim();
+            if (!plansInputRaw) return;
+            
+            try {
+                // Ensure it's valid JSON before downloading
+                const parsed = JSON.parse(plansInputRaw);
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(parsed, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "pricing_plans.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+                
+                if (typeof showSuccessToast === 'function') {
+                    showSuccessToast('JSON downloaded');
+                }
+            } catch(e) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Download Error', 'Invalid JSON, cannot download.');
+                } else {
+                    alert('Invalid JSON, cannot download.');
+                }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um Pricing Tabellen-Strukturen zu validieren oder zu generieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/pricing_table_generator</code>
+        </div>
+
+        <div class="ptg-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "plans": [
+    {
+      "name": "Basic",
+      "price": "9",
+      "currency": "$",
+      "period": "/mo",
+      "features": ["1 User"],
+      "is_popular": false
+    }
+  ]
+}</pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "result": [
+      {
+        "name": "Basic",
+        "price": "9",
+        "currency": "$",
+        "period": "/mo",
+        "features": ["1 User"],
+        "is_popular": false
+      }
+    ]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

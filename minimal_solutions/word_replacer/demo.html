@@ -1,0 +1,282 @@
+<div class="wr-container" style="width: 100%;">
+    <style>
+        .wr-input-group { margin-bottom: 1.5rem; }
+        .wr-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .wr-input-group input[type="text"], .wr-input-group textarea {
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem;
+            width: 100%;
+            font-family: inherit;
+        }
+        .wr-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .wr-input-group input:focus, .wr-input-group textarea:focus { outline: none; border-color: var(--primary-color); }
+        .wr-checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .wr-checkbox-group label {
+            margin: 0;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .wr-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .wr-result-text {
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            word-break: break-word;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .wr-controls { display: flex; gap: 1rem; justify-content: center; }
+        .wr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .wr-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="wr-grid">
+        <div class="wr-form-section">
+            <div class="wr-input-group">
+                <label>Text</label>
+                <textarea id="wr-text-input" class="wr-textarea" placeholder="Enter your text here..."></textarea>
+            </div>
+
+            <div class="wr-input-group">
+                <label>Search for</label>
+                <input type="text" id="wr-search-input" placeholder="Word or phrase to find..." />
+            </div>
+
+            <div class="wr-input-group">
+                <label>Replace with</label>
+                <input type="text" id="wr-replace-input" placeholder="Replacement word..." />
+            </div>
+
+            <div class="wr-checkbox-group">
+                <input type="checkbox" id="wr-case-sensitive" />
+                <label for="wr-case-sensitive">Case Sensitive</label>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%;" onclick="replaceWords(this)">
+                Replace Words
+            </button>
+        </div>
+
+        <div class="wr-preview-section">
+            <div class="wr-preview-box" id="wr-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="wr-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter text and words to replace.</p>
+                </div>
+                
+                <div id="wr-result-state" style="display: none; width: 100%;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem; text-align: left;">
+                        Replacements made: <strong id="wr-count-result" style="color: var(--primary-color);">0</strong>
+                    </p>
+                    <div class="wr-result-text" id="wr-text-result"></div>
+                </div>
+            </div>
+            
+            <div class="wr-controls" style="display: none;" id="wr-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyResult(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs-section" style="margin-top: 3rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            You can use this tool programmatically via our API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem;">
+                <span class="badge badge-primary" style="font-family: monospace; font-size: 0.85rem; padding: 0.25rem 0.5rem; background: var(--primary-color); color: #fff; border-radius: 4px;">POST</span>
+                <code style="color: var(--text-color); font-size: 0.9rem;">/api/minimal-solutions/word_replacer</code>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-color);">
+                <div style="background: var(--surface-color); padding: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Request Example</h4>
+                    <pre style="margin: 0; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-size: 0.85rem; color: var(--text-color);">fetch('/api/minimal-solutions/word_replacer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        "text": "Hello world, hello universe!",
+        "search": "hello",
+        "replace": "Hi",
+        "case_sensitive": false
+    })
+});</code></pre>
+                </div>
+                <div style="background: var(--surface-color); padding: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Response Example</h4>
+                    <pre style="margin: 0; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-size: 0.85rem; color: var(--text-color);">{
+    "status": "success",
+    "data": {
+        "result_text": "Hi world, Hi universe!",
+        "replacement_count": 2
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function replaceWords(btn) {
+            const textInput = document.getElementById('wr-text-input').value;
+            const searchInput = document.getElementById('wr-search-input').value;
+            const replaceInput = document.getElementById('wr-replace-input').value;
+            const caseSensitive = document.getElementById('wr-case-sensitive').checked;
+            
+            const container = document.getElementById('wr-preview-container');
+            const controls = document.getElementById('wr-result-controls');
+            const emptyState = document.getElementById('wr-empty-state');
+            const resultState = document.getElementById('wr-result-state');
+            
+            if (!textInput || !searchInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide both text and search word.');
+                } else {
+                    alert('Please provide both text and search word.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Replacing...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'wr-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/word_replacer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: textInput,
+                        search: searchInput,
+                        replace: replaceInput,
+                        case_sensitive: caseSensitive
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('wr-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Replace Words'; }
+                    return;
+                }
+
+                document.getElementById('wr-text-result').innerText = result.data.result_text;
+                document.getElementById('wr-count-result').innerText = result.data.replacement_count !== undefined ? result.data.replacement_count : '-';
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Replace Words'; }
+
+            } catch (err) {
+                const loader = document.getElementById('wr-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Replace Words'; }
+            }
+        }
+
+        function copyResult(btn) {
+            const resultOutput = document.getElementById('wr-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(resultOutput).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = resultOutput;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

@@ -1,0 +1,280 @@
+<div class="swot-container" style="width: 100%;">
+    <style>
+        .swot-input-group { margin-bottom: 1.5rem; }
+        .swot-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .swot-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .swot-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .swot-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .swot-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .swot-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .swot-card h5 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            color: var(--text-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .swot-card.strength h5 { border-bottom-color: #28a745; }
+        .swot-card.weakness h5 { border-bottom-color: #dc3545; }
+        .swot-card.opportunity h5 { border-bottom-color: #17a2b8; }
+        .swot-card.threat h5 { border-bottom-color: #ffc107; }
+
+        .swot-list {
+            margin: 0;
+            padding-left: 1.25rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .swot-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .swot-main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { 
+            .swot-main-grid { grid-template-columns: 1fr; } 
+            .swot-grid-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+
+    <div class="swot-main-grid">
+        <div class="swot-form-section">
+            <div class="swot-input-group">
+                <label>Topic</label>
+                <input type="text" id="swot-topic-input" class="swot-input" placeholder="e.g. Launching a new e-commerce platform">
+            </div>
+            <div class="swot-input-group">
+                <label>Notes (Optional)</label>
+                <textarea id="swot-notes-input" class="swot-input" placeholder="e.g. Budget is limited, but we have a strong marketing team." rows="4"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processSwot(this)">
+                Generate SWOT
+            </button>
+        </div>
+
+        <div class="swot-preview-section">
+            <div class="swot-preview-box" id="swot-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="swot-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="12" x2="21" y2="12"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Fill in the topic to generate SWOT Analysis.</p>
+                </div>
+                
+                <div id="swot-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="margin: 0; color: var(--text-color);">SWOT Analysis</h4>
+                    </div>
+                    
+                    <div class="swot-grid-layout">
+                        <div class="swot-card strength">
+                            <h5>Strengths</h5>
+                            <ul class="swot-list" id="swot-strengths-list"></ul>
+                        </div>
+                        <div class="swot-card weakness">
+                            <h5>Weaknesses</h5>
+                            <ul class="swot-list" id="swot-weaknesses-list"></ul>
+                        </div>
+                        <div class="swot-card opportunity">
+                            <h5>Opportunities</h5>
+                            <ul class="swot-list" id="swot-opportunities-list"></ul>
+                        </div>
+                        <div class="swot-card threat">
+                            <h5>Threats</h5>
+                            <ul class="swot-list" id="swot-threats-list"></ul>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; justify-content: center; width: 100%; margin-top: 1.5rem;">
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="copySwotResult()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0;">API Usage</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            You can use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        <div style="background: var(--surface-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/swot_generator
+        </div>
+        
+        <div class="swot-main-grid" style="gap: 1rem; margin-top: 1rem;">
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Request Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "topic": "Launching a new e-commerce platform",
+  "notes": "Budget is limited, but we have a strong team."
+}</pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Response Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "strengths": ["Strong marketing team"],
+    "weaknesses": ["Limited budget"],
+    "opportunities": ["Growing market"],
+    "threats": ["Established competitors"]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processSwot(btn) {
+            const topicInput = document.getElementById('swot-topic-input').value.trim();
+            const notesInput = document.getElementById('swot-notes-input').value.trim();
+            
+            const container = document.getElementById('swot-preview-container');
+            const emptyState = document.getElementById('swot-empty-state');
+            const resultState = document.getElementById('swot-result-state');
+            
+            if (!topicInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Topic is required.');
+                } else {
+                    alert('Topic is required.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'swot-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const requestData = { 
+                    topic: topicInput,
+                    notes: notesInput || ""
+                };
+                
+                const response = await fetch('/api/minimal-solutions/swot_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('swot-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate SWOT'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const data = result.data || {};
+                
+                const strengths = data.strengths || [`Example Strength for ${topicInput}`];
+                const weaknesses = data.weaknesses || ["Example Weakness"];
+                const opportunities = data.opportunities || ["Example Opportunity"];
+                const threats = data.threats || ["Example Threat"];
+
+                window.lastSwotData = JSON.stringify(data, null, 2);
+                
+                document.getElementById('swot-strengths-list').innerHTML = strengths.map(item => `<li>${item}</li>`).join('');
+                document.getElementById('swot-weaknesses-list').innerHTML = weaknesses.map(item => `<li>${item}</li>`).join('');
+                document.getElementById('swot-opportunities-list').innerHTML = opportunities.map(item => `<li>${item}</li>`).join('');
+                document.getElementById('swot-threats-list').innerHTML = threats.map(item => `<li>${item}</li>`).join('');
+
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate SWOT'; }
+
+            } catch (err) {
+                const loader = document.getElementById('swot-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate SWOT'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        async function copySwotResult() {
+            if (!window.lastSwotData) return;
+            try {
+                await navigator.clipboard.writeText(window.lastSwotData);
+                if (typeof showToast === 'function') {
+                    showToast('JSON copied to clipboard!');
+                } else {
+                    alert('JSON copied to clipboard!');
+                }
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+    </script>
+</div>

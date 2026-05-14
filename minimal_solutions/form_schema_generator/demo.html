@@ -1,0 +1,305 @@
+<div class="fsg-container" style="width: 100%;">
+    <style>
+        .fsg-input-group { margin-bottom: 1.5rem; }
+        .fsg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+        .fsg-textarea { 
+            width: 100%; 
+            min-height: 200px; 
+            background: var(--bg-color); 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            padding: 0.75rem; 
+            color: var(--text-color); 
+            font-family: monospace; 
+            font-size: 0.85rem; 
+            resize: vertical; 
+        }
+        .fsg-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .fsg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .fsg-result-text {
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .fsg-controls { display: flex; gap: 1rem; justify-content: center; }
+        .fsg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .fsg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="fsg-grid">
+        <div class="fsg-form-section">
+            <div class="fsg-input-group">
+                <label>Fields (JSON Array)</label>
+                <textarea id="fsg-fields" class="fsg-textarea" placeholder='[
+  {
+    "name": "username",
+    "type": "string",
+    "required": true
+  },
+  {
+    "name": "age",
+    "type": "integer",
+    "required": false
+  }
+]'>[
+  {
+    "name": "username",
+    "type": "string",
+    "required": true
+  },
+  {
+    "name": "age",
+    "type": "integer",
+    "required": false
+  }
+]</textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateSchema(this)">
+                Generate Schema
+            </button>
+        </div>
+
+        <div class="fsg-preview-section">
+            <div class="fsg-preview-box" id="fsg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="fsg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Define fields and click generate.</p>
+                </div>
+                
+                <div id="fsg-result-state" style="display: none; width: 100%;">
+                    <div class="fsg-result-text" id="fsg-schema-result"></div>
+                </div>
+            </div>
+            
+            <div class="fsg-controls" style="display: none;" id="fsg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copySchema(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Schema
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; color: var(--text-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Integration
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">You can use this tool programmatically via our API. Send a POST request with the required fields to generate a JSON Schema.</p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Endpoint</div>
+            <div style="background: var(--bg-color); padding: 0.75rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.9rem; color: var(--text-color); display: flex; align-items: center; gap: 0.75rem;">
+                <span style="background: var(--primary-color); color: var(--bg-color); padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: bold; font-size: 0.75rem;">POST</span>
+                /api/minimal-solutions/form_schema_generator
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+                <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Request Example</div>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto; margin: 0;">{
+  "fields": [
+    {
+      "name": "username",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "age",
+      "type": "integer",
+      "required": false
+    }
+  ]
+}</pre>
+            </div>
+            <div>
+                <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Response Example</div>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto; margin: 0;">{
+  "status": "success",
+  "data": {
+    "schema": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "age": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "username"
+      ]
+    }
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateSchema(btn) {
+            const fieldsRaw = document.getElementById('fsg-fields').value;
+            let fields = [];
+            
+            try {
+                fields = JSON.parse(fieldsRaw);
+                if (!Array.isArray(fields)) {
+                    throw new Error("Fields must be a JSON array.");
+                }
+            } catch (e) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Invalid JSON format: ' + e.message);
+                } else {
+                    alert('Invalid JSON format: ' + e.message);
+                }
+                return;
+            }
+
+            const container = document.getElementById('fsg-preview-container');
+            const controls = document.getElementById('fsg-result-controls');
+            const emptyState = document.getElementById('fsg-empty-state');
+            const resultState = document.getElementById('fsg-result-state');
+            
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'fsg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/form_schema_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fields: fields
+                    })
+                });
+                
+                const result = await response.json();
+                
+                const loader = document.getElementById('fsg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Schema'; }
+                    return;
+                }
+
+                const schema = result.data.schema;
+
+                document.getElementById('fsg-schema-result').innerText = JSON.stringify(schema, null, 2);
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Schema'; }
+                
+                const resultBox = document.querySelector('.result-box');
+                if(resultBox) {
+                    resultBox.innerHTML = `
+                        <div style="text-align: center; width: 100%;">
+                            <p style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">Generated Successfully!</p>
+                            <pre class="code-block" style="text-align: left; background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">
+${JSON.stringify(result, null, 2)}
+                            </pre>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                const loader = document.getElementById('fsg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Schema'; }
+            }
+        }
+
+        function copySchema(btn) {
+            const schemaTxt = document.getElementById('fsg-schema-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(schemaTxt).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = schemaTxt;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

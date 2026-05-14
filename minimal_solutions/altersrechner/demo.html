@@ -1,0 +1,337 @@
+<div class="ar-container" style="width: 100%;">
+    <style>
+        .ar-input-group { margin-bottom: 1.5rem; }
+        .ar-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ar-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .ar-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .ar-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ar-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .ar-stat-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .ar-stat-card strong {
+            display: block;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+        
+        .ar-stat-card span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ar-details {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+
+        .ar-details-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ar-details-row:last-child {
+            border-bottom: none;
+        }
+
+        .ar-controls { display: flex; gap: 1rem; justify-content: center; width: 100%; }
+        .ar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ar-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="ar-grid">
+        <div class="ar-form-section">
+            <div class="ar-input-group">
+                <label for="ar-birth-date">Geburtsdatum</label>
+                <input type="date" id="ar-birth-date" class="ar-input">
+            </div>
+
+            <div class="ar-input-group">
+                <label for="ar-target-date">Ziel-Datum (optional)</label>
+                <input type="date" id="ar-target-date" class="ar-input">
+                <small style="color: var(--text-muted); display: block; margin-top: 0.5rem; font-size: 0.8rem;">Standardmäßig wird das heutige Datum verwendet.</small>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="calculateAge(this)">
+                Alter berechnen
+            </button>
+        </div>
+
+        <div class="ar-preview-section">
+            <div class="ar-preview-box" id="ar-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ar-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Daten eingeben und auf Berechnen klicken.</p>
+                </div>
+                
+                <div id="ar-result-state" style="display: none; width: 100%;">
+                    <div class="ar-stats" id="ar-stats-container">
+                        <div class="ar-stat-card">
+                            <strong id="ar-stat-years">0</strong>
+                            <span>Jahre</span>
+                        </div>
+                        <div class="ar-stat-card">
+                            <strong id="ar-stat-months">0</strong>
+                            <span>Monate</span>
+                        </div>
+                        <div class="ar-stat-card">
+                            <strong id="ar-stat-days">0</strong>
+                            <span>Tage</span>
+                        </div>
+                    </div>
+                    
+                    <div class="ar-details">
+                        <div class="ar-details-row">
+                            <span style="color: var(--text-muted);">Gesamt in Tagen:</span>
+                            <strong id="ar-detail-total-days">0 Tage</strong>
+                        </div>
+                        <div class="ar-details-row">
+                            <span style="color: var(--text-muted);">Gesamt in Wochen:</span>
+                            <strong id="ar-detail-total-weeks">0 Wochen</strong>
+                        </div>
+                        <div class="ar-details-row">
+                            <span style="color: var(--text-muted);">Gesamt in Monaten:</span>
+                            <strong id="ar-detail-total-months">0 Monate</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ar-controls" style="display: none;" id="ar-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyResult(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Ergebnis kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs-section" style="margin-top: 3rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            You can use this tool programmatically via our API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem;">
+                <span class="badge badge-primary" style="font-family: monospace; font-size: 0.85rem; padding: 0.25rem 0.5rem; background: var(--primary-color); color: #fff; border-radius: 4px;">POST</span>
+                <code style="color: var(--text-color); font-size: 0.9rem;">/api/minimal-solutions/altersrechner</code>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-color);">
+                <div style="background: var(--surface-color); padding: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Request Example</h4>
+                    <pre style="margin: 0; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-size: 0.85rem; color: var(--text-color);">fetch('/api/minimal-solutions/altersrechner', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        "birth_date": "1990-05-15",
+        "target_date": "2026-05-11"
+    })
+});</code></pre>
+                </div>
+                <div style="background: var(--surface-color); padding: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Response Example</h4>
+                    <pre style="margin: 0; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-size: 0.85rem; color: var(--text-color);">{
+    "status": "success",
+    "data": {
+        "years": 35,
+        "months": 11,
+        "days": 26,
+        "total_days": 13145,
+        "total_weeks": 1877,
+        "total_months": 431
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set today's date as default for target date
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('ar-target-date').value = today;
+        });
+
+        async function calculateAge(btn) {
+            const birthDate = document.getElementById('ar-birth-date').value;
+            const targetDate = document.getElementById('ar-target-date').value;
+            
+            const container = document.getElementById('ar-preview-container');
+            const controls = document.getElementById('ar-result-controls');
+            const emptyState = document.getElementById('ar-empty-state');
+            const resultState = document.getElementById('ar-result-state');
+            
+            // Validation Error-State
+            if (!birthDate) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validierung', 'Bitte ein Geburtsdatum eingeben.');
+                } else {
+                    alert('Bitte ein Geburtsdatum eingeben.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Berechne...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ar-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/altersrechner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        birth_date: birthDate,
+                        target_date: targetDate || undefined
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('ar-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Fehler', result.message || 'Ein unbekannter Fehler ist aufgetreten.');
+                    } else {
+                        alert(result.message || 'Ein unbekannter Fehler ist aufgetreten.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Alter berechnen'; }
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                // Update UI Result-State
+                const data = result.data || {};
+                
+                document.getElementById('ar-stat-years').innerText = data.years !== undefined ? data.years : '0';
+                document.getElementById('ar-stat-months').innerText = data.months !== undefined ? data.months : '0';
+                document.getElementById('ar-stat-days').innerText = data.days !== undefined ? data.days : '0';
+                
+                document.getElementById('ar-detail-total-days').innerText = (data.total_days !== undefined ? data.total_days : '0') + ' Tage';
+                document.getElementById('ar-detail-total-weeks').innerText = (data.total_weeks !== undefined ? data.total_weeks : '0') + ' Wochen';
+                document.getElementById('ar-detail-total-months').innerText = (data.total_months !== undefined ? data.total_months : '0') + ' Monate';
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Alter berechnen'; }
+
+            } catch (err) {
+                const loader = document.getElementById('ar-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Netzwerkfehler', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Alter berechnen'; }
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyResult(btn) {
+            const y = document.getElementById('ar-stat-years').innerText;
+            const m = document.getElementById('ar-stat-months').innerText;
+            const d = document.getElementById('ar-stat-days').innerText;
+            const td = document.getElementById('ar-detail-total-days').innerText;
+            
+            const textToCopy = `Alter: ${y} Jahre, ${m} Monate, ${d} Tage\n${td}`;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

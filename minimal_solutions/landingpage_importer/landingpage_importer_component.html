@@ -1,0 +1,363 @@
+<div class="landingpage-importer-container" style="width: 100%;">
+    <style>
+        .landingpage-importer-input-group { margin-bottom: 1.5rem; }
+        .landingpage-importer-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .landingpage-importer-input, .landingpage-importer-textarea {
+            width: 100%;
+            padding: 0.65rem 1rem;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .landingpage-importer-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .landingpage-importer-input:focus, .landingpage-importer-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .landingpage-importer-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .landingpage-importer-result-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .landingpage-importer-result-box {
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            text-align: left;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .landingpage-importer-copy-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            align-self: flex-start;
+        }
+
+        .landingpage-importer-copy-btn:hover {
+            background: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+
+        .landingpage-importer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .landingpage-importer-grid { grid-template-columns: 1fr; } }
+
+        .landingpage-importer-error-box {
+            width: 100%;
+            background: rgba(255, 60, 60, 0.08);
+            border: 1px solid rgba(255, 60, 60, 0.3);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            display: none;
+        }
+        .landingpage-importer-error-box p { margin: 0; color: #ff5c5c; font-size: 0.9rem; }
+        .landingpage-importer-error-box strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #ff5c5c;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .landingpage-importer-loading-box {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .landingpage-importer-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color, var(--text-color));
+            border-radius: 50%;
+            animation: landingpage-importer-spin 0.8s linear infinite;
+        }
+        @keyframes landingpage-importer-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .landingpage-importer-loading-text { color: var(--text-muted); font-size: 0.85rem; }
+    </style>
+
+    <div class="landingpage-importer-grid">
+        <div class="landingpage-importer-form-section">
+            <div class="landingpage-importer-input-group">
+                <label>Topic</label>
+                <input type="text" id="landingpage-importer-topic" class="landingpage-importer-input" placeholder="e.g. Modern AI SaaS">
+            </div>
+
+            <div class="landingpage-importer-input-group">
+                <label>Target Audience</label>
+                <input type="text" id="landingpage-importer-target" class="landingpage-importer-input" placeholder="e.g. Developers and Tech Founders">
+            </div>
+
+            <div class="landingpage-importer-input-group">
+                <label>Options / Data Link</label>
+                <textarea id="landingpage-importer-options" class="landingpage-importer-textarea" placeholder="e.g. Include meta tags, import images"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processLandingpageImporter(this)">
+                Import Landingpage Data
+            </button>
+        </div>
+
+        <div class="landingpage-importer-preview-section">
+            <div class="landingpage-importer-preview-box" id="landingpage-importer-preview-container">
+                <!-- Empty State -->
+                <div style="text-align: center; color: var(--text-muted);" id="landingpage-importer-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter data to preview your Landingpage Import.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="landingpage-importer-loading-box" id="landingpage-importer-loading-state">
+                    <div class="landingpage-importer-spinner"></div>
+                    <span class="landingpage-importer-loading-text">Importing Data…</span>
+                </div>
+
+                <!-- Error State -->
+                <div class="landingpage-importer-error-box" id="landingpage-importer-error-state">
+                    <strong id="landingpage-importer-error-title">Error</strong>
+                    <p id="landingpage-importer-error-message"></p>
+                </div>
+
+                <!-- Result State -->
+                <div id="landingpage-importer-result-state" style="display: none; width: 100%;">
+                    <div class="landingpage-importer-result-container">
+                        <div class="landingpage-importer-result-box" id="landingpage-importer-template-output">
+                        </div>
+                        <button class="landingpage-importer-copy-btn" onclick="copyLandingpageImporter()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="landingpage-importer-api-docs" id="landingpage-importer-api-docs-container" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color); font-size: 1.2rem;">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            You can use this tool via our REST API. Send a POST request with the topic, target, and options to import landingpage data.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="display: block; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--primary-color);">POST /api/minimal-solutions/landingpage_importer</code>
+        </div>
+        
+        <div class="landingpage-importer-grid">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+                <pre style="margin: 0; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace; font-size: 0.85rem;">{
+  "topic": "Modern AI SaaS",
+  "target": "Developers and Tech Founders",
+  "options": "Include meta tags, import images"
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+                <pre style="margin: 0; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace; font-size: 0.85rem;">{
+  "status": "success",
+  "data": {
+    "imported_data": "Landingpage Data Imported:\n\nTopic: Modern AI SaaS\nTarget Audience: Developers and Tech Founders\nOptions: Include meta tags, import images",
+    "meta": {
+      "topic": "Modern AI SaaS",
+      "target": "Developers and Tech Founders",
+      "options": "Include meta tags, import images"
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function landingpageImporterShowState(state) {
+            const empty = document.getElementById('landingpage-importer-empty-state');
+            const loading = document.getElementById('landingpage-importer-loading-state');
+            const error = document.getElementById('landingpage-importer-error-state');
+            const result = document.getElementById('landingpage-importer-result-state');
+
+            if(empty) empty.style.display = 'none';
+            if(loading) loading.style.display = 'none';
+            if(error) error.style.display = 'none';
+            if(result) result.style.display = 'none';
+
+            switch (state) {
+                case 'empty': if(empty) empty.style.display = 'block'; break;
+                case 'loading': if(loading) loading.style.display = 'flex'; break;
+                case 'error': if(error) error.style.display = 'block'; break;
+                case 'result': if(result) result.style.display = 'block'; break;
+            }
+        }
+
+        function landingpageImporterShowError(title, message) {
+            const errTitle = document.getElementById('landingpage-importer-error-title');
+            const errMsg = document.getElementById('landingpage-importer-error-message');
+            if(errTitle) errTitle.textContent = title;
+            if(errMsg) errMsg.textContent = message;
+            landingpageImporterShowState('error');
+        }
+
+        async function processLandingpageImporter(btn) {
+            const topicEl = document.getElementById('landingpage-importer-topic');
+            const targetEl = document.getElementById('landingpage-importer-target');
+            const optionsEl = document.getElementById('landingpage-importer-options');
+            
+            const topic = topicEl ? topicEl.value.trim() : '';
+            const target = targetEl ? targetEl.value.trim() : '';
+            const options = optionsEl ? optionsEl.value.trim() : '';
+
+            if (!topic || !target) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide both Topic and Target Audience.');
+                } else {
+                    landingpageImporterShowError('Validation Error', 'Please provide both Topic and Target Audience.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Importing...'; }
+
+            landingpageImporterShowState('loading');
+
+            try {
+                // Mock API integration or real if wired
+                const response = await fetch('/api/minimal-solutions/landingpage_importer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        target: target,
+                        options: options
+                    })
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok || result.status === 'error') {
+                    let errorMsg = result.message || 'Unknown error occurred.';
+                    if (result.details) {
+                        if (typeof result.details === 'object') {
+                            const detailsStr = Object.values(result.details).join(', ');
+                            if (detailsStr) errorMsg += ' - ' + detailsStr;
+                        } else if (Array.isArray(result.details)) {
+                            errorMsg += ' - ' + result.details.join(', ');
+                        } else {
+                            errorMsg += ' - ' + result.details;
+                        }
+                    }
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', errorMsg);
+                    } else {
+                        landingpageImporterShowError('API Error', errorMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Import Landingpage Data'; }
+                    return;
+                }
+
+                renderLandingpageImporter(result.data || 'Import complete.');
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Import Landingpage Data'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API: ' + err.message);
+                } else {
+                    landingpageImporterShowError('Network Error', 'Failed to connect to the API: ' + err.message);
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Import Landingpage Data'; }
+            }
+        }
+
+        function renderLandingpageImporter(data) {
+            const outputElement = document.getElementById('landingpage-importer-template-output');
+            
+            let outputText = data;
+            if (data && data.imported_data) {
+                outputText = data.imported_data;
+            } else if (typeof data === 'object') {
+                outputText = JSON.stringify(data, null, 2);
+            }
+            if(outputElement) outputElement.innerText = outputText;
+            
+            landingpageImporterShowState('result');
+        }
+
+        function copyLandingpageImporter() {
+            const outputElement = document.getElementById('landingpage-importer-template-output');
+            const text = outputElement ? outputElement.innerText : '';
+            const btn = document.querySelector('.landingpage-importer-copy-btn');
+            const originalHtml = btn ? btn.innerHTML : 'Copy Result';
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    if(btn) btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { if(btn) btn.innerHTML = originalHtml; }, 2000);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if(btn) btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { if(btn) btn.innerHTML = originalHtml; }, 2000);
+                } catch (err) {}
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

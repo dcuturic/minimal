@@ -1,0 +1,314 @@
+<div class="dpg-container" style="width: 100%;">
+    <style>
+        .dpg-input-group { margin-bottom: 1.5rem; }
+        .dpg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .dpg-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .dpg-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .dpg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .dpg-plan-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .dpg-plan-item {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            width: 100%;
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .dpg-time-block {
+            background: var(--primary-color);
+            color: #fff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .dpg-task-info {
+            flex-grow: 1;
+        }
+        
+        .dpg-task-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin: 0;
+            margin-bottom: 0.25rem;
+            word-break: break-word;
+        }
+
+        .dpg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .dpg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="dpg-grid">
+        <div class="dpg-form-section">
+            <div class="dpg-input-group">
+                <label>Tasks (one per line)</label>
+                <textarea id="dpg-tasks-input" class="dpg-input" placeholder="e.g. Check emails&#10;Write report&#10;Team meeting" rows="5"></textarea>
+            </div>
+            <div class="dpg-input-group">
+                <label>Available Hours</label>
+                <input type="number" id="dpg-hours-input" class="dpg-input" placeholder="e.g. 8" value="8" min="1" max="24" />
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processDpg(this)">
+                Generate Daily Plan
+            </button>
+        </div>
+
+        <div class="dpg-preview-section">
+            <div class="dpg-preview-box" id="dpg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="dpg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter tasks and hours to generate a plan.</p>
+                </div>
+                
+                <div id="dpg-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0; color: var(--text-color);">Your Daily Plan (<span id="dpg-count">0</span> items)</h4>
+                    </div>
+                    
+                    <div class="dpg-plan-list" id="dpg-plan-list-container">
+                        <!-- Plan items will be rendered here -->
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; justify-content: center; width: 100%; margin-top: 1.5rem;">
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="copyDpgPlan()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy JSON
+                        </button>
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="downloadDpgJson()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Download JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processDpg(btn) {
+            const tasksInput = document.getElementById('dpg-tasks-input').value.trim();
+            const hoursInput = parseFloat(document.getElementById('dpg-hours-input').value);
+            
+            const container = document.getElementById('dpg-preview-container');
+            const emptyState = document.getElementById('dpg-empty-state');
+            const resultState = document.getElementById('dpg-result-state');
+            
+            if (!tasksInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Tasks are required.');
+                } else {
+                    alert('Tasks are required.');
+                }
+                return;
+            }
+            if (isNaN(hoursInput) || hoursInput <= 0) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Available hours must be greater than 0.');
+                } else {
+                    alert('Available hours must be greater than 0.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'dpg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const tasksArray = tasksInput.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+                const requestData = {
+                    tasks: tasksArray,
+                    available_hours: hoursInput
+                };
+                
+                const response = await fetch('/api/minimal-solutions/daily_plan_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('dpg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Daily Plan'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const planItems = result.data.plan || [];
+                window.lastDpgData = planItems;
+                
+                document.getElementById('dpg-count').innerText = planItems.length;
+                
+                const listContainer = document.getElementById('dpg-plan-list-container');
+                listContainer.innerHTML = '';
+                
+                planItems.forEach((item) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'dpg-plan-item';
+                    
+                    itemDiv.innerHTML = `
+                        <div class="dpg-time-block">${item.start_time || 'N/A'} - ${item.end_time || 'N/A'}</div>
+                        <div class="dpg-task-info">
+                            <h3 class="dpg-task-title">${item.task}</h3>
+                        </div>
+                    `;
+                    listContainer.appendChild(itemDiv);
+                });
+                
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Daily Plan'; }
+
+            } catch (err) {
+                const loader = document.getElementById('dpg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Daily Plan'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        async function copyDpgPlan() {
+            if (!window.lastDpgData) return;
+            try {
+                await navigator.clipboard.writeText(JSON.stringify(window.lastDpgData, null, 2));
+                if (typeof showToast === 'function') {
+                    showToast('JSON copied to clipboard!');
+                } else {
+                    alert('JSON copied to clipboard!');
+                }
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+
+        function downloadDpgJson() {
+            if (!window.lastDpgData) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.lastDpgData, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "daily_plan.json");
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert Aufgaben in einen tagesaktuellen, stundenbasierten Plan zu verteilen.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/daily_plan_generator</code>
+        </div>
+
+        <div class="dpg-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "tasks": [
+    "Mails checken",
+    "Meeting vorbereiten",
+    "Ticket 123 bearbeiten"
+  ],
+  "available_hours": 8
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `tasks` ist ein Array von Strings, `available_hours` eine Zahl größer 0.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "plan": [
+      {
+        "task": "Mails checken",
+        "start_time": "09:00",
+        "end_time": "11:40"
+      },
+      {
+        "task": "Meeting vorbereiten",
+        "start_time": "11:40",
+        "end_time": "14:20"
+      },
+      {
+        "task": "Ticket 123 bearbeiten",
+        "start_time": "14:20",
+        "end_time": "17:00"
+      }
+    ]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

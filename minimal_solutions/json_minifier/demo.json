@@ -1,0 +1,23 @@
+{
+  "project": "CraftHoster",
+  "developer": "Danijel",
+  "type": "Minimal Solutions",
+  "active": true,
+  "metrics": {
+    "solutions_count": 8000,
+    "uptime_percentage": 99.9,
+    "daily_active_users": 1500
+  },
+  "features": [
+    "JSON Minifier",
+    "JSON Formatter",
+    "UUID Generator",
+    "QR Code Generator",
+    "Password Generator"
+  ],
+  "settings": {
+    "theme": "dark",
+    "notifications": false,
+    "api_version": "v1"
+  }
+}

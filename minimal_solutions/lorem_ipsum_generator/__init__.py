@@ -1,0 +1,3 @@
+"""
+Lorem Ipsum Generator Module
+"""

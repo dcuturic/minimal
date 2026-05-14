@@ -1,0 +1,223 @@
+<div class="mnf-container" style="width: 100%;">
+    <style>
+        .mnf-input-group { margin-bottom: 1.5rem; }
+        .mnf-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .mnf-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .mnf-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .mnf-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .mnf-result-box {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            width: 100%;
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            white-space: pre-wrap;
+            font-family: inherit;
+            color: var(--text-color);
+        }
+
+        .mnf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .mnf-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="mnf-grid">
+        <div class="mnf-form-section">
+            <div class="mnf-input-group">
+                <label>Unformatted Meeting Notes</label>
+                <textarea id="mnf-notes-input" class="mnf-input" placeholder="e.g. talked about design, needs a new logo. marketing said no budget. to-do: call agency" rows="10"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processMnf(this)">
+                Format Notes
+            </button>
+        </div>
+
+        <div class="mnf-preview-section">
+            <div class="mnf-preview-box" id="mnf-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="mnf-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter notes to see formatted result.</p>
+                </div>
+                
+                <div id="mnf-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0; color: var(--text-color);">Formatted Notes</h4>
+                    </div>
+                    
+                    <div class="mnf-result-box" id="mnf-formatted-output">
+                        <!-- Formatted result will be rendered here -->
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; justify-content: center; width: 100%; margin-top: 1.5rem;">
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="copyMnfResult()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processMnf(btn) {
+            const notesInput = document.getElementById('mnf-notes-input').value.trim();
+            
+            const container = document.getElementById('mnf-preview-container');
+            const emptyState = document.getElementById('mnf-empty-state');
+            const resultState = document.getElementById('mnf-result-state');
+            
+            if (!notesInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Notes are required.');
+                } else {
+                    alert('Notes are required.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Formatting...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'mnf-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const requestData = { notes: notesInput };
+                
+                const response = await fetch('/api/minimal-solutions/meeting_notes_formatter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('mnf-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Format Notes'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                let formattedOutputText = result.data?.formatted_notes || "";
+                
+                if (result.data?.action_items && result.data.action_items.length > 0) {
+                    formattedOutputText += "\n\n--- Action Items ---\n" + result.data.action_items.join("\n");
+                }
+                
+                window.lastMnfData = formattedOutputText;
+                
+                document.getElementById('mnf-formatted-output').innerText = formattedOutputText;
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Format Notes'; }
+
+            } catch (err) {
+                const loader = document.getElementById('mnf-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Format Notes'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        async function copyMnfResult() {
+            if (!window.lastMnfData) return;
+            try {
+                await navigator.clipboard.writeText(window.lastMnfData);
+                if (typeof showToast === 'function') {
+                    showToast('Result copied to clipboard!');
+                } else {
+                    alert('Result copied to clipboard!');
+                }
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+    </script>
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um unstrukturierte Notizen automatisch in formatierte Listen und Action Items zu konvertieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/meeting_notes_formatter</code>
+        </div>
+
+        <div class="mnf-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "notes": "team sync. talked about budget and q3 goals. anna will prepare the presentation by friday. budget approved for 50k. need to call the agency."
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `notes` ist ein String, der nicht leer sein darf.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "formatted_notes": "- Team Sync.\n- Talked about budget and Q3 goals.\n- Budget approved for 50k.",
+    "action_items": [
+      "Anna will prepare the presentation by friday.",
+      "Need to call the agency."
+    ]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

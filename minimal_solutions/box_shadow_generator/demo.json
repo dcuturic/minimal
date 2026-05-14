@@ -1,0 +1,40 @@
+[
+  {
+    "title": "Subtle Drop Shadow",
+    "description": "Erzeugt einen subtilen Box Shadow für Karten-Elemente.",
+    "request": {
+      "x": 0,
+      "y": 4,
+      "blur": 12,
+      "spread": 0,
+      "opacity": 0.1,
+      "color": "#000000",
+      "inset": false
+    },
+    "response": {
+      "success": true,
+      "data": {
+        "css": "0px 4px 12px 0px rgba(0, 0, 0, 0.1)"
+      }
+    }
+  },
+  {
+    "title": "Inset Inner Shadow",
+    "description": "Erzeugt einen nach innen gerichteten Schatten.",
+    "request": {
+      "x": 2,
+      "y": 2,
+      "blur": 5,
+      "spread": 0,
+      "opacity": 0.2,
+      "color": "#000000",
+      "inset": true
+    },
+    "response": {
+      "success": true,
+      "data": {
+        "css": "inset 2px 2px 5px 0px rgba(0, 0, 0, 0.2)"
+      }
+    }
+  }
+]

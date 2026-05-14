@@ -1,0 +1,324 @@
+<div class="rg-container" style="width: 100%;">
+    <style>
+        .rg-input-group { margin-bottom: 1.5rem; }
+        .rg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .rg-input { width: 100%; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.75rem; border-radius: 4px; font-family: inherit; font-size: 0.95rem; }
+        .rg-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 255, 213), 0.2); }
+        
+        .rg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .rg-result-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-color);
+        }
+        .rg-result-list li {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .rg-result-list li:last-child {
+            border-bottom: none;
+        }
+        .rg-result-list li span.index {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .rg-pattern-display {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .rg-controls { display: flex; gap: 1rem; justify-content: center; }
+        .rg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .rg-grid { grid-template-columns: 1fr; } }
+        
+        /* Custom scrollbar for the list */
+        .rg-result-list::-webkit-scrollbar { width: 6px; }
+        .rg-result-list::-webkit-scrollbar-track { background: var(--bg-color); }
+        .rg-result-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        .rg-result-list::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+
+    <div class="rg-grid">
+        <div class="rg-form-section">
+            <div class="rg-input-group">
+                <label for="rg-prefix">Prefix (optional)</label>
+                <input type="text" id="rg-prefix" class="rg-input" placeholder="e.g. RE" value="RE">
+            </div>
+
+            <div class="rg-input-group">
+                <label for="rg-year">Year (optional)</label>
+                <input type="text" id="rg-year" class="rg-input" placeholder="e.g. 2026" value="2026">
+            </div>
+
+            <div class="rg-input-group">
+                <label for="rg-start-number">Start Number</label>
+                <input type="number" id="rg-start-number" class="rg-input" value="1" min="1">
+            </div>
+
+            <div class="rg-input-group">
+                <label for="rg-count">Count (How many numbers to generate?)</label>
+                <input type="number" id="rg-count" class="rg-input" value="5" min="1" max="100">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateInvoiceNumbers(this)">
+                Generate Numbers
+            </button>
+        </div>
+
+        <div class="rg-preview-section">
+            <div class="rg-preview-box" id="rg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="rg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><line x1="9" y1="16" x2="15" y2="16"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure parameters and click generate.</p>
+                </div>
+                
+                <div id="rg-result-state" style="display: none; width: 100%;">
+                    <div class="rg-pattern-display" id="rg-pattern-text">Pattern: [Prefix]-[Year]-[Number]</div>
+                    <ul class="rg-result-list" id="rg-number-list">
+                        <!-- Numbers will be injected here -->
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="rg-controls" style="display: none;" id="rg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyAllNumbers(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy All
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateInvoiceNumbers(btn) {
+            const prefix = document.getElementById('rg-prefix').value.trim();
+            const year = document.getElementById('rg-year').value.trim();
+            const startNumber = parseInt(document.getElementById('rg-start-number').value);
+            const count = parseInt(document.getElementById('rg-count').value);
+            
+            const container = document.getElementById('rg-preview-container');
+            const controls = document.getElementById('rg-result-controls');
+            const emptyState = document.getElementById('rg-empty-state');
+            const resultState = document.getElementById('rg-result-state');
+            const listContainer = document.getElementById('rg-number-list');
+            const patternText = document.getElementById('rg-pattern-text');
+            
+            // Validation
+            if (isNaN(startNumber) || startNumber < 1) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Start Number must be at least 1.');
+                else alert('Start Number must be at least 1.');
+                return;
+            }
+            if (isNaN(count) || count < 1 || count > 1000) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Count must be between 1 and 1000.');
+                else alert('Count must be between 1 and 1000.');
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'rg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/rechnungsnummer_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prefix: prefix,
+                        year: year,
+                        start_number: startNumber,
+                        count: count
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('rg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Numbers'; }
+                    return;
+                }
+
+                const numbers = result.data.numbers;
+                const pattern = result.data.pattern || 'Pattern applied';
+
+                // Update UI
+                patternText.innerText = `Pattern: ${pattern}`;
+                listContainer.innerHTML = '';
+                
+                numbers.forEach((num, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${num}</span> <span class="index">#${index + 1}</span>`;
+                    listContainer.appendChild(li);
+                });
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Numbers'; }
+                
+                // Optional: Update the API Result box below if present in the main UI
+                const resultBox = document.querySelector('.result-box');
+                if(resultBox) {
+                    resultBox.innerHTML = `
+                        <div style="text-align: center; width: 100%;">
+                            <p style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">Generated Successfully!</p>
+                            <pre class="code-block" style="text-align: left; background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">
+{
+  "status": "success",
+  "data": {
+    "numbers": [
+      "${numbers.slice(0, 3).join('",\n      "')}"${numbers.length > 3 ? ',\n      ...' : ''}
+    ],
+    "count": ${numbers.length},
+    "pattern": "${pattern}"
+  }
+}
+                            </pre>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                const loader = document.getElementById('rg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Numbers'; }
+            }
+        }
+
+        function copyAllNumbers(btn) {
+            const listItems = document.querySelectorAll('#rg-number-list li span:first-child');
+            const numbers = Array.from(listItems).map(span => span.innerText).join('\\n');
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(numbers).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                // Fallback
+                const textArea = document.createElement("textarea");
+                textArea.value = numbers;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <div style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Use this endpoint to programmatically generate invoice numbers.</p>
+        
+        <div class="api-docs-box" style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+            <div style="background: var(--surface-color); padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem;">
+                <span style="background: var(--primary-color); color: var(--bg-color); padding: 0.25rem 0.75rem; border-radius: 4px; font-weight: bold; font-size: 0.85rem;">POST</span>
+                <code style="color: var(--text-color); font-size: 0.95rem;">/api/minimal-solutions/rechnungsnummer_generator</code>
+            </div>
+            
+            <div style="padding: 1.5rem;">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color); font-size: 0.95rem;">Request Example</h4>
+                <pre class="code-block" style="background: var(--surface-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto; margin-bottom: 1.5rem; color: var(--text-color);">
+{
+  "prefix": "RE",
+  "year": "2026",
+  "start_number": 1,
+  "count": 5
+}</pre>
+
+                <h4 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color); font-size: 0.95rem;">Response Example</h4>
+                <pre class="code-block" style="background: var(--surface-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "numbers": [
+      "RE-2026-0001",
+      "RE-2026-0002",
+      "RE-2026-0003",
+      "RE-2026-0004",
+      "RE-2026-0005"
+    ],
+    "count": 5,
+    "pattern": "RE-2026-0000"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

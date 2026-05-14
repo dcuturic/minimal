@@ -1,0 +1,246 @@
+<div class="backup-container" style="width: 100%;">
+    <style>
+        .backup-input-group { margin-bottom: 1.5rem; }
+        .backup-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .backup-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: inherit; font-size: 1rem; }
+        .backup-input:focus { outline: none; border-color: var(--primary-color); }
+        .backup-select { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: inherit; font-size: 1rem; appearance: auto; }
+        .backup-select:focus { outline: none; border-color: var(--primary-color); }
+        
+        .backup-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .backup-result-text {
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-break: break-all;
+            width: 100%;
+            text-align: left;
+            line-height: 1.5;
+            font-family: monospace;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .backup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .backup-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="backup-grid">
+        <div class="backup-form-section">
+            <div class="backup-input-group">
+                <label>Frequency</label>
+                <select id="backup-freq" class="backup-select">
+                    <option value="hourly">Hourly</option>
+                    <option value="daily" selected>Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+            
+            <div class="backup-input-group">
+                <label>Retention Days</label>
+                <input type="number" id="backup-retention" class="backup-input" placeholder="e.g. 30" value="30">
+            </div>
+            
+            <div class="backup-input-group">
+                <label>Storage Type</label>
+                <select id="backup-storage" class="backup-select">
+                    <option value="local">Local</option>
+                    <option value="s3" selected>AWS S3</option>
+                    <option value="azure">Azure Blob</option>
+                    <option value="gcs">Google Cloud Storage</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateBackupPlan(this)">
+                Generate Backup Plan
+            </button>
+            <div id="backup-error-state" style="display:none; color: var(--error-color, #ff4d4d); margin-top: 1rem; font-size: 0.9rem;"></div>
+        </div>
+
+        <div class="backup-preview-section">
+            <div class="backup-preview-box" id="backup-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="backup-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure details to generate a backup plan.</p>
+                </div>
+                
+                <div id="backup-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="copyBackupJson(this)">Copy JSON</button>
+                    </div>
+                    <pre class="backup-result-text" id="backup-result"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateBackupPlan(btn) {
+            const frequency = document.getElementById('backup-freq').value;
+            const retention = document.getElementById('backup-retention').value;
+            const storage = document.getElementById('backup-storage').value;
+            
+            const container = document.getElementById('backup-preview-container');
+            const emptyState = document.getElementById('backup-empty-state');
+            const resultState = document.getElementById('backup-result-state');
+            const errorState = document.getElementById('backup-error-state');
+            
+            if (errorState) errorState.style.display = 'none';
+
+            if (!retention || parseInt(retention) <= 0) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide valid Retention Days.');
+                } else if (errorState) {
+                    errorState.innerText = 'Please provide valid Retention Days.';
+                    errorState.style.display = 'block';
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'backup-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/backup_plan_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        frequency: frequency,
+                        retention_days: parseInt(retention),
+                        storage_type: storage
+                    })
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('backup-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else if (errorState) {
+                        errorState.innerText = result.message || 'Unknown error occurred.';
+                        errorState.style.display = 'block';
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Backup Plan'; }
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+
+                document.getElementById('backup-result').textContent = JSON.stringify(result.data || result, null, 2);
+                
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Backup Plan'; }
+
+            } catch (err) {
+                const loader = document.getElementById('backup-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else if (errorState) {
+                    errorState.innerText = 'Failed to connect to the API.';
+                    errorState.style.display = 'block';
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Backup Plan'; }
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        async function copyBackupJson(btn) {
+            const textContent = document.getElementById('backup-result').textContent;
+            try {
+                await navigator.clipboard.writeText(textContent);
+                if (typeof showCopySuccess === 'function') {
+                    showCopySuccess(btn, true);
+                } else {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = 'Copied!';
+                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                }
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Copy Error', 'Failed to copy text.');
+                } else {
+                    btn.innerHTML = 'Error';
+                    setTimeout(() => { btn.innerHTML = 'Copy JSON'; }, 2000);
+                }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert Backup-Pläne zu generieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/backup_plan_generator</code>
+        </div>
+
+        <div class="backup-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "frequency": "daily",
+  "retention_days": 30,
+  "storage_type": "s3"
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `frequency` kann "hourly", "daily", "weekly" oder "monthly" sein. `storage_type` unterstützt "local", "s3", "azure", "gcs".</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "plan_id": "bp_123456789",
+    "frequency": "daily",
+    "retention_days": 30,
+    "storage_type": "s3",
+    "next_run": "2026-05-13T00:00:00Z",
+    "estimated_cost_per_gb": 0.023,
+    "actions": [
+      "Snapshot EBS volumes",
+      "Sync to S3 bucket"
+    ]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

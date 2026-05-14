@@ -1,0 +1,287 @@
+<div class="j2c-container" style="width: 100%;">
+    <style>
+        .j2c-input-group { margin-bottom: 1.5rem; }
+        .j2c-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .j2c-textarea {
+            width: 100%;
+            min-height: 250px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .j2c-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .j2c-select {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            appearance: none;
+            cursor: pointer;
+        }
+        .j2c-select:focus { outline: none; border-color: var(--primary-color); }
+
+        .j2c-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .j2c-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .j2c-controls { display: flex; gap: 1rem; justify-content: center; }
+        .j2c-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .j2c-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="j2c-grid">
+        <div class="j2c-form-section">
+            <div class="j2c-input-group">
+                <label>JSON Text</label>
+                <textarea id="j2c-text-input" class="j2c-textarea" placeholder='[&#10;  {&#10;    "name": "Max",&#10;    "age": 30&#10;  }&#10;]'></textarea>
+            </div>
+
+            <div class="j2c-input-group">
+                <label>Delimiter</label>
+                <select id="j2c-delimiter" class="j2c-select">
+                    <option value=",">Comma (,)</option>
+                    <option value=";">Semicolon (;)</option>
+                    <option value="\t">Tab (\t)</option>
+                    <option value="|">Pipe (|)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processJsonToCsv(this)">
+                Convert to CSV
+            </button>
+        </div>
+
+        <div class="j2c-preview-section">
+            <div class="j2c-preview-box" id="j2c-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="j2c-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter JSON and click convert.</p>
+                </div>
+                
+                <div id="j2c-result-state" style="display: none; width: 100%;">
+                    <pre class="j2c-result-text" id="j2c-text-result"></pre>
+                </div>
+            </div>
+            
+            <div class="j2c-controls" style="display: none;" id="j2c-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyJsonToCsv(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Result
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadCsv()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download CSV
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Box -->
+    <div class="api-doku-box" style="margin-top: 3rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Du kannst diese Minimal-Lösung auch per API ansprechen.</p>
+        
+        <div style="background: var(--surface-color); padding: 1rem; border-radius: 4px; margin-bottom: 1rem; font-family: monospace; border: 1px solid var(--border-color);">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/json_zu_csv_converter
+        </div>
+
+        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Request Beispiel</h4>
+        <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0;">
+{
+  "json_text": "[\n  {\n    \"name\": \"Max\",\n    \"age\": 30\n  }\n]",
+  "delimiter": ","
+}</pre>
+
+        <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Response Beispiel</h4>
+        <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0;">
+{
+  "status": "success",
+  "data": {
+    "csv_text": "name,age\nMax,30"
+  }
+}</pre>
+    </div>
+
+    <script>
+        async function processJsonToCsv(btn) {
+            const textInput = document.getElementById('j2c-text-input').value.trim();
+            const delimiter = document.getElementById('j2c-delimiter').value;
+            
+            const container = document.getElementById('j2c-preview-container');
+            const controls = document.getElementById('j2c-result-controls');
+            const emptyState = document.getElementById('j2c-empty-state');
+            const resultState = document.getElementById('j2c-result-state');
+            
+            if (!textInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide JSON text to convert.');
+                } else {
+                    alert('Please provide JSON text.');
+                }
+                return;
+            }
+
+            try {
+                JSON.parse(textInput);
+            } catch (e) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Invalid JSON format.');
+                } else {
+                    alert('Invalid JSON format.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Converting...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'j2c-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/json_zu_csv_converter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        json_text: textInput,
+                        delimiter: delimiter
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('j2c-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Convert to CSV'; }
+                    return;
+                }
+
+                // Handling API standard response format: result.data
+                const outputText = result.data ? result.data.csv_text : '';
+
+                document.getElementById('j2c-text-result').innerText = outputText;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Convert to CSV'; }
+
+            } catch (err) {
+                const loader = document.getElementById('j2c-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Convert to CSV'; }
+            }
+        }
+
+        function copyJsonToCsv(btn) {
+            const outputText = document.getElementById('j2c-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function downloadCsv() {
+            const outputText = document.getElementById('j2c-text-result').innerText;
+            if (!outputText) return;
+
+            const blob = new Blob([outputText], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'data.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</div>

@@ -1,0 +1,18 @@
+{
+  "request": {
+    "error_text": "Uncaught TypeError: Cannot read properties of undefined (reading 'length')",
+    "context": "const arr = data.items;\nconsole.log(arr.length);"
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "causes": [
+        "Es wird versucht auf eine Variable oder ein Objekt zuzugreifen, das nicht initialisiert wurde (Null / None / Undefined)."
+      ],
+      "resolution_steps": [
+        "Stellen Sie sicher, dass das Objekt korrekt erstellt wurde, bevor Sie darauf zugreifen.",
+        "Fügen Sie Checks ein (z.B. 'if object is not None:')."
+      ]
+    }
+  }
+}

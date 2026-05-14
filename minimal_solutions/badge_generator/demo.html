@@ -1,0 +1,275 @@
+<div class="bg-container" style="width: 100%;">
+    <style>
+        .bg-input-group { margin-bottom: 1.5rem; }
+        .bg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .bg-input, .bg-select { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; }
+        .bg-input:focus, .bg-select:focus { outline: none; border-color: var(--primary-color); }
+
+        .bg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .bg-result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .bg-svg-wrapper {
+            background: var(--bg-color);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .bg-controls { display: flex; gap: 1rem; justify-content: center; }
+        .bg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .bg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="bg-grid">
+        <div class="bg-form-section">
+            <div class="bg-input-group">
+                <label>Label</label>
+                <input type="text" id="bg-label" class="bg-input" placeholder="e.g. build">
+            </div>
+
+            <div class="bg-input-group">
+                <label>Value</label>
+                <input type="text" id="bg-value" class="bg-input" placeholder="e.g. passing">
+            </div>
+
+            <div class="bg-input-group">
+                <label>Style</label>
+                <select id="bg-style" class="bg-select">
+                    <option value="flat">Flat</option>
+                    <option value="classic">Classic</option>
+                    <option value="plastic">Plastic</option>
+                    <option value="for-the-badge">For The Badge</option>
+                    <option value="social">Social</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateBadge(this)">
+                Generate Badge
+            </button>
+        </div>
+
+        <div class="bg-preview-section">
+            <div class="bg-preview-box" id="bg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="bg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="8" width="18" height="8" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Provide label, value, style and click generate.</p>
+                </div>
+                
+                <div id="bg-result-state" style="display: none; width: 100%;">
+                    <div class="bg-result-container">
+                        <div class="bg-svg-wrapper" id="bg-svg-output">
+                            <!-- SVG goes here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-controls" style="display: none;" id="bg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyBadgeSvg(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy SVG
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadBadgeSvg(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="bg-api-docs" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The Badge Generator functionality can also be accessed via API.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block; font-family: monospace;">POST /api/minimal-solutions/badge_generator</code>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "label": "build",
+  "value": "passing",
+  "style": "flat"
+}</pre>
+        </div>
+        
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "status": "success",
+  "data": {
+    "badge_svg": "&lt;svg...&gt;...&lt;/svg&gt;"
+  }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        let currentBadgeSvg = '';
+
+        async function generateBadge(btn) {
+            const label = document.getElementById('bg-label').value;
+            const value = document.getElementById('bg-value').value;
+            const style = document.getElementById('bg-style').value;
+            
+            const container = document.getElementById('bg-preview-container');
+            const controls = document.getElementById('bg-result-controls');
+            const emptyState = document.getElementById('bg-empty-state');
+            const resultState = document.getElementById('bg-result-state');
+            
+            // Validation
+            if (!label || !value) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide both label and value.');
+                } else {
+                    alert('Please provide both label and value.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'bg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/badge_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        label: label,
+                        value: value,
+                        style: style
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('bg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Badge'; }
+                    return;
+                }
+
+                currentBadgeSvg = result.data.badge_svg || result.data.svg_code || result.data.svg;
+
+                // Update UI Result-State
+                const svgOutput = document.getElementById('bg-svg-output');
+                svgOutput.innerHTML = currentBadgeSvg;
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Badge'; }
+
+            } catch (err) {
+                const loader = document.getElementById('bg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Badge'; }
+            }
+        }
+
+        function copyBadgeSvg(btn) {
+            if (!currentBadgeSvg) return;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(currentBadgeSvg).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = currentBadgeSvg;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function downloadBadgeSvg(btn) {
+            if (!currentBadgeSvg) return;
+            const blob = new Blob([currentBadgeSvg], { type: 'image/svg+xml' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'badge.svg';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</div>

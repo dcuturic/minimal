@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+{% from 'components/api_doc_box.html' import api_doc_box %}
+{% from 'components/empty_state.html' import empty_state %}
+
+{% block content %}
+<section class="detail">
+    <div class="breadcrumb">
+        <a href="{{ url_for('main.solutions_overview') }}">&larr; Back to Solutions</a>
+    </div>
+    
+    <div class="detail-header">
+        <div class="title-row">
+            <h2>{{ solution.title }}</h2>
+            <span class="badge status-{{ solution.status | lower | replace(' ', '-') }}">{{ solution.status }}</span>
+        </div>
+        <p class="category-text">Category: {{ solution.category }}</p>
+    </div>
+
+    <div class="solution-layout">
+        <!-- Main Demo UI Area -->
+        <div class="solution-main">
+            <div class="card demo-ui-card">
+                <h3>Demo UI</h3>
+                <div class="demo-area" id="demo-area-container" data-demo-url="{{ solution.ui_route }}/demo">
+                    <!-- The individual minimal solution UI will be injected or rendered here -->
+                    {{ empty_state(
+                        title="Loading Component",
+                        description="Fetching the UI component for this solution...",
+                        icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+                        cta_text="Please wait",
+                        cta_url="#"
+                    ) }}
+                </div>
+                
+                <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                    const demoArea = document.getElementById('demo-area-container');
+                    if(demoArea) {
+                        const url = demoArea.getAttribute('data-demo-url');
+                        fetch(url)
+                            .then(res => {
+                                if(res.ok) return res.text();
+                                throw new Error("Not implemented");
+                            })
+                            .then(html => {
+                                if(html.trim().length > 0) {
+                                    demoArea.innerHTML = html;
+                                    // Execute scripts inside the loaded HTML
+                                    const scripts = demoArea.querySelectorAll('script');
+                                    scripts.forEach(oldScript => {
+                                        const newScript = document.createElement('script');
+                                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                                    });
+                                } else {
+                                    showMissingState();
+                                }
+                            })
+                            .catch(e => {
+                                console.error(e);
+                                showMissingState();
+                            });
+                            
+                        function showMissingState() {
+                            demoArea.innerHTML = `{{ empty_state(
+                                title="UI Component Missing",
+                                description="The UI component for this minimal solution has not been implemented yet.",
+                                icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+                                cta_text="Implement Now",
+                                cta_url="#"
+                            ) | replace('\n', '') | safe }}`;
+                        }
+                    }
+                });
+                </script>
+                
+                <div class="result-area">
+                    <h3>Result</h3>
+                    <div class="result-box">
+                        {{ empty_state(
+                            title="No Results",
+                            description="Run the demo above to see the output here.",
+                            icon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+                        ) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / API Info Area -->
+        <div class="solution-sidebar">
+            {{ api_doc_box(
+                method=solution.api_method | default("POST"), 
+                endpoint=solution.api_endpoint, 
+                request_example=solution.request_example | default('{\n  "example_key": "example_value"\n}'), 
+                response_example=solution.response_example | default('{\n  "status": "success",\n  "data": {}\n}')
+            ) }}
+        </div>
+    </div>
+</section>
+{% endblock %}

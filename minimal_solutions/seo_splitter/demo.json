@@ -1,0 +1,8 @@
+{
+    "topic": "Ein großer Textblock für SEO",
+    "target": "Blog-Post-Splitting",
+    "options": {
+        "split_by": "paragraphs",
+        "max_segments": 5
+    }
+}

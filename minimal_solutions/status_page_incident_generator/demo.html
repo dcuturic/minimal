@@ -1,0 +1,369 @@
+<div class="incident-container" style="width: 100%;">
+    <style>
+        .incident-input-group { margin-bottom: 1.5rem; }
+        .incident-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .incident-input, .incident-select { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: inherit; font-size: 1rem; }
+        .incident-input:focus, .incident-select:focus { outline: none; border-color: var(--primary-color); }
+        .incident-textarea { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: inherit; font-size: 1rem; resize: vertical; min-height: 100px; }
+        .incident-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .incident-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .incident-result-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            width: 100%;
+            text-align: left;
+            margin-top: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .incident-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .incident-card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+        }
+
+        .incident-card-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .incident-card-body {
+            color: var(--text-color);
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .incident-card-meta {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 1.5rem;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 0.75rem;
+        }
+
+        .incident-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .incident-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="incident-grid">
+        <div class="incident-form-section">
+            <div class="incident-input-group">
+                <label>Service Name</label>
+                <input type="text" id="inc-service" class="incident-input" placeholder="e.g. API, Database, Core Platform" value="Core Platform">
+            </div>
+
+            <div class="incident-input-group">
+                <label>Incident Type</label>
+                <select id="inc-type" class="incident-select">
+                    <option value="Outage">Outage</option>
+                    <option value="Degraded Performance">Degraded Performance</option>
+                    <option value="Scheduled Maintenance">Scheduled Maintenance</option>
+                </select>
+            </div>
+            
+            <div class="incident-input-group">
+                <label>Status</label>
+                <select id="inc-status" class="incident-select">
+                    <option value="Investigating">Investigating</option>
+                    <option value="Identified">Identified</option>
+                    <option value="Monitoring">Monitoring</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+            </div>
+            
+            <div class="incident-input-group">
+                <label>Message</label>
+                <textarea id="inc-message" class="incident-textarea" placeholder="Update message...">We are currently investigating reports of connectivity issues affecting the Core Platform.</textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateIncident(this)">
+                Generate Incident Card
+            </button>
+            <div id="inc-error-state" style="display:none; color: var(--error-color, #ff4d4d); margin-top: 1rem; font-size: 0.9rem;"></div>
+        </div>
+
+        <div class="incident-preview-section">
+            <div class="incident-preview-box" id="inc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="inc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure details to generate the incident card.</p>
+                </div>
+                
+                <div id="inc-result-state" style="display: none; width: 100%;">
+                    <div class="incident-result-card">
+                        <div class="incident-card-header">
+                            <h4 class="incident-card-title" id="res-service">Service Name</h4>
+                            <span class="incident-card-badge" id="res-status">Status</span>
+                        </div>
+                        <div class="incident-card-body" id="res-message">
+                            Message content goes here...
+                        </div>
+                        <div class="incident-card-meta">
+                            <span><strong>Type:</strong> <span id="res-type">Type</span></span>
+                            <span><strong>Date:</strong> <span id="res-date">Date</span></span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <button class="btn btn-secondary" onclick="copyIncidentText()" style="flex: 1; padding: 0.5rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; cursor: pointer; transition: background 0.2s;">
+                            Copy Text
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadIncidentJson()" style="flex: 1; padding: 0.5rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; cursor: pointer; transition: background 0.2s;">
+                            Download JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.currentIncidentData = null;
+
+        async function generateIncident(btn) {
+            const service = document.getElementById('inc-service').value;
+            const type = document.getElementById('inc-type').value;
+            const status = document.getElementById('inc-status').value;
+            const message = document.getElementById('inc-message').value;
+            
+            const container = document.getElementById('inc-preview-container');
+            const emptyState = document.getElementById('inc-empty-state');
+            const resultState = document.getElementById('inc-result-state');
+            const errorState = document.getElementById('inc-error-state');
+            
+            if (errorState) errorState.style.display = 'none';
+
+            if (!service || !message) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Service and Message are required.');
+                } else if (errorState) {
+                    errorState.innerText = 'Service and Message are required.';
+                    errorState.style.display = 'block';
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'inc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/status_page_incident_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        service: service,
+                        incident_type: type,
+                        status: status,
+                        message: message
+                    })
+                });
+                
+                const result = await response.json();
+                
+                const loader = document.getElementById('inc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'An error occurred during generation.');
+                    } else if (errorState) {
+                        errorState.innerText = result.message || 'An error occurred during generation.';
+                        errorState.style.display = 'block';
+                    }
+                    emptyState.style.display = 'flex';
+                } else if (result.status === 'success' && result.data) {
+                    const data = result.data;
+                    document.getElementById('res-service').textContent = data.service || service;
+                    document.getElementById('res-type').textContent = data.incident_type || type;
+                    document.getElementById('res-status').textContent = data.status || status;
+                    document.getElementById('res-message').textContent = data.message || message;
+                    
+                    // Format date if provided, otherwise use current
+                    if (data.created_at) {
+                        try {
+                            document.getElementById('res-date').textContent = new Date(data.created_at).toLocaleString();
+                        } catch(e) {
+                            document.getElementById('res-date').textContent = data.created_at;
+                        }
+                    } else {
+                        document.getElementById('res-date').textContent = new Date().toLocaleString();
+                    }
+
+                    window.currentIncidentData = data;
+
+                    // Adjust border color based on status
+                    const card = document.querySelector('.incident-result-card');
+                    const currentStatus = data.status || status;
+                    if (currentStatus === 'Resolved') card.style.borderLeftColor = '#4caf50'; // Green
+                    else if (currentStatus === 'Monitoring') card.style.borderLeftColor = '#2196f3'; // Blue
+                    else if (currentStatus === 'Identified') card.style.borderLeftColor = '#ff9800'; // Orange
+                    else card.style.borderLeftColor = 'var(--error-color, #f44336)'; // Red/Primary for Investigating
+
+                    resultState.style.display = 'block';
+                } else {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', 'Unexpected response format.');
+                    } else if (errorState) {
+                        errorState.innerText = 'Unexpected response format.';
+                        errorState.style.display = 'block';
+                    }
+                    emptyState.style.display = 'flex';
+                }
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Incident Card'; }
+
+            } catch (err) {
+                const loader = document.getElementById('inc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else if (errorState) {
+                    errorState.innerText = 'Failed to connect to the API.';
+                    errorState.style.display = 'block';
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Incident Card'; }
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        function copyIncidentText() {
+            if (!window.currentIncidentData) return;
+            const d = window.currentIncidentData;
+            const text = `Service: ${d.service}\nStatus: ${d.status}\nType: ${d.incident_type}\nDate: ${d.created_at || new Date().toISOString()}\n\nMessage:\n${d.message}`;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    if (typeof showToast === 'function') showToast('Copied to clipboard!', 'success');
+                    else alert('Copied to clipboard!');
+                }).catch(err => {
+                    if (typeof showToast === 'function') showToast('Failed to copy', 'error');
+                    else alert('Failed to copy');
+                });
+            } else {
+                // Fallback for non-secure contexts (http)
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showToast === 'function') showToast('Copied to clipboard!', 'success');
+                    else alert('Copied to clipboard!');
+                } catch (err) {
+                    if (typeof showToast === 'function') showToast('Failed to copy', 'error');
+                    else alert('Failed to copy');
+                }
+                textArea.remove();
+            }
+        }
+
+        function downloadIncidentJson() {
+            if (!window.currentIncidentData) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.currentIncidentData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            const sanitizedService = (window.currentIncidentData.service || 'incident').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+            downloadAnchorNode.setAttribute("download", `incident_${sanitizedService}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+    </script>
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert Status-Page Incident-Updates zu generieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/status_page_incident_generator</code>
+        </div>
+
+        <div class="incident-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "service": "Core Platform",
+  "incident_type": "Outage",
+  "status": "Investigating",
+  "message": "We are currently investigating..."
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: Gültige Werte für `incident_type` sind "Outage", "Degraded Performance", "Scheduled Maintenance". Gültige Werte für `status` sind "Investigating", "Identified", "Monitoring", "Resolved".</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "result": {
+      "incident": {
+        "service": "Core Platform",
+        "incident_type": "Outage",
+        "status": "Investigating",
+        "message": "We are currently investigating...",
+        "created_at": "2026-05-12T14:19:14Z",
+        "id": "inc_1234567890"
+      },
+      "formatted_text": "[2026-05-12T14:19:14Z] INCIDENT..."
+    }
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

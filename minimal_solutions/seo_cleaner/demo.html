@@ -1,0 +1,265 @@
+<div class="sc-container" style="width: 100%;">
+    <style>
+        .sc-input-group { margin-bottom: 1.2rem; }
+        .sc-input-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.9rem; }
+        .sc-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--surface-color); color: var(--text-color); font-family: inherit; }
+        .sc-input:focus { outline: none; border-color: var(--primary-color); }
+        .sc-textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--surface-color); color: var(--text-color); font-family: inherit; min-height: 100px; resize: vertical; }
+        .sc-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .sc-preview-area {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .sc-grid { grid-template-columns: 1fr; } }
+        
+        .sc-output {
+            font-family: monospace;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: left;
+        }
+
+        .sc-state { text-align: center; width: 100%; }
+        .sc-state svg { margin-bottom: 1rem; color: var(--text-muted); }
+        .sc-state p { color: var(--text-muted); margin: 0; }
+        .sc-state-error { color: #ef4444; }
+        .sc-state-error svg { color: #ef4444; }
+
+        .sc-spinner {
+            animation: sc-spin 1s linear infinite;
+        }
+        @keyframes sc-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+
+    <div class="sc-grid">
+        <div class="sc-form-section">
+            <div class="sc-input-group">
+                <label for="sc-topic">Topic</label>
+                <input type="text" id="sc-topic" class="sc-input" placeholder="e.g. Content Marketing">
+            </div>
+
+            <div class="sc-input-group">
+                <label for="sc-target">Target</label>
+                <input type="text" id="sc-target" class="sc-input" placeholder="e.g. Beginners">
+            </div>
+
+            <div class="sc-input-group">
+                <label for="sc-options">Options (JSON)</label>
+                <textarea id="sc-options" class="sc-textarea" placeholder='{"remove_duplicates": true, "normalize_case": true}'></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="executeSEOCleaner(this)" id="sc-submit-btn">
+                Clean SEO Data
+            </button>
+        </div>
+
+        <div class="sc-preview-section">
+            <div class="sc-preview-area">
+                <!-- Empty State -->
+                <div id="sc-empty-state" class="sc-state" style="display: block;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                     <p>Enter topic, target and options, then click clean.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div id="sc-loading-state" class="sc-state" style="display: none;">
+                    <svg class="sc-spinner" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    <p>Cleaning SEO Data...</p>
+                </div>
+
+                <!-- Error State -->
+                <div id="sc-error-state" class="sc-state sc-state-error" style="display: none;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                     <p id="sc-error-message">An error occurred.</p>
+                </div>
+                
+                <!-- Result State -->
+                <div id="sc-result-state" class="sc-state" style="display: none; text-align: left;">
+                    <div class="sc-output" id="sc-result-output"></div>
+                    <div style="display: flex; gap: 1rem; justify-content: flex-start;">
+                        <button class="btn btn-secondary btn-sm" onclick="copySCResult(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function resetSCStates() {
+            document.getElementById('sc-empty-state').style.display = 'none';
+            document.getElementById('sc-loading-state').style.display = 'none';
+            document.getElementById('sc-error-state').style.display = 'none';
+            document.getElementById('sc-result-state').style.display = 'none';
+        }
+
+        function showSCError(msg) {
+            resetSCStates();
+            if (typeof showErrorPanel === 'function') {
+                showErrorPanel('Error', msg);
+            } else {
+                document.getElementById('sc-error-state').style.display = 'block';
+                document.getElementById('sc-error-message').innerText = msg;
+            }
+        }
+
+        function copySCResult(btn) {
+            const text = document.getElementById('sc-result-output').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            }).catch(e => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+
+        async function executeSEOCleaner(btn) {
+            const topic = document.getElementById('sc-topic').value;
+            const target = document.getElementById('sc-target').value;
+            const optionsStr = document.getElementById('sc-options').value;
+            let optionsObj = {};
+            
+            if (optionsStr.trim()) {
+                try {
+                    optionsObj = JSON.parse(optionsStr);
+                } catch(e) {
+                    showSCError('Options must be a valid JSON object.');
+                    return;
+                }
+            }
+
+            if (!topic) {
+                showSCError("Topic is required.");
+                return;
+            }
+
+            resetSCStates();
+            document.getElementById('sc-loading-state').style.display = 'block';
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Cleaning...'; }
+
+            try {
+                const response = await fetch('/api/minimal-solutions/seo_cleaner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        target: target,
+                        options: optionsObj
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.status === 'error') {
+                    showSCError(result.message || 'Unknown API error.');
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Clean SEO Data'; }
+                    return;
+                }
+
+                resetSCStates();
+                document.getElementById('sc-result-state').style.display = 'block';
+                
+                // Format the output dynamically
+                let outputText = '';
+                if (result.data && result.data.result) {
+                    outputText = typeof result.data.result === 'object' ? JSON.stringify(result.data.result, null, 2) : result.data.result;
+                } else if (result.data) {
+                    outputText = JSON.stringify(result.data, null, 2);
+                } else {
+                    outputText = JSON.stringify(result, null, 2);
+                }
+                
+                document.getElementById('sc-result-output').innerText = outputText;
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Clean SEO Data'; }
+
+            } catch (err) {
+                showSCError('Failed to connect to the API.');
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Clean SEO Data'; }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um SEO-Daten basierend auf Topic, Target und Optionen zu bereinigen.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/seo_cleaner</code>
+        </div>
+
+        <div class="sc-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "topic": "Content Marketing",
+  "target": "Beginners",
+  "options": {
+    "remove_duplicates": true
+  }
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Die Eingabeparameter für die SEO Bereinigung.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "topic": "Content Marketing",
+    "target": "Beginners",
+    "options": {
+      "remove_duplicates": true
+    },
+    "clean_status": "success",
+    "clean_items": 5,
+    "message": "Daten für 'Content Marketing' erfolgreich bereinigt."
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

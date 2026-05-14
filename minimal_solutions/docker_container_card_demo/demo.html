@@ -1,0 +1,398 @@
+<div class="docker-card-container" style="width: 100%;">
+    <style>
+        .dc-input-group { margin-bottom: 1.5rem; }
+        .dc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .dc-input, .dc-select {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .dc-input:focus, .dc-select:focus { outline: none; border-color: var(--primary-color); }
+        
+        .dc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .dc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .dc-grid { grid-template-columns: 1fr; } }
+        
+        /* Container Card Styles */
+        .container-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .cc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .cc-title-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .cc-icon {
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(var(--primary-rgb, 59, 130, 246), 0.1);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .cc-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0;
+        }
+
+        .cc-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-running {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .status-dot-running { background-color: #10b981; }
+
+        .status-stopped, .status-exited {
+            background: rgba(107, 114, 128, 0.1);
+            color: #9ca3af;
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+        .status-dot-stopped, .status-dot-exited { background-color: #9ca3af; }
+
+        .status-paused, .status-restarting {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .status-dot-paused, .status-dot-restarting { background-color: #f59e0b; }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .cc-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .cc-detail-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .cc-detail-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .cc-detail-value {
+            font-family: monospace;
+            background: var(--bg-color);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        
+        .cc-json-area {
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+
+    </style>
+
+    <div class="dc-grid">
+        <div class="dc-form-section">
+            <div class="dc-input-group">
+                <label>Container Name</label>
+                <input type="text" id="dc-name-input" class="dc-input" placeholder="e.g. web-server" value="web-server" required>
+            </div>
+            <div class="dc-input-group">
+                <label>Status</label>
+                <select id="dc-status-input" class="dc-select">
+                    <option value="running">Running</option>
+                    <option value="stopped">Stopped</option>
+                    <option value="paused">Paused</option>
+                    <option value="restarting">Restarting</option>
+                    <option value="exited">Exited</option>
+                </select>
+            </div>
+            <div class="dc-input-group">
+                <label>Image</label>
+                <input type="text" id="dc-image-input" class="dc-input" placeholder="e.g. nginx:latest" value="nginx:latest" required>
+            </div>
+            <div class="dc-input-group">
+                <label>Ports</label>
+                <input type="text" id="dc-ports-input" class="dc-input" placeholder="e.g. 80:80" value="80:80" required>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processContainerCard(this)">
+                Generate Container Card
+            </button>
+        </div>
+
+        <div class="dc-preview-section">
+            <div class="dc-preview-box" id="dc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="dc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter container details and click generate.</p>
+                </div>
+                
+                <div id="dc-result-state" style="display: none; width: 100%;">
+                    <div id="dc-card-container">
+                        <!-- Card goes here -->
+                    </div>
+                    
+                    <div class="cc-json-area">
+                        <div class="dc-input-group">
+                            <label>JSON Data</label>
+                            <textarea id="dc-json-result" class="dc-input" rows="5" readonly></textarea>
+                        </div>
+                        <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="copyContainerJson()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="dc-api-docs" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Generate Docker Container Cards via API.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block; font-family: monospace;">POST /api/minimal-solutions/docker_container_card_demo</code>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "name": "web-server",
+  "status": "running",
+  "image": "nginx:latest",
+  "ports": "80:80"
+}</pre>
+        </div>
+        
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "status": "success",
+  "data": {
+    "name": "web-server",
+    "status": "running",
+    "image": "nginx:latest",
+    "ports": "80:80",
+    "timestamp": "2026-05-12T10:14:00Z"
+  }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        let currentContainerData = null;
+
+        async function processContainerCard(btn) {
+            const nameInput = document.getElementById('dc-name-input').value;
+            const statusInput = document.getElementById('dc-status-input').value;
+            const imageInput = document.getElementById('dc-image-input').value;
+            const portsInput = document.getElementById('dc-ports-input').value;
+            
+            const container = document.getElementById('dc-preview-container');
+            const emptyState = document.getElementById('dc-empty-state');
+            const resultState = document.getElementById('dc-result-state');
+            
+            if (!nameInput || !imageInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide a Container Name and Image.');
+                } else {
+                    alert('Please provide a Container Name and Image.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'dc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            currentContainerData = null;
+
+            try {
+                const response = await fetch('/api/minimal-solutions/docker_container_card_demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        name: nameInput,
+                        status: statusInput,
+                        image: imageInput,
+                        ports: portsInput || 'None'
+                    })
+                });
+
+                const result = await response.json();
+
+                const loader = document.getElementById('dc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    const errorMsg = result.message || 'Ein Fehler ist aufgetreten.';
+                    let detailMsg = '';
+                    if (result.details && Array.isArray(result.details)) {
+                        detailMsg = result.details.map(d => d.msg || d).join(', ');
+                    }
+                    const fullError = detailMsg ? `${errorMsg} - ${detailMsg}` : errorMsg;
+                    
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', fullError);
+                    } else {
+                        alert(fullError);
+                    }
+                    emptyState.style.display = 'block';
+                } else {
+                    const data = result.data;
+                    currentContainerData = data;
+
+                    const cardContainer = document.getElementById('dc-card-container');
+                    const jsonEl = document.getElementById('dc-json-result');
+                    
+                    const nameVal = data.name !== undefined ? data.name : nameInput;
+                    const statusVal = data.status !== undefined ? data.status : statusInput;
+                    const imageVal = data.image !== undefined ? data.image : imageInput;
+                    const portsVal = data.ports !== undefined ? data.ports : (portsInput || 'None');
+
+                    let statusClass = 'status-stopped';
+                    let statusDotClass = 'status-dot-stopped';
+                    if (statusVal === 'running') { statusClass = 'status-running'; statusDotClass = 'status-dot-running'; }
+                    else if (statusVal === 'paused' || statusVal === 'restarting') { statusClass = 'status-paused'; statusDotClass = 'status-dot-paused'; }
+                    else if (statusVal === 'exited') { statusClass = 'status-exited'; statusDotClass = 'status-dot-exited'; }
+
+                    cardContainer.innerHTML = `
+                        <div class="container-card">
+                            <div class="cc-header">
+                                <div class="cc-title-area">
+                                    <div class="cc-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12.5V8a2 2 0 0 0-2-2h-3.66a2 2 0 0 1-1.34-.52L13 3.52A2 2 0 0 0 11.66 3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2"></path><rect x="12" y="13" width="10" height="8" rx="1"></rect><path d="M12 17h10"></path></svg>
+                                    </div>
+                                    <h3 class="cc-name">${nameVal}</h3>
+                                </div>
+                                <div class="cc-status-badge ${statusClass}">
+                                    <span class="status-dot ${statusDotClass}"></span>
+                                    ${statusVal}
+                                </div>
+                            </div>
+                            <div class="cc-details">
+                                <div class="cc-detail-row">
+                                    <span class="cc-detail-label">Image</span>
+                                    <span class="cc-detail-value">${imageVal}</span>
+                                </div>
+                                <div class="cc-detail-row">
+                                    <span class="cc-detail-label">Ports</span>
+                                    <span class="cc-detail-value">${portsVal}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    jsonEl.value = JSON.stringify(data, null, 2);
+                    
+                    resultState.style.display = 'block';
+                }
+            } catch (error) {
+                const loader = document.getElementById('dc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Could not connect to the API.');
+                } else {
+                    alert('Network Error: Could not connect to the API.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Container Card'; }
+            }
+        }
+
+        async function copyContainerJson() {
+            if (!currentContainerData) return;
+            const jsonText = document.getElementById('dc-json-result').value;
+            try {
+                await navigator.clipboard.writeText(jsonText);
+                if (typeof showToast === 'function') {
+                    showToast('JSON kopiert!', 'success');
+                } else {
+                    alert('JSON kopiert!');
+                }
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Copy Failed', 'Failed to copy to clipboard.');
+                } else {
+                    alert('Failed to copy to clipboard.');
+                }
+            }
+        }
+    </script>
+</div>

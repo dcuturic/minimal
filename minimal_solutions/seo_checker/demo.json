@@ -1,0 +1,25 @@
+{
+  "request": {
+    "topic": "Die besten SEO-Strategien für 2024",
+    "target": "Landingpage",
+    "options": {
+      "language": "de",
+      "strict_mode": true
+    }
+  },
+  "response": {
+    "status": "success",
+    "data": {
+      "score": 85,
+      "feedback": "SEO Check für Thema 'Die besten SEO-Strategien für 2024' auf Ziel 'Landingpage' erfolgreich.",
+      "details": {
+        "topic_used": "Die besten SEO-Strategien für 2024",
+        "target_used": "Landingpage",
+        "options_applied": {
+          "language": "de",
+          "strict_mode": true
+        }
+      }
+    }
+  }
+}

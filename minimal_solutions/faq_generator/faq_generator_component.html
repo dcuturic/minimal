@@ -1,0 +1,305 @@
+<div class="faqgen-container" style="width: 100%;">
+    <style>
+        .faqgen-input-group { margin-bottom: 1.5rem; }
+        .faqgen-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .faqgen-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        .faqgen-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .faqgen-textarea:focus, .faqgen-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .faqgen-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .faqgen-result-section {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+        
+        .faqgen-faq-item {
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .faqgen-faq-question {
+            font-weight: bold;
+            padding: 1rem;
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .faqgen-faq-answer {
+            padding: 1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .faqgen-controls { display: flex; gap: 1rem; justify-content: center; }
+        .faqgen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .faqgen-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="faqgen-grid">
+        <div class="faqgen-form-section">
+            <div class="faqgen-input-group">
+                <label>Source Text</label>
+                <textarea id="faqgen-source-input" class="faqgen-textarea" placeholder="Paste your text here to generate FAQs..."></textarea>
+            </div>
+            
+            <div class="faqgen-input-group">
+                <label>Number of FAQs (Count)</label>
+                <input type="number" id="faqgen-count-input" class="faqgen-input" value="3" min="1" max="10">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="generateFAQs(this)">
+                Generate FAQs
+            </button>
+        </div>
+
+        <div class="faqgen-preview-section">
+            <div class="faqgen-preview-box" id="faqgen-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="faqgen-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter source text and desired count to generate FAQs.</p>
+                </div>
+                
+                <div id="faqgen-result-state" style="display: none; width: 100%; height: 100%; align-items: flex-start; justify-content: flex-start;">
+                    <div id="faqgen-list-container" style="width: 100%;">
+                        <!-- FAQs will be appended here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="faqgen-controls" style="display: none;" id="faqgen-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyFAQs(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy FAQs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Documentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            You can also use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; font-family: monospace; border: 1px solid var(--border-color);">
+                POST /api/minimal-solutions/faq_generator
+            </code>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Request</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "source_text": "Our new service offers 24/7 support and unlimited bandwidth. It costs $9.99 per month. You can cancel anytime.",
+  "count": 3
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Response</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "faqs": [
+      {
+        "question": "What kind of support is available?",
+        "answer": "We offer 24/7 support."
+      },
+      {
+        "question": "How much does the service cost?",
+        "answer": "The service costs $9.99 per month."
+      },
+      {
+        "question": "Can I cancel my subscription?",
+        "answer": "Yes, you can cancel anytime."
+      }
+    ]
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFAQs = [];
+
+        async function generateFAQs(btn) {
+            const sourceText = document.getElementById('faqgen-source-input').value.trim();
+            const countStr = document.getElementById('faqgen-count-input').value;
+            const count = parseInt(countStr, 10);
+            
+            const container = document.getElementById('faqgen-preview-container');
+            const controls = document.getElementById('faqgen-result-controls');
+            const emptyState = document.getElementById('faqgen-empty-state');
+            const resultState = document.getElementById('faqgen-result-state');
+            const listContainer = document.getElementById('faqgen-list-container');
+            
+            if (!sourceText) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide the source text.');
+                } else {
+                    alert('Please provide the source text.');
+                }
+                return;
+            }
+
+            if (isNaN(count) || count < 1 || count > 20) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a valid count (1-20).');
+                } else {
+                    alert('Please provide a valid count (1-20).');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'faqgen-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const payload = {
+                    source_text: sourceText,
+                    count: count
+                };
+
+                const response = await fetch('/api/minimal-solutions/faq_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const loader = document.getElementById('faqgen-temp-loader');
+                if (loader) loader.remove();
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error('Invalid JSON response from server.');
+                }
+
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Unknown error occurred.');
+                }
+
+                currentFAQs = result.data.faqs || [];
+                
+                listContainer.innerHTML = '';
+                
+                if (currentFAQs.length === 0) {
+                    listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No FAQs generated.</p>';
+                } else {
+                    currentFAQs.forEach(faq => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'faqgen-faq-item';
+                        
+                        const qDiv = document.createElement('div');
+                        qDiv.className = 'faqgen-faq-question';
+                        qDiv.textContent = faq.question;
+                        
+                        const aDiv = document.createElement('div');
+                        aDiv.className = 'faqgen-faq-answer';
+                        aDiv.textContent = faq.answer;
+                        
+                        itemDiv.appendChild(qDiv);
+                        itemDiv.appendChild(aDiv);
+                        listContainer.appendChild(itemDiv);
+                    });
+                }
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+            } catch (err) {
+                const loader = document.getElementById('faqgen-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Error', err.message || 'Failed to generate FAQs.');
+                } else {
+                    alert(err.message || 'Failed to generate FAQs.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate FAQs'; }
+            }
+        }
+
+        function copyFAQs(btn) {
+            if (currentFAQs.length === 0) return;
+            
+            let textToCopy = currentFAQs.map((faq, index) => {
+                return `Q${index+1}: ${faq.question}\nA${index+1}: ${faq.answer}`;
+            }).join('\n\n');
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                } catch (err) { }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

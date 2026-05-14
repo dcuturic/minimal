@@ -1,0 +1,397 @@
+<div class="ts-conv-container" style="width: 100%;">
+    <style>
+        .ts-conv-input-group { margin-bottom: 1.5rem; }
+        .ts-conv-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        
+        .ts-conv-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.65rem 1rem;
+            font-family: monospace;
+            font-size: 0.95rem;
+        }
+        .ts-conv-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .ts-conv-pills {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .ts-conv-pills input { display: none; }
+        .ts-conv-pills label {
+            padding: 0.45rem 1rem;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            font-family: monospace;
+            letter-spacing: 0.025em;
+        }
+        .ts-conv-pills label:hover {
+            border-color: var(--text-color);
+            color: var(--text-color);
+        }
+        .ts-conv-pills input:checked + label {
+            background: var(--text-color);
+            color: var(--bg-color);
+            border-color: var(--text-color);
+        }
+
+        .ts-conv-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ts-conv-result-text {
+            font-family: monospace;
+            font-size: 1.1rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        .ts-conv-result-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.35rem;
+            font-weight: 600;
+        }
+        
+        .ts-conv-result-item {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .ts-conv-controls { display: flex; gap: 1rem; justify-content: center; }
+        .ts-conv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ts-conv-grid { grid-template-columns: 1fr; } }
+
+        .ts-conv-error-box {
+            width: 100%;
+            background: rgba(255, 60, 60, 0.08);
+            border: 1px solid rgba(255, 60, 60, 0.3);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            display: none;
+        }
+        .ts-conv-error-box p { margin: 0; color: #ff5c5c; font-size: 0.9rem; }
+        .ts-conv-error-box strong { display: block; margin-bottom: 0.25rem; color: #ff5c5c; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .ts-conv-loading-box {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .ts-conv-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color, var(--text-color));
+            border-radius: 50%;
+            animation: ts-conv-spin 0.8s linear infinite;
+        }
+        @keyframes ts-conv-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .ts-conv-loading-text { color: var(--text-muted); font-size: 0.85rem; }
+    </style>
+
+    <div class="ts-conv-grid">
+        <div class="ts-conv-form-section">
+            <div class="ts-conv-input-group">
+                <label>Mode</label>
+                <div class="ts-conv-pills">
+                    <input type="radio" id="ts-mode-to-date" name="ts-conv-mode" value="timestamp_to_date" checked onchange="tsConvModeChanged()">
+                    <label for="ts-mode-to-date">Timestamp to Date</label>
+                    <input type="radio" id="ts-mode-to-ts" name="ts-conv-mode" value="date_to_timestamp" onchange="tsConvModeChanged()">
+                    <label for="ts-mode-to-ts">Date to Timestamp</label>
+                </div>
+            </div>
+
+            <div class="ts-conv-input-group">
+                <label id="ts-conv-value-label">Timestamp</label>
+                <input type="text" id="ts-conv-value-input" class="ts-conv-input" placeholder="e.g. 1704067200">
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                    <span style="font-size: 0.8rem; color: var(--text-muted);" id="ts-conv-hint">Enter Unix timestamp in seconds or milliseconds</span>
+                    <a href="javascript:void(0)" onclick="tsConvInsertCurrent()" style="font-size: 0.8rem; color: var(--primary-color, var(--text-color)); text-decoration: none;">Insert Current</a>
+                </div>
+            </div>
+
+            <div class="ts-conv-input-group">
+                <label>Timezone</label>
+                <div class="ts-conv-pills">
+                    <input type="radio" id="ts-tz-utc" name="ts-conv-timezone" value="UTC" checked>
+                    <label for="ts-tz-utc">UTC</label>
+                    <input type="radio" id="ts-tz-local" name="ts-conv-timezone" value="Local">
+                    <label for="ts-tz-local">Local</label>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processTsConv(this)">
+                Convert
+            </button>
+        </div>
+
+        <div class="ts-conv-preview-section">
+            <div class="ts-conv-preview-box" id="ts-conv-preview-container">
+                <!-- Empty State -->
+                <div style="text-align: center; color: var(--text-muted);" id="ts-conv-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter a value to convert.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="ts-conv-loading-box" id="ts-conv-loading-state">
+                    <div class="ts-conv-spinner"></div>
+                    <span class="ts-conv-loading-text">Converting…</span>
+                </div>
+
+                <!-- Error State -->
+                <div class="ts-conv-error-box" id="ts-conv-error-state">
+                    <strong id="ts-conv-error-title">Error</strong>
+                    <p id="ts-conv-error-message"></p>
+                </div>
+
+                <!-- Result State -->
+                <div id="ts-conv-result-state" style="display: none; width: 100%;">
+                    <div class="ts-conv-result-item">
+                        <div class="ts-conv-result-label" id="ts-conv-result-label-text">Result</div>
+                        <div class="ts-conv-result-text" id="ts-conv-text-result"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ts-conv-controls" style="display: none;" id="ts-conv-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyTsConv(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function tsConvModeChanged() {
+            const mode = document.querySelector('input[name="ts-conv-mode"]:checked').value;
+            const label = document.getElementById('ts-conv-value-label');
+            const input = document.getElementById('ts-conv-value-input');
+            const hint = document.getElementById('ts-conv-hint');
+
+            if (mode === 'timestamp_to_date') {
+                label.textContent = 'Timestamp';
+                input.placeholder = 'e.g. 1704067200';
+                hint.textContent = 'Enter Unix timestamp in seconds or milliseconds';
+            } else {
+                label.textContent = 'Date String';
+                input.placeholder = 'e.g. 2024-01-01T00:00:00Z';
+                hint.textContent = 'Enter ISO-8601 date string or similar valid date format';
+            }
+        }
+
+        function tsConvInsertCurrent() {
+            const mode = document.querySelector('input[name="ts-conv-mode"]:checked').value;
+            const input = document.getElementById('ts-conv-value-input');
+            const now = new Date();
+            
+            if (mode === 'timestamp_to_date') {
+                input.value = Math.floor(now.getTime() / 1000);
+            } else {
+                input.value = now.toISOString();
+            }
+        }
+
+        function tsConvShowState(state) {
+            const empty = document.getElementById('ts-conv-empty-state');
+            const loading = document.getElementById('ts-conv-loading-state');
+            const error = document.getElementById('ts-conv-error-state');
+            const result = document.getElementById('ts-conv-result-state');
+            const controls = document.getElementById('ts-conv-result-controls');
+
+            empty.style.display = 'none';
+            loading.style.display = 'none';
+            error.style.display = 'none';
+            result.style.display = 'none';
+            controls.style.display = 'none';
+
+            switch (state) {
+                case 'empty': empty.style.display = 'block'; break;
+                case 'loading': loading.style.display = 'flex'; break;
+                case 'error': error.style.display = 'block'; break;
+                case 'result': 
+                    result.style.display = 'block'; 
+                    controls.style.display = 'flex'; 
+                    break;
+            }
+        }
+
+        function tsConvShowError(title, message) {
+            document.getElementById('ts-conv-error-title').textContent = title;
+            document.getElementById('ts-conv-error-message').textContent = message;
+            tsConvShowState('error');
+        }
+
+        async function processTsConv(btn) {
+            const valueInput = document.getElementById('ts-conv-value-input').value.trim();
+            const mode = document.querySelector('input[name="ts-conv-mode"]:checked').value;
+            const timezone = document.querySelector('input[name="ts-conv-timezone"]:checked').value;
+
+            if (!valueInput) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Please provide a value to convert.');
+                else tsConvShowError('Validation', 'Please provide a value to convert.');
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Converting...'; }
+
+            tsConvShowState('loading');
+
+            try {
+                const response = await fetch('/api/minimal-solutions/timestamp_converter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        value: valueInput,
+                        mode: mode,
+                        timezone: timezone
+                    })
+                });
+                const result = await response.json();
+
+                if (!response.ok || result.status === 'error') {
+                    let errorMsg = result.message || 'Unknown error occurred.';
+                    if (result.details) {
+                        if (typeof result.details === 'object') errorMsg += ' - ' + Object.values(result.details).join(', ');
+                        else if (Array.isArray(result.details)) errorMsg += ' - ' + result.details.join(', ');
+                        else errorMsg += ' - ' + result.details;
+                    }
+                    if (typeof showErrorPanel === 'function') showErrorPanel('API Error', errorMsg);
+                    else tsConvShowError('API Error', errorMsg);
+                    
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Convert'; }
+                    return;
+                }
+
+                const outputText = result.data ? result.data.result : 'API not implemented yet';
+
+                if (mode === 'timestamp_to_date') {
+                    document.getElementById('ts-conv-result-label-text').textContent = timezone === 'UTC' ? 'Date (UTC)' : 'Date (Local)';
+                } else {
+                    document.getElementById('ts-conv-result-label-text').textContent = 'Unix Timestamp';
+                }
+                
+                document.getElementById('ts-conv-text-result').innerText = outputText;
+
+                tsConvShowState('result');
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Convert'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Network Error', 'Failed to connect to the API.');
+                else tsConvShowError('Network Error', 'Failed to connect to the API.');
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Convert'; }
+            }
+        }
+
+        function copyTsConv(btn) {
+            const outputText = document.getElementById('ts-conv-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                    else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => btn.innerHTML = originalText, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                    else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => btn.innerHTML = originalText, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert Timestamps in menschenlesbare Daten umzuwandeln und umgekehrt.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/timestamp_converter</code>
+        </div>
+
+        <div class="ts-conv-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "value": "1704067200",
+  "mode": "timestamp_to_date",
+  "timezone": "UTC"
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `mode` kann "timestamp_to_date" oder "date_to_timestamp" sein. `timezone` kann "UTC" oder "Local" sein.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "result": "2024-01-01 00:00:00"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

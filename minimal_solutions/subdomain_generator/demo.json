@@ -1,0 +1,20 @@
+{
+  "scenarios": [
+    {
+      "name": "Standard API",
+      "description": "Erzeugt Subdomains für einen API Service",
+      "input": {
+        "name": "api",
+        "base_domain": "crafthoster.com"
+      }
+    },
+    {
+      "name": "Project Name",
+      "description": "Erzeugt Subdomains für ein spezifisches Projekt mit Leerzeichen im Namen",
+      "input": {
+        "name": "cool project",
+        "base_domain": "example.com"
+      }
+    }
+  ]
+}

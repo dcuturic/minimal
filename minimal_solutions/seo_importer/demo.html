@@ -1,0 +1,226 @@
+<div class="si-container" style="width: 100%;">
+    <style>
+        .si-input-group { margin-bottom: 1.2rem; }
+        .si-input-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.9rem; }
+        .si-input { width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--surface-color); color: var(--text-color); font-size: 1rem; }
+        .si-input:focus { outline: none; border-color: var(--primary-color); }
+        .si-textarea { width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--surface-color); color: var(--text-color); font-size: 1rem; min-height: 100px; resize: vertical; }
+        .si-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .si-preview-area {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .si-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .si-grid { grid-template-columns: 1fr; } }
+        
+        .si-json-output {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+
+    <div class="si-grid">
+        <div class="si-form-section">
+            <div class="si-input-group">
+                <label>Topic</label>
+                <input type="text" id="si-topic" class="si-input" placeholder="Enter SEO Topic (e.g. Content Marketing)">
+            </div>
+
+            <div class="si-input-group">
+                <label>Target</label>
+                <input type="text" id="si-target" class="si-input" placeholder="Enter Target Audience or Keyword">
+            </div>
+
+            <div class="si-input-group">
+                <label>Options (JSON)</label>
+                <textarea id="si-options" class="si-textarea" placeholder='{"strict": true, "language": "de"}'></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateAPISEOImporter(this)">
+                Import SEO Data
+            </button>
+        </div>
+
+        <div class="si-preview-section">
+            <div id="si-empty-state" style="text-align: center; padding: 2rem; display: block;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; color: var(--text-muted);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                 <p style="color: var(--text-muted);">Enter details and click Import to process SEO data</p>
+            </div>
+
+            <div id="si-preview-container" class="si-preview-area" style="display: none;">
+                <div id="si-result-state" style="width: 100%;">
+                    <div class="si-json-output" id="si-json-result"></div>
+                    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="copyResult(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        function copyResult(btn) {
+            const resultText = document.getElementById('si-json-result').innerText;
+            navigator.clipboard.writeText(resultText).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            }).catch(e => {
+                const ta = document.createElement('textarea');
+                ta.value = resultText;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+
+        async function generateAPISEOImporter(btn) {
+            const topic = document.getElementById('si-topic').value;
+            const target = document.getElementById('si-target').value;
+            let optionsObj = {};
+            const optionsStr = document.getElementById('si-options').value;
+            
+            if (optionsStr.trim()) {
+                try {
+                    optionsObj = JSON.parse(optionsStr);
+                } catch(e) {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('Validation Error', 'Options must be a valid JSON object.');
+                    } else {
+                        alert('Validation Error: Options must be a valid JSON object.');
+                    }
+                    return;
+                }
+            }
+
+            if (!topic) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Topic is required.');
+                } else {
+                    alert('Validation Error: Topic is required.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Importing...'; }
+
+            try {
+                const response = await fetch('/api/minimal-solutions/seo_importer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        target: target,
+                        options: optionsObj
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown API error.');
+                    } else {
+                        alert('API Error: ' + (result.message || 'Unknown'));
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Import SEO Data'; }
+                    return;
+                }
+
+                document.getElementById('si-json-result').innerText = JSON.stringify(result.data, null, 2);
+                
+                document.getElementById('si-empty-state').style.display = 'none';
+                document.getElementById('si-preview-container').style.display = 'flex';
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Import SEO Data'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Network Error: Failed to connect to API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Import SEO Data'; }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um SEO Daten basierend auf einem Thema und Ziel zu importieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/seo_importer</code>
+        </div>
+
+        <div class="si-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "topic": "Content Marketing",
+  "target": "B2B",
+  "options": {
+    "strict": true
+  }
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Parameter für den Import der SEO Daten.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "topic": "Content Marketing",
+    "target": "B2B",
+    "options": {
+      "strict": true
+    },
+    "import_status": "success",
+    "imported_items": 42,
+    "message": "Daten für 'Content Marketing' erfolgreich importiert."
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

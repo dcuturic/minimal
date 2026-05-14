@@ -1,0 +1,287 @@
+<div class="errh-container" style="width: 100%;">
+    <style>
+        .errh-input-group { margin-bottom: 1.5rem; }
+        .errh-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .errh-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+        }
+        .errh-textarea:focus, .errh-input:focus { outline: none; border-color: var(--primary-color); }
+        .errh-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        
+        .errh-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .errh-result-section {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 1.5rem;
+        }
+        
+        .errh-result-section h4 {
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .errh-list {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .errh-controls { display: flex; gap: 1rem; justify-content: center; }
+        .errh-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .errh-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="errh-grid">
+        <div class="errh-form-section">
+            <div class="errh-input-group">
+                <label>Error Message</label>
+                <textarea id="errh-text-input" class="errh-textarea" placeholder="Paste your cryptic error message here..."></textarea>
+            </div>
+            <div class="errh-input-group">
+                <label>Context / Framework (Optional)</label>
+                <input type="text" id="errh-context-input" class="errh-input" placeholder="e.g. React, Docker, Python 3.10">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="explainError(this)">
+                Explain Error
+            </button>
+        </div>
+
+        <div class="errh-preview-section">
+            <div class="errh-preview-box" id="errh-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="errh-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Paste an error to get it explained.</p>
+                </div>
+                
+                <div id="errh-result-state" style="display: none; width: 100%; height: 100%; align-items: flex-start; justify-content: flex-start;">
+                    
+                    <div class="errh-result-section">
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ff5555;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            Possible Causes
+                        </h4>
+                        <ul class="errh-list" id="errh-causes-list"></ul>
+                    </div>
+
+                    <div class="errh-result-section">
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #50fa7b;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Resolution Steps
+                        </h4>
+                        <ul class="errh-list" id="errh-steps-list"></ul>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="errh-controls" style="display: none;" id="errh-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyExplanation(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Details
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Documentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            You can also use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; font-family: monospace; border: 1px solid var(--border-color);">
+                POST /api/minimal-solutions/error_message_explainer
+            </code>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Request</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "error_text": "TypeError: Cannot read properties of undefined (reading 'map')",
+  "context": "React"
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Response</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "causes": [
+      "The variable you are calling '.map()' on is undefined."
+    ],
+    "steps": [
+      "Ensure the data is fetched or passed correctly.",
+      "Use optional chaining: 'variable?.map()'."
+    ]
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function explainError(btn) {
+            const errorText = document.getElementById('errh-text-input').value.trim();
+            const contextText = document.getElementById('errh-context-input').value.trim();
+            
+            const container = document.getElementById('errh-preview-container');
+            const controls = document.getElementById('errh-result-controls');
+            const emptyState = document.getElementById('errh-empty-state');
+            const resultState = document.getElementById('errh-result-state');
+            
+            if (!errorText) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide an error message.');
+                } else {
+                    alert('Please provide an error message.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Analyzing...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'errh-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const payload = {
+                    error_text: errorText,
+                    context: contextText
+                };
+
+                const response = await fetch('/api/minimal-solutions/error_message_explainer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const loader = document.getElementById('errh-temp-loader');
+                if (loader) loader.remove();
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error('Invalid JSON response from server.');
+                }
+
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Unknown error occurred.');
+                }
+
+                const causes = result.data.causes || [];
+                const steps = result.data.steps || [];
+
+                // Render causes
+                const causesList = document.getElementById('errh-causes-list');
+                causesList.innerHTML = '';
+                causes.forEach(cause => {
+                    const li = document.createElement('li');
+                    li.textContent = cause;
+                    causesList.appendChild(li);
+                });
+
+                // Render steps
+                const stepsList = document.getElementById('errh-steps-list');
+                stepsList.innerHTML = '';
+                steps.forEach(step => {
+                    const li = document.createElement('li');
+                    li.textContent = step;
+                    stepsList.appendChild(li);
+                });
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+            } catch (err) {
+                const loader = document.getElementById('errh-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Error', err.message || 'Failed to explain error.');
+                } else {
+                    alert(err.message || 'Failed to explain error.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Explain Error'; }
+            }
+        }
+
+        function copyExplanation(btn) {
+            const causes = Array.from(document.getElementById('errh-causes-list').children).map(li => "- " + li.textContent).join('\n');
+            const steps = Array.from(document.getElementById('errh-steps-list').children).map(li => "1. " + li.textContent).join('\n');
+            
+            const textToCopy = `Causes:\n${causes}\n\nSteps to resolve:\n${steps}`;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                } catch (err) { }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

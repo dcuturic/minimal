@@ -1,0 +1,35 @@
+{
+  "name": "Lorem Ipsum Generator Demo",
+  "description": "Demo data for Lorem Ipsum Generator API testing and examples",
+  "requests": {
+    "happy_path_words": {
+      "mode": "words",
+      "count": 50
+    },
+    "happy_path_paragraphs": {
+      "mode": "paragraphs",
+      "count": 3
+    },
+    "happy_path_lists": {
+      "mode": "lists",
+      "count": 5
+    },
+    "happy_path_bytes": {
+      "mode": "bytes",
+      "count": 1024
+    },
+    "empty_input": {},
+    "invalid_mode": {
+      "mode": "unsupported",
+      "count": 5
+    },
+    "invalid_count_type": {
+      "mode": "words",
+      "count": "10"
+    },
+    "invalid_count_value": {
+      "mode": "paragraphs",
+      "count": 0
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "example_1": {
+    "title": "Vollständiges Release",
+    "data": {
+      "version": "v2.0.0",
+      "features": [
+        "Neues Dark Mode Design hinzugefügt",
+        "Performance beim Laden der Listenansicht um 40% verbessert",
+        "Export in PDF-Format wird nun unterstützt"
+      ],
+      "fixes": [
+        "Fehler beim Login mit Sonderzeichen im Passwort behoben",
+        "Absturz in der Detailansicht korrigiert"
+      ],
+      "breaking_changes": [
+        "API v1 wurde komplett abgeschaltet",
+        "Authentifizierung nutzt nun JWT statt Session Cookies"
+      ]
+    }
+  },
+  "example_2": {
+    "title": "Nur Bugfixes",
+    "data": {
+      "version": "v1.1.2",
+      "features": [],
+      "fixes": [
+        "Tippfehler in der Navigation korrigiert",
+        "Problem mit dem Dateiupload unter iOS behoben"
+      ],
+      "breaking_changes": []
+    }
+  },
+  "example_3": {
+    "title": "Leeres Release",
+    "data": {
+      "version": "v1.0.0-rc1",
+      "features": [],
+      "fixes": [],
+      "breaking_changes": []
+    }
+  }
+}

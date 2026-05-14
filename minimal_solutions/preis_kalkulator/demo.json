@@ -1,0 +1,6 @@
+{
+  "base_price": 100.0,
+  "margin": 20.0,
+  "discount": 5.0,
+  "markup": 10.0
+}

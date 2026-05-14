@@ -1,0 +1,302 @@
+<div class="pg-container" style="width: 100%;">
+    <style>
+        .pg-input-group { margin-bottom: 1.5rem; }
+        .pg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .pg-slider-container { display: flex; align-items: center; gap: 1rem; }
+        .pg-slider { flex: 1; accent-color: var(--primary-color); }
+        .pg-slider-value { width: 3rem; text-align: center; font-weight: bold; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.25rem; }
+        
+        .pg-checkbox-group { display: flex; align-items: center; margin-bottom: 0.75rem; cursor: pointer; }
+        .pg-checkbox-group input { margin-right: 0.75rem; accent-color: var(--primary-color); width: 1.2rem; height: 1.2rem; cursor: pointer; }
+        .pg-checkbox-group span { font-size: 0.95rem; }
+
+        .pg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .pg-result-text {
+            font-family: monospace;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            word-break: break-all;
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        .pg-strength-meter {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-color);
+            border-radius: 3px;
+            margin-top: 1rem;
+            overflow: hidden;
+            display: flex;
+        }
+        .pg-strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        .strength-text {
+            font-size: 0.8rem;
+            text-align: right;
+            margin-top: 0.25rem;
+            color: var(--text-muted);
+            width: 100%;
+        }
+
+        .pg-controls { display: flex; gap: 1rem; justify-content: center; }
+        .pg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .pg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="pg-grid">
+        <div class="pg-form-section">
+            <div class="pg-input-group">
+                <label>Password Length (<span id="pg-length-display-label">16</span>)</label>
+                <div class="pg-slider-container">
+                    <input type="range" id="pg-length" class="pg-slider" min="8" max="128" value="16" oninput="updateLengthDisplay(this.value)">
+                    <div id="pg-length-display" class="pg-slider-value">16</div>
+                </div>
+            </div>
+
+            <div class="pg-input-group">
+                <label>Options</label>
+                <label class="pg-checkbox-group">
+                    <input type="checkbox" id="pg-uppercase" checked>
+                    <span>Include Uppercase Letters (A-Z)</span>
+                </label>
+                <label class="pg-checkbox-group">
+                    <input type="checkbox" id="pg-numbers" checked>
+                    <span>Include Numbers (0-9)</span>
+                </label>
+                <label class="pg-checkbox-group">
+                    <input type="checkbox" id="pg-symbols" checked>
+                    <span>Include Symbols (!@#$%)</span>
+                </label>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generatePassword(this)">
+                Generate Password
+            </button>
+        </div>
+
+        <div class="pg-preview-section">
+            <div class="pg-preview-box" id="pg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="pg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure options and click generate.</p>
+                </div>
+                
+                <div id="pg-result-state" style="display: none; width: 100%;">
+                    <div class="pg-result-text" id="pg-password-result"></div>
+                    
+                    <div style="width: 100%;">
+                        <div class="pg-strength-meter">
+                            <div class="pg-strength-bar" id="pg-strength-bar"></div>
+                        </div>
+                        <div class="strength-text" id="pg-strength-text">Medium</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pg-controls" style="display: none;" id="pg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyPassword(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateLengthDisplay(val) {
+            document.getElementById('pg-length-display').innerText = val;
+            document.getElementById('pg-length-display-label').innerText = val;
+        }
+
+        function calculateStrength(length, hasUpper, hasNums, hasSyms) {
+            let score = 0;
+            if (length >= 8) score += 1;
+            if (length >= 12) score += 1;
+            if (length >= 16) score += 1;
+            if (hasUpper) score += 1;
+            if (hasNums) score += 1;
+            if (hasSyms) score += 1;
+
+            if (score <= 2) return { text: 'Weak', color: '#ff4d4d', percent: '33%' };
+            if (score <= 4) return { text: 'Medium', color: '#ffb84d', percent: '66%' };
+            return { text: 'Strong', color: '#00ffd5', percent: '100%' };
+        }
+
+        async function generatePassword(btn) {
+            const length = parseInt(document.getElementById('pg-length').value);
+            const useUpper = document.getElementById('pg-uppercase').checked;
+            const useNums = document.getElementById('pg-numbers').checked;
+            const useSyms = document.getElementById('pg-symbols').checked;
+            
+            const container = document.getElementById('pg-preview-container');
+            const controls = document.getElementById('pg-result-controls');
+            const emptyState = document.getElementById('pg-empty-state');
+            const resultState = document.getElementById('pg-result-state');
+            
+            // Error-State Validation
+            if (!length || length < 4 || length > 128) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a valid length between 4 and 128.');
+                } else {
+                    alert('Invalid length');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'pg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/passwort_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        length: length,
+                        use_uppercase: useUpper,
+                        use_numbers: useNums,
+                        use_symbols: useSyms
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('pg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Password'; }
+                    return;
+                }
+
+                const password = result.data.password;
+
+                // Update UI Result-State
+                document.getElementById('pg-password-result').innerText = password;
+                
+                const strengthInfo = calculateStrength(length, useUpper, useNums, useSyms);
+                const bar = document.getElementById('pg-strength-bar');
+                bar.style.width = strengthInfo.percent;
+                bar.style.backgroundColor = strengthInfo.color;
+                
+                const text = document.getElementById('pg-strength-text');
+                text.innerText = strengthInfo.text;
+                text.style.color = strengthInfo.color;
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Password'; }
+                
+                const resultBox = document.querySelector('.result-box');
+                if(resultBox) {
+                    resultBox.innerHTML = `
+                        <div style="text-align: center; width: 100%;">
+                            <p style="color: var(--primary-color); margin-bottom: 1rem; font-weight: 600;">Generated Successfully!</p>
+                            <pre class="code-block" style="text-align: left; background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">
+{
+  "status": "success",
+  "data": {
+    "password": "${password.replace(/"/g, '\\"')}",
+    "length": ${length},
+    "strength": "${strengthInfo.text.toLowerCase()}"
+  }
+}
+                            </pre>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                const loader = document.getElementById('pg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Password'; }
+            }
+        }
+
+        function copyPassword(btn) {
+            const pwd = document.getElementById('pg-password-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(pwd).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                // Fallback
+                const textArea = document.createElement("textarea");
+                textArea.value = pwd;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

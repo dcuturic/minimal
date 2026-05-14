@@ -1,0 +1,8 @@
+{
+  "topic": "Keyword Research",
+  "target": "Blog Post",
+  "options": [
+    "include_metadata",
+    "overwrite_existing"
+  ]
+}

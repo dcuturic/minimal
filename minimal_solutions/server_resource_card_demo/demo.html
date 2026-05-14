@@ -1,0 +1,320 @@
+<div class="server-card-container" style="width: 100%;">
+    <style>
+        .sc-input-group { margin-bottom: 1.5rem; }
+        .sc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .sc-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .sc-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .sc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .sc-result-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .sc-grid { grid-template-columns: 1fr; } }
+        
+        /* Dashboard Card Styles */
+        .dashboard-cards {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            justify-content: center;
+        }
+        @media (max-width: 480px) { .dashboard-cards { flex-direction: column; } }
+        
+        .dash-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            flex: 1;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .dash-card h4 {
+            margin: 0 0 1rem 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .dash-card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+        .progress-bar-bg {
+            background: var(--bg-color);
+            border-radius: 4px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        .progress-bar-fill {
+            background: var(--primary-color);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        /* Warn/Danger Colors */
+        .progress-bar-fill.warning { background: #f59e0b; }
+        .progress-bar-fill.danger { background: #ef4444; }
+    </style>
+
+    <div class="sc-grid">
+        <div class="sc-form-section">
+            <div class="sc-input-group">
+                <label>CPU Usage (%)</label>
+                <input type="number" step="0.1" min="0" max="100" id="sc-cpu-input" class="sc-input" placeholder="45.5" value="45.5" required>
+            </div>
+            <div class="sc-input-group">
+                <label>RAM Usage (%)</label>
+                <input type="number" step="0.1" min="0" max="100" id="sc-ram-input" class="sc-input" placeholder="78.2" value="78.2" required>
+            </div>
+            <div class="sc-input-group">
+                <label>Disk Usage (%)</label>
+                <input type="number" step="0.1" min="0" max="100" id="sc-disk-input" class="sc-input" placeholder="92.0" value="92.0" required>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processCardGeneration(this)">
+                Generate Dashboard Cards
+            </button>
+        </div>
+
+        <div class="sc-preview-section">
+            <div class="sc-preview-box" id="sc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="sc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter resource values and click generate.</p>
+                </div>
+                
+                <div id="sc-result-state" style="display: none; width: 100%;">
+                    <div class="sc-result-card" style="margin-bottom: 1.5rem;">
+                        <div id="sc-cards-container" class="dashboard-cards">
+                            <!-- Cards go here -->
+                        </div>
+                    </div>
+                    
+                    <div class="sc-input-group">
+                        <label>JSON Data</label>
+                        <textarea id="sc-json-result" class="sc-input" rows="4" readonly></textarea>
+                    </div>
+                    
+                    <button class="btn btn-outline" style="width: 100%; margin-top: 1rem;" onclick="copyCardData()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="sc-api-docs" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The Server Resource Card Generator functionality can also be accessed via API.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block; font-family: monospace;">POST /api/minimal-solutions/server_resource_card_demo</code>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "cpu": 45.5,
+  "ram": 78.2,
+  "disk": 92.0
+}</pre>
+        </div>
+        
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "status": "success",
+  "data": {
+    "cpu": 45.5,
+    "ram": 78.2,
+    "disk": 92.0,
+    "timestamp": "2026-05-12T09:50:36Z"
+  }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        let currentCardData = null;
+
+        function getProgressColorClass(value) {
+            if (value >= 90) return 'danger';
+            if (value >= 75) return 'warning';
+            return '';
+        }
+
+        async function processCardGeneration(btn) {
+            const cpuInput = document.getElementById('sc-cpu-input').value;
+            const ramInput = document.getElementById('sc-ram-input').value;
+            const diskInput = document.getElementById('sc-disk-input').value;
+            
+            const container = document.getElementById('sc-preview-container');
+            const emptyState = document.getElementById('sc-empty-state');
+            const resultState = document.getElementById('sc-result-state');
+            
+            if (!cpuInput || !ramInput || !diskInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide values for CPU, RAM, and Disk.');
+                } else {
+                    alert('Please provide values for CPU, RAM, and Disk.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'sc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            currentCardData = null;
+
+            try {
+                const response = await fetch('/api/minimal-solutions/server_resource_card_demo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        cpu: parseFloat(cpuInput),
+                        ram: parseFloat(ramInput),
+                        disk: parseFloat(diskInput)
+                    })
+                });
+
+                const result = await response.json();
+
+                const loader = document.getElementById('sc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    const errorMsg = result.message || 'Ein Fehler ist aufgetreten.';
+                    let detailMsg = '';
+                    if (result.details && Array.isArray(result.details)) {
+                        detailMsg = result.details.map(d => d.msg || d).join(', ');
+                    }
+                    const fullError = detailMsg ? `${errorMsg} - ${detailMsg}` : errorMsg;
+                    
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', fullError);
+                    } else {
+                        alert(fullError);
+                    }
+                    emptyState.style.display = 'block';
+                } else {
+                    const data = result.data;
+                    currentCardData = data;
+
+                    const cardsContainer = document.getElementById('sc-cards-container');
+                    const jsonEl = document.getElementById('sc-json-result');
+                    
+                    // Allow server response to overwrite values, or use inputs as fallback
+                    const cpuVal = data.cpu !== undefined ? data.cpu : parseFloat(cpuInput);
+                    const ramVal = data.ram !== undefined ? data.ram : parseFloat(ramInput);
+                    const diskVal = data.disk !== undefined ? data.disk : parseFloat(diskInput);
+
+                    cardsContainer.innerHTML = `
+                        <div class="dash-card">
+                            <h4>CPU</h4>
+                            <div class="dash-card-value">${cpuVal}%</div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill ${getProgressColorClass(cpuVal)}" style="width: ${Math.min(100, cpuVal)}%"></div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h4>RAM</h4>
+                            <div class="dash-card-value">${ramVal}%</div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill ${getProgressColorClass(ramVal)}" style="width: ${Math.min(100, ramVal)}%"></div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h4>Disk</h4>
+                            <div class="dash-card-value">${diskVal}%</div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill ${getProgressColorClass(diskVal)}" style="width: ${Math.min(100, diskVal)}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    jsonEl.value = JSON.stringify(data, null, 2);
+                    
+                    resultState.style.display = 'block';
+                }
+            } catch (error) {
+                const loader = document.getElementById('sc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Could not connect to the API.');
+                } else {
+                    alert('Network Error: Could not connect to the API.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Dashboard Cards'; }
+            }
+        }
+
+        async function copyCardData() {
+            if (!currentCardData) return;
+            const jsonText = document.getElementById('sc-json-result').value;
+            try {
+                await navigator.clipboard.writeText(jsonText);
+                if (typeof showToast === 'function') {
+                    showToast('JSON kopiert!', 'success');
+                } else {
+                    alert('JSON kopiert!');
+                }
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Copy Failed', 'Failed to copy to clipboard.');
+                } else {
+                    alert('Failed to copy to clipboard.');
+                }
+            }
+        }
+    </script>
+</div>

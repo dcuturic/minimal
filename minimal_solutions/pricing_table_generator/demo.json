@@ -1,0 +1,48 @@
+{
+  "plans": [
+    {
+      "name": "Hobby",
+      "price": "0",
+      "currency": "$",
+      "period": "/month",
+      "features": [
+        "1 Project",
+        "Community Support",
+        "Basic Analytics",
+        "100MB Storage"
+      ],
+      "is_popular": false,
+      "button_text": "Start for Free"
+    },
+    {
+      "name": "Pro",
+      "price": "19",
+      "currency": "$",
+      "period": "/month",
+      "features": [
+        "Unlimited Projects",
+        "Priority Support",
+        "Advanced Analytics",
+        "10GB Storage",
+        "Custom Domains"
+      ],
+      "is_popular": true,
+      "button_text": "Upgrade to Pro"
+    },
+    {
+      "name": "Enterprise",
+      "price": "99",
+      "currency": "$",
+      "period": "/month",
+      "features": [
+        "Everything in Pro",
+        "Dedicated Account Manager",
+        "Custom Contracts",
+        "SAML SSO",
+        "Unlimited Storage"
+      ],
+      "is_popular": false,
+      "button_text": "Contact Sales"
+    }
+  ]
+}

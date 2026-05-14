@@ -1,0 +1,8 @@
+{
+    "topic": "Wie man SEO optimiert",
+    "target": "Blog-Post-Redirect",
+    "options": {
+        "mask_type": "301",
+        "preserve_query": true
+    }
+}

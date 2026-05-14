@@ -1,0 +1,353 @@
+<div class="euc-container" style="width: 100%;">
+    <style>
+        .euc-input-group { margin-bottom: 1.5rem; }
+        .euc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .euc-input, .euc-select {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        .euc-input:focus, .euc-select:focus { outline: none; border-color: var(--primary-color); }
+        .euc-select { appearance: none; cursor: pointer; }
+
+        .euc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .euc-result-text {
+            font-family: monospace;
+            font-size: 2rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .euc-result-subtext {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .euc-controls { display: flex; gap: 1rem; justify-content: center; }
+        .euc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        
+        .euc-row { display: flex; gap: 1rem; }
+        .euc-row > div { flex: 1; }
+        
+        @media (max-width: 768px) { 
+            .euc-grid { grid-template-columns: 1fr; } 
+            .euc-row { flex-direction: column; gap: 0; }
+        }
+    </style>
+
+    <div class="euc-grid">
+        <div class="euc-form-section">
+            <div class="euc-input-group">
+                <label>Category</label>
+                <select id="euc-category" class="euc-select" onchange="updateEucUnits()">
+                    <option value="length" selected>Length</option>
+                    <option value="weight">Weight</option>
+                    <option value="temperature">Temperature</option>
+                </select>
+            </div>
+
+            <div class="euc-input-group">
+                <label>Value</label>
+                <input type="number" id="euc-value-input" class="euc-input" placeholder="e.g. 100" step="any">
+            </div>
+
+            <div class="euc-row">
+                <div class="euc-input-group">
+                    <label>From Unit</label>
+                    <select id="euc-from-unit" class="euc-select">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+                
+                <div class="euc-input-group" style="display: flex; align-items: center; justify-content: center; padding-top: 1.5rem; flex: 0 0 40px; color: var(--text-muted);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </div>
+
+                <div class="euc-input-group">
+                    <label>To Unit</label>
+                    <select id="euc-to-unit" class="euc-select">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processUnitConversion(this)">
+                Convert
+            </button>
+        </div>
+
+        <div class="euc-preview-section">
+            <div class="euc-preview-box" id="euc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="euc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter value and select units to convert.</p>
+                </div>
+                
+                <div id="euc-result-state" style="display: none; width: 100%;">
+                    <div class="euc-result-subtext" id="euc-equation-result"></div>
+                    <div class="euc-result-text" id="euc-text-result"></div>
+                </div>
+            </div>
+            
+            <div class="euc-controls" style="display: none;" id="euc-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyUnitResult(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs-section" style="margin-top: 3rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            You can use this tool programmatically via our API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 1rem;">
+                <span class="badge badge-primary" style="font-family: monospace; font-size: 0.85rem; padding: 0.25rem 0.5rem; background: var(--primary-color); color: #fff; border-radius: 4px;">POST</span>
+                <code style="color: var(--text-color); font-size: 0.9rem;">/api/minimal-solutions/einheiten_converter</code>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-color);">
+                <div style="background: var(--surface-color); padding: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Request Example</h4>
+                    <pre style="margin: 0; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-size: 0.85rem; color: var(--text-color);">fetch('/api/minimal-solutions/einheiten_converter', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        "value": 100,
+        "from_unit": "km",
+        "to_unit": "m",
+        "category": "length"
+    })
+});</code></pre>
+                </div>
+                <div style="background: var(--surface-color); padding: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 1rem;">Response Example</h4>
+                    <pre style="margin: 0; background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-size: 0.85rem; color: var(--text-color);">{
+    "status": "success",
+    "data": {
+        "result": 100000.0
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const unitCategories = {
+            length: [
+                { value: "m", label: "Meter (m)" },
+                { value: "km", label: "Kilometer (km)" },
+                { value: "cm", label: "Centimeter (cm)" },
+                { value: "mm", label: "Millimeter (mm)" },
+                { value: "in", label: "Inch (in)" },
+                { value: "ft", label: "Foot (ft)" },
+                { value: "yd", label: "Yard (yd)" },
+                { value: "mi", label: "Mile (mi)" }
+            ],
+            weight: [
+                { value: "kg", label: "Kilogram (kg)" },
+                { value: "g", label: "Gram (g)" },
+                { value: "mg", label: "Milligram (mg)" },
+                { value: "t", label: "Tonne (t)" },
+                { value: "oz", label: "Ounce (oz)" },
+                { value: "lb", label: "Pound (lb)" }
+            ],
+            temperature: [
+                { value: "c", label: "Celsius (°C)" },
+                { value: "f", label: "Fahrenheit (°F)" },
+                { value: "k", label: "Kelvin (K)" }
+            ]
+        };
+
+        function updateEucUnits() {
+            const category = document.getElementById('euc-category').value;
+            const units = unitCategories[category] || [];
+            
+            const fromSelect = document.getElementById('euc-from-unit');
+            const toSelect = document.getElementById('euc-to-unit');
+            
+            fromSelect.innerHTML = '';
+            toSelect.innerHTML = '';
+            
+            units.forEach((unit, index) => {
+                fromSelect.add(new Option(unit.label, unit.value));
+                toSelect.add(new Option(unit.label, unit.value));
+            });
+            
+            // Set defaults (e.g. first to second)
+            if (units.length > 1) {
+                fromSelect.selectedIndex = 0;
+                toSelect.selectedIndex = 1;
+            }
+        }
+        
+        // Initialize options on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateEucUnits();
+        });
+
+        async function processUnitConversion(btn) {
+            const valueInput = document.getElementById('euc-value-input').value;
+            const category = document.getElementById('euc-category').value;
+            const fromUnit = document.getElementById('euc-from-unit').value;
+            const toUnit = document.getElementById('euc-to-unit').value;
+            
+            const container = document.getElementById('euc-preview-container');
+            const controls = document.getElementById('euc-result-controls');
+            const emptyState = document.getElementById('euc-empty-state');
+            const resultState = document.getElementById('euc-result-state');
+            
+            if (!valueInput || isNaN(valueInput)) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a valid number.');
+                } else {
+                    alert('Please provide a valid number.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Converting...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'euc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/einheiten_converter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        value: parseFloat(valueInput),
+                        from_unit: fromUnit,
+                        to_unit: toUnit,
+                        category: category
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('euc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Convert'; }
+                    return;
+                }
+
+                let outputText = "";
+                if (result.data && result.data.formatted) {
+                    outputText = result.data.formatted;
+                } else if (result.data && result.data.result !== undefined) {
+                    outputText = result.data.result + ' ' + toUnit;
+                } else {
+                    outputText = JSON.stringify(result.data);
+                }
+
+                document.getElementById('euc-text-result').innerText = outputText;
+                document.getElementById('euc-equation-result').innerText = `${valueInput} ${fromUnit} =`;
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Convert'; }
+
+            } catch (err) {
+                const loader = document.getElementById('euc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Convert'; }
+            }
+        }
+
+        function copyUnitResult(btn) {
+            const outputText = document.getElementById('euc-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

@@ -1,0 +1,29 @@
+{
+  "base_json": {
+    "header": {
+      "title": "Welcome to our application",
+      "subtitle": "The best place to find minimal solutions"
+    },
+    "auth": {
+      "login": "Log in",
+      "register": "Sign up",
+      "logout": "Log out"
+    },
+    "errors": {
+      "not_found": "Page not found",
+      "unauthorized": "You do not have permission"
+    }
+  },
+  "target_json": {
+    "header": {
+      "title": "Willkommen zu unserer Anwendung"
+    },
+    "auth": {
+      "login": "Anmelden",
+      "register": "Registrieren"
+    },
+    "errors": {
+      "not_found": "Seite nicht gefunden"
+    }
+  }
+}

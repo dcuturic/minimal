@@ -1,0 +1,14 @@
+{
+  "request": {
+    "motd_text": "§aA Minecraft Server\n§eSome secondary text"
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "motd_text": "§aA Minecraft Server\n§eSome secondary text"
+    },
+    "error": null,
+    "warnings": [],
+    "meta": {}
+  }
+}

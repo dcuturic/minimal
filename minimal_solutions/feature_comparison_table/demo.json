@@ -1,0 +1,35 @@
+{
+  "features": [
+    "User Management",
+    "Analytics Dashboard",
+    "API Access",
+    "Custom Domain",
+    "Priority Support"
+  ],
+  "items": [
+    {
+      "name": "Basic Plan",
+      "User Management": true,
+      "Analytics Dashboard": false,
+      "API Access": false,
+      "Custom Domain": false,
+      "Priority Support": false
+    },
+    {
+      "name": "Pro Plan",
+      "User Management": true,
+      "Analytics Dashboard": true,
+      "API Access": true,
+      "Custom Domain": false,
+      "Priority Support": false
+    },
+    {
+      "name": "Enterprise Plan",
+      "User Management": true,
+      "Analytics Dashboard": true,
+      "API Access": true,
+      "Custom Domain": true,
+      "Priority Support": true
+    }
+  ]
+}

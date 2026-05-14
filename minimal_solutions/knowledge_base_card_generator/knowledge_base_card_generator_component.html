@@ -1,0 +1,305 @@
+<div class="kbcg-container" style="width: 100%;">
+    <style>
+        .kbcg-input-group { margin-bottom: 1.5rem; }
+        .kbcg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .kbcg-input, .kbcg-textarea {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.8rem 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .kbcg-textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+        .kbcg-input:focus, .kbcg-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .kbcg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .kbcg-grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .kbcg-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .kbcg-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            border-color: var(--primary-color);
+        }
+
+        .kbcg-card-title {
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .kbcg-card-content {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .kbcg-card-category {
+            display: inline-block;
+            background: rgba(var(--primary-color-rgb), 0.1);
+            color: var(--primary-color);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(var(--primary-color-rgb), 0.3);
+        }
+
+        .kbcg-controls { display: flex; gap: 1rem; justify-content: center; }
+        .kbcg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .kbcg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="kbcg-grid">
+        <div class="kbcg-form-section">
+            <div class="kbcg-input-group">
+                <label>Category (Optional)</label>
+                <input type="text" id="kbcg-category-input" class="kbcg-input" placeholder="e.g. Troubleshooting, Setup, Billing">
+            </div>
+            <div class="kbcg-input-group">
+                <label>Source Text</label>
+                <textarea id="kbcg-text-input" class="kbcg-textarea" placeholder="Paste the text source to generate knowledge base cards from..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="generateKBCards(this)">
+                Generate Cards
+            </button>
+        </div>
+
+        <div class="kbcg-preview-section">
+            <div class="kbcg-preview-box" id="kbcg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="kbcg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Provide category and source text to generate cards.</p>
+                </div>
+                
+                <div id="kbcg-result-state" style="display: none; width: 100%; height: 100%; align-items: flex-start; justify-content: flex-start;">
+                    <div class="kbcg-grid-layout" id="kbcg-cards-container">
+                        <!-- Cards will be injected here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kbcg-controls" style="display: none;" id="kbcg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyCards(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Documentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            You can also use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; font-family: monospace; border: 1px solid var(--border-color);">
+                POST /api/minimal-solutions/knowledge_base_card_generator
+            </code>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Request</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "source_text": "To reset your password, click on 'Forgot Password' on the login page and follow the link sent to your email. If you didn't receive the email, check your spam folder.",
+  "category": "Troubleshooting"
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Response</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "cards": [
+      {
+        "category": "Troubleshooting",
+        "title": "Reset Password",
+        "content": "Click 'Forgot Password' on the login page and follow the link sent to your email."
+      },
+      {
+        "category": "Troubleshooting",
+        "title": "Missing Password Reset Email",
+        "content": "Check your spam folder if you didn't receive the password reset email."
+      }
+    ]
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCardsData = [];
+
+        async function generateKBCards(btn) {
+            const category = document.getElementById('kbcg-category-input').value.trim();
+            const sourceText = document.getElementById('kbcg-text-input').value.trim();
+            
+            const container = document.getElementById('kbcg-preview-container');
+            const controls = document.getElementById('kbcg-result-controls');
+            const emptyState = document.getElementById('kbcg-empty-state');
+            const resultState = document.getElementById('kbcg-result-state');
+            const cardsContainer = document.getElementById('kbcg-cards-container');
+            
+            if (!sourceText) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide the source text.');
+                } else {
+                    alert('Please provide the source text.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'kbcg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const payload = {
+                    source_text: sourceText,
+                    category: category || 'General'
+                };
+
+                const response = await fetch('/api/minimal-solutions/knowledge_base_card_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const loader = document.getElementById('kbcg-temp-loader');
+                if (loader) loader.remove();
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error('Invalid JSON response from server.');
+                }
+
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Unknown error occurred.');
+                }
+
+                const cards = result.data.cards || [];
+                currentCardsData = cards;
+                cardsContainer.innerHTML = '';
+
+                if (cards.length > 0) {
+                    cards.forEach(card => {
+                        const cardEl = document.createElement('div');
+                        cardEl.className = 'kbcg-card';
+                        
+                        const catEl = document.createElement('span');
+                        catEl.className = 'kbcg-card-category';
+                        catEl.textContent = card.category || category || 'General';
+                        
+                        const titleEl = document.createElement('h4');
+                        titleEl.className = 'kbcg-card-title';
+                        titleEl.textContent = card.title || 'Untitled Card';
+                        
+                        const contentEl = document.createElement('p');
+                        contentEl.className = 'kbcg-card-content';
+                        contentEl.textContent = card.content || 'No content provided.';
+                        
+                        cardEl.appendChild(catEl);
+                        cardEl.appendChild(titleEl);
+                        cardEl.appendChild(contentEl);
+                        
+                        cardsContainer.appendChild(cardEl);
+                    });
+                } else {
+                    cardsContainer.innerHTML = '<p style="color: var(--text-muted); width: 100%; text-align: center;">No cards generated.</p>';
+                }
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+            } catch (err) {
+                const loader = document.getElementById('kbcg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Error', err.message || 'Failed to generate cards.');
+                } else {
+                    alert(err.message || 'Failed to generate cards.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Cards'; }
+            }
+        }
+
+        function copyCards(btn) {
+            const textToCopy = JSON.stringify(currentCardsData, null, 2);
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                } catch (err) { }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

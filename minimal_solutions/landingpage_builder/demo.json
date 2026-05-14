@@ -1,0 +1,9 @@
+{
+  "topic": "AI Code Assistant Tool",
+  "target": "Software Developers & Engineering Teams",
+  "options": {
+    "tone": "innovative and professional",
+    "primary_color": "#10b981",
+    "features": "Dark mode support, syntax highlighting, API access, easy integration"
+  }
+}

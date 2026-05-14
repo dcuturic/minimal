@@ -1,0 +1,13 @@
+{
+  "request": {
+    "topic": "SaaS für automatisiertes Social Media Management",
+    "target": "Marketing-Agenturen und kleine Unternehmen",
+    "options": "professionell, überzeugend, Call-to-Action fokussiert"
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "result": "# Social Media Autopilot für Agenturen\n\n**Skaliere dein Marketing, nicht deinen Stress.**\n\nUnsere Plattform automatisiert das Posten, Analysieren und Managen von Social Media Kanälen für dich und deine Kunden.\n\n## Warum wir?\n- Spare bis zu 20 Stunden pro Woche.\n- Manage unbegrenzt viele Accounts.\n- KI-gestützte Content-Vorschläge.\n\n## Jetzt starten\n[Kostenlos testen] - Keine Kreditkarte erforderlich."
+    }
+  }
+}

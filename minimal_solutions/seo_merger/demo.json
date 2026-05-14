@@ -1,0 +1,8 @@
+{
+  "topic": "Keyword-Liste: ['SEO Tool', 'Ranking Check', 'Backlink Analyse']",
+  "target": "Content-Strategie Q3",
+  "options": {
+    "merge_strategy": "remove_duplicates",
+    "sort_order": "alphabetical"
+  }
+}

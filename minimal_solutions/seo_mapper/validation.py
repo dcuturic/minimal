@@ -1,0 +1,1 @@
+from .seo_mapper_validation import validate_seo_mapper_request

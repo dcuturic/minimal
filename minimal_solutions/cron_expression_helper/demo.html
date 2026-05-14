@@ -1,0 +1,318 @@
+<div class="cron-helper-container" style="width: 100%;">
+    <style>
+        .cron-input-group { margin-bottom: 1.5rem; display: flex; flex-direction: column; }
+        .cron-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .cron-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .cron-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .cron-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .cron-result-content {
+            width: 100%;
+            text-align: left;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            font-family: monospace;
+            line-height: 1.6;
+        }
+
+        .cron-description {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-align: center;
+            padding: 1rem;
+            background: rgba(var(--primary-color-rgb, 100, 100, 255), 0.1);
+            border-radius: 4px;
+        }
+
+        .cron-executions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .cron-executions-list li {
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .cron-executions-list li:last-child {
+            border-bottom: none;
+        }
+
+        .cron-executions-list li::before {
+            content: "•";
+            color: var(--primary-color);
+            font-weight: bold;
+            display: inline-block; 
+            width: 1em;
+            margin-left: -1em;
+            margin-right: 0.5rem;
+        }
+        
+        .cron-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: stretch; }
+        @media (max-width: 768px) { .cron-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="cron-grid">
+        <div class="cron-form-section" style="display: flex; flex-direction: column;">
+            
+            <div class="cron-input-group">
+                <label>Cron Expression</label>
+                <input type="text" id="cron-expression-input" class="cron-input" placeholder="*/5 * * * *" value="*/5 * * * *" />
+            </div>
+
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                <p style="margin-top: 0;">Beispiele:</p>
+                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                    <li><code>*/5 * * * *</code> - Alle 5 Minuten</li>
+                    <li><code>0 12 * * *</code> - Jeden Tag um 12:00 Uhr</li>
+                    <li><code>0 0 * * 1</code> - Jeden Montag um Mitternacht</li>
+                </ul>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: auto;" onclick="processCron(this)">
+                Erklären & Berechnen
+            </button>
+        </div>
+
+        <div class="cron-preview-section">
+            <div class="cron-preview-box" id="cron-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="cron-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Kein Ausdruck berechnet.</p>
+                </div>
+                
+                <div id="cron-result-state" style="display: none; width: 100%; height: 100%;">
+                    <div class="cron-description" id="cron-description"></div>
+                    <div class="cron-result-content">
+                        <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Nächste Ausführungen:</h4>
+                        <ul class="cron-executions-list" id="cron-executions"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cron-controls" style="display: none; justify-content: center; gap: 1rem;" id="cron-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyCronExecutions(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Ergebnis Kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Dokumentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            Du kannst diese Funktion auch über unsere REST-API nutzen. Sende dazu einen <code>POST</code>-Request an den unten stehenden Endpunkt.
+        </p>
+
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem; font-family: monospace; display: flex; justify-content: space-between; align-items: center;">
+            <span><span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/cron_expression_helper</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Request Beispiel</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "cron_expression": "*/5 * * * *"
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Response Beispiel (Erfolg)</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "expression": "*/5 * * * *",
+    "description": "Every 5 minutes",
+    "next_executions": [
+      "2026-05-11 12:50:00",
+      "2026-05-11 12:55:00",
+      "2026-05-11 13:00:00",
+      "2026-05-11 13:05:00",
+      "2026-05-11 13:10:00"
+    ]
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window._lastCronExecutions = [];
+
+        async function processCron(btn) {
+            const cronInput = document.getElementById('cron-expression-input').value;
+            
+            const container = document.getElementById('cron-preview-container');
+            const emptyState = document.getElementById('cron-empty-state');
+            const resultState = document.getElementById('cron-result-state');
+            const controls = document.getElementById('cron-result-controls');
+            
+            if (!cronInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Bitte einen Cron-Ausdruck eingeben.');
+                } else {
+                    alert('Bitte einen Cron-Ausdruck eingeben.');
+                }
+                
+                emptyState.style.display = 'block';
+                resultState.style.display = 'none';
+                controls.style.display = 'none';
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Berechne...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'cron-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/cron_expression_helper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cron_expression: cronInput
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('cron-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Fehler bei der Verarbeitung des Cron-Ausdrucks.');
+                    } else {
+                        alert(result.message || 'Fehler bei der Verarbeitung des Cron-Ausdrucks.');
+                    }
+                    emptyState.style.display = 'block';
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Erklären & Berechnen'; }
+                    return;
+                }
+
+                const description = result.data.description || 'Keine Beschreibung verfügbar.';
+                const executions = result.data.next_executions || [];
+                
+                window._lastCronExecutions = executions;
+
+                document.getElementById('cron-description').innerText = description;
+                
+                const listEl = document.getElementById('cron-executions');
+                listEl.innerHTML = '';
+                executions.forEach(exec => {
+                    const li = document.createElement('li');
+                    li.innerText = exec;
+                    listEl.appendChild(li);
+                });
+
+                resultState.style.display = 'block';
+                if (executions.length > 0) {
+                    controls.style.display = 'flex';
+                }
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Erklären & Berechnen'; }
+
+            } catch (err) {
+                const loader = document.getElementById('cron-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                emptyState.style.display = 'block';
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Erklären & Berechnen'; }
+            }
+        }
+
+        function copyCronExecutions(btn) {
+            const executionsText = window._lastCronExecutions.join('\n');
+            if (!executionsText) return;
+
+            const copyText = `${document.getElementById('cron-description').innerText}\n\nNächste Ausführungen:\n${executionsText}`;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(copyText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = copyText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

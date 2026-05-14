@@ -1,0 +1,306 @@
+<div class="ag-container" style="width: 100%;">
+    <style>
+        .ag-input-group { margin-bottom: 1.5rem; }
+        .ag-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ag-input { width: 100%; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.75rem; border-radius: 4px; font-family: inherit; font-size: 0.95rem; }
+        .ag-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 255, 213), 0.2); }
+        
+        .ag-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ag-result-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-color);
+        }
+        .ag-result-list li {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-family: monospace;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ag-result-list li:last-child {
+            border-bottom: none;
+        }
+        .ag-result-list li span.index {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .ag-pattern-display {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .ag-controls { display: flex; gap: 1rem; justify-content: center; }
+        .ag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ag-grid { grid-template-columns: 1fr; } }
+        
+        /* Custom scrollbar for the list */
+        .ag-result-list::-webkit-scrollbar { width: 6px; }
+        .ag-result-list::-webkit-scrollbar-track { background: var(--bg-color); }
+        .ag-result-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        .ag-result-list::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+
+    <div class="ag-grid">
+        <div class="ag-form-section">
+            <div class="ag-input-group">
+                <label for="ag-prefix">Prefix (optional)</label>
+                <input type="text" id="ag-prefix" class="ag-input" placeholder="e.g. ANG" value="ANG">
+            </div>
+
+            <div class="ag-input-group">
+                <label for="ag-date">Date (optional)</label>
+                <input type="text" id="ag-date" class="ag-input" placeholder="e.g. 2026-05" value="2026-05">
+            </div>
+
+            <div class="ag-input-group">
+                <label for="ag-customer">Customer Short (optional)</label>
+                <input type="text" id="ag-customer" class="ag-input" placeholder="e.g. CUST" value="CUST">
+            </div>
+
+            <div class="ag-input-group">
+                <label for="ag-number">Number</label>
+                <input type="number" id="ag-number" class="ag-input" value="1" min="1">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateOfferNumber(this)">
+                Generate Number
+            </button>
+        </div>
+
+        <div class="ag-preview-section">
+            <div class="ag-preview-box" id="ag-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ag-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><line x1="9" y1="16" x2="15" y2="16"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure parameters and click generate.</p>
+                </div>
+                
+                <div id="ag-result-state" style="display: none; width: 100%;">
+                    <div class="ag-pattern-display" id="ag-pattern-text">Pattern: [Prefix]-[Date]-[Customer]-[Number]</div>
+                    <ul class="ag-result-list" id="ag-number-list">
+                        <!-- Numbers will be injected here -->
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="ag-controls" style="display: none;" id="ag-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyAllNumbers(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy All
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateOfferNumber(btn) {
+            const prefix = document.getElementById('ag-prefix').value.trim();
+            const date = document.getElementById('ag-date').value.trim();
+            const customerShort = document.getElementById('ag-customer').value.trim();
+            const number = parseInt(document.getElementById('ag-number').value);
+            
+            const container = document.getElementById('ag-preview-container');
+            const controls = document.getElementById('ag-result-controls');
+            const emptyState = document.getElementById('ag-empty-state');
+            const resultState = document.getElementById('ag-result-state');
+            const listContainer = document.getElementById('ag-number-list');
+            const patternText = document.getElementById('ag-pattern-text');
+            
+            // Validation
+            if (isNaN(number) || number < 1) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Number must be at least 1.');
+                else alert('Number must be at least 1.');
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ag-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/angebotsnummer_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prefix: prefix,
+                        date: date,
+                        customer_short: customerShort,
+                        number: number
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('ag-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Number'; }
+                    return;
+                }
+
+                // Temporary mockup if API doesn't return data yet
+                let numbers = result.data?.numbers;
+                let pattern = result.data?.pattern || 'Pattern applied';
+                
+                if (!numbers || numbers.length === 0) {
+                    const parts = [];
+                    if (prefix) parts.push(prefix);
+                    if (date) parts.push(date);
+                    if (customerShort) parts.push(customerShort);
+                    parts.push(number.toString().padStart(4, '0'));
+                    numbers = [parts.join('-')];
+                    pattern = 'Fallback Pattern applied';
+                }
+
+                // Update UI
+                patternText.innerText = `Pattern: ${pattern}`;
+                listContainer.innerHTML = '';
+                
+                numbers.forEach((num, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${num}</span> <span class="index">#${index + 1}</span>`;
+                    listContainer.appendChild(li);
+                });
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Number'; }
+
+            } catch (err) {
+                const loader = document.getElementById('ag-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Number'; }
+            }
+        }
+
+        function copyAllNumbers(btn) {
+            const listItems = document.querySelectorAll('#ag-number-list li span:first-child');
+            const numbers = Array.from(listItems).map(span => span.innerText).join('\n');
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(numbers).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                // Fallback
+                const textArea = document.createElement("textarea");
+                textArea.value = numbers;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <!-- API Documentation -->
+    <div class="api-docs-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Documentation
+        </h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Use this endpoint to generate customized offer numbers systematically via REST API.</p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <span style="background: var(--primary-color); color: var(--bg-color); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.8rem; margin-right: 0.5rem;">POST</span>
+            <code style="background: var(--bg-color); padding: 0.4rem 0.8rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color);">/api/minimal-solutions/angebotsnummer_generator</code>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-color);">Request</h4>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-muted); font-size: 0.85rem; margin: 0;"><code>{
+  "prefix": "ANG",
+  "date": "2026-05",
+  "customer_short": "CUST",
+  "number": 1
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-color);">Response</h4>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; color: var(--text-muted); font-size: 0.85rem; margin: 0;"><code>{
+  "status": "success",
+  "data": {
+    "numbers": [
+      "ANG-2026-05-CUST-0001"
+    ],
+    "pattern": "ANG-2026-05-CUST-0001"
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>

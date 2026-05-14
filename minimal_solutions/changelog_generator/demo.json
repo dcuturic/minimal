@@ -1,0 +1,5 @@
+{
+  "version": "1.2.0",
+  "date": "2026-05-12",
+  "changes": "Added robust error handling for API requests.\nImproved UI performance by refactoring components.\nFixed minor layout issues on mobile devices.\nUpdated dependencies to address security vulnerabilities."
+}

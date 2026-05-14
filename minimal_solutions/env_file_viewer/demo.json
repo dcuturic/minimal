@@ -1,0 +1,3 @@
+{
+  "env_text": "APP_NAME=My Awesome Project\nAPP_ENV=production\nAPP_DEBUG=false\n\n# Database Settings\nDB_CONNECTION=mysql\nDB_HOST=127.0.0.1\nDB_PORT=3306\nDB_DATABASE=awesome_db\nDB_USERNAME=root\nDB_PASSWORD=my_super_secret_password\n\n# Third-party Services\nSTRIPE_API_KEY=sk_live_1234567890abcdef\nAWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+}

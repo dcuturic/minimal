@@ -1,0 +1,29 @@
+{% from 'components/actions.html' import code_actions %}
+{% macro api_doc_box(method, endpoint, request_example='', response_example='') %}
+<div class="card api-docs-card">
+    <h3>API Documentation</h3>
+    <div class="api-endpoint">
+        <span class="method">{{ method }}</span>
+        <code style="flex-grow: 1;">{{ endpoint }}</code>
+        <button class="icon-btn copy-btn" onclick="copyTextFromElement(this.previousElementSibling, this)" title="Copy Endpoint">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </button>
+    </div>
+    
+    {% if request_example %}
+    <div class="code-header">
+        <h4>Request</h4>
+        {{ code_actions('json', 'request_example') }}
+    </div>
+    <pre class="code-block"><code>{{ request_example }}</code></pre>
+    {% endif %}
+
+    {% if response_example %}
+    <div class="code-header">
+        <h4>Response</h4>
+        {{ code_actions('json', 'response_example') }}
+    </div>
+    <pre class="code-block"><code>{{ response_example }}</code></pre>
+    {% endif %}
+</div>
+{% endmacro %}

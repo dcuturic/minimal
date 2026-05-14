@@ -1,0 +1,6 @@
+{
+  "allow": "/public/\n/images/",
+  "disallow": "/admin/\n/private/",
+  "sitemap_url": "https://crafthoster.de/sitemap.xml",
+  "user_agent": "*"
+}

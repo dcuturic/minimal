@@ -1,0 +1,217 @@
+<div class="c2j-container" style="width: 100%;">
+    <style>
+        .c2j-input-group { margin-bottom: 1.5rem; }
+        .c2j-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .c2j-input, .c2j-textarea { width: 100%; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 0.75rem; border-radius: 4px; font-family: inherit; font-size: 0.95rem; }
+        .c2j-input:focus, .c2j-textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 255, 213), 0.2); }
+        .c2j-textarea { min-height: 150px; font-family: monospace; resize: vertical; }
+        
+        .c2j-checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .c2j-checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary-color); }
+        .c2j-checkbox-group label { margin-bottom: 0; color: var(--text-color); cursor: pointer; }
+
+        .c2j-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .c2j-result-container {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .c2j-result-container pre {
+            margin: 0;
+            color: var(--primary-color);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .c2j-controls { display: flex; gap: 1rem; justify-content: center; }
+        .c2j-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .c2j-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="c2j-grid">
+        <div class="c2j-form-section">
+            <div class="c2j-input-group">
+                <label for="c2j-csv-text">CSV Input</label>
+                <textarea id="c2j-csv-text" class="c2j-textarea" placeholder="id,name,age&#10;1,Alice,30&#10;2,Bob,25"></textarea>
+            </div>
+
+            <div class="c2j-input-group">
+                <label for="c2j-delimiter">Trennzeichen (Delimiter)</label>
+                <select id="c2j-delimiter" class="c2j-input">
+                    <option value=",">Komma (,)</option>
+                    <option value=";">Semikolon (;)</option>
+                    <option value="\t">Tabulator (\t)</option>
+                    <option value="|">Pipe (|)</option>
+                </select>
+            </div>
+
+            <div class="c2j-checkbox-group">
+                <input type="checkbox" id="c2j-has-header" checked>
+                <label for="c2j-has-header">Erste Zeile enthält Spaltennamen (Header)</label>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="convertCsvToJson(this)">
+                Konvertieren
+            </button>
+        </div>
+
+        <div class="c2j-preview-section">
+            <div class="c2j-preview-box" id="c2j-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="c2j-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">CSV eingeben und konvertieren.</p>
+                </div>
+                
+                <div id="c2j-result-state" style="display: none; width: 100%;">
+                    <div class="c2j-result-container">
+                        <pre id="c2j-result-json"></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="c2j-controls" style="display: none;" id="c2j-result-controls">
+                <button class="btn btn-secondary" onclick="copyJsonResult()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem; vertical-align: middle;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 3rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; color: var(--primary-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Nutze diese Lösung als externe Schnittstelle in deinen eigenen Applikationen.</p>
+        
+        <div style="margin-bottom: 1rem;">
+            <strong>Endpoint:</strong> <code style="background: var(--surface-color); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace;">POST /api/minimal-solutions/csv_zu_json_converter</code>
+        </div>
+        
+        <div class="c2j-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <strong>Request Example:</strong>
+                <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "csv_text": "id,name\n1,Alice\n2,Bob",
+  "delimiter": ",",
+  "has_header": true
+}</pre>
+            </div>
+            <div>
+                <strong>Response Example:</strong>
+                <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace; font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "status": "success",
+  "data": {
+    "json_data": [
+      { "id": "1", "name": "Alice" },
+      { "id": "2", "name": "Bob" }
+    ]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function convertCsvToJson(btn) {
+            const csvText = document.getElementById('c2j-csv-text').value.trim();
+            const delimiter = document.getElementById('c2j-delimiter').value;
+            const hasHeader = document.getElementById('c2j-has-header').checked;
+            
+            const container = document.getElementById('c2j-preview-container');
+            const emptyState = document.getElementById('c2j-empty-state');
+            const resultState = document.getElementById('c2j-result-state');
+            
+            if (!csvText) {
+                if (typeof showErrorPanel === 'function') showErrorPanel('Validation', 'Bitte CSV-Text eingeben.');
+                else alert('Bitte CSV-Text eingeben.');
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Konvertiere...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'c2j-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/csv_zu_json_converter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        csv_text: csvText, 
+                        delimiter: delimiter, 
+                        has_header: hasHeader 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.status === 'error') {
+                    throw new Error(result.error?.message || result.message || 'Ein Fehler ist aufgetreten.');
+                }
+
+                const loader = document.getElementById('c2j-temp-loader');
+                if (loader) loader.remove();
+
+                // Update UI
+                const jsonOutput = JSON.stringify(result.data.json_data, null, 2);
+                document.getElementById('c2j-result-json').innerText = jsonOutput;
+
+                resultState.style.display = 'block';
+                document.getElementById('c2j-result-controls').style.display = 'flex';
+                
+            } catch (err) {
+                const loader = document.getElementById('c2j-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('API Fehler', err.message);
+                } else {
+                    alert('Ein Fehler ist aufgetreten: ' + err.message);
+                }
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Konvertieren'; }
+            }
+        }
+
+        function copyJsonResult() {
+            const jsonText = document.getElementById('c2j-result-json').innerText;
+            
+            navigator.clipboard.writeText(jsonText).then(() => {
+                if (typeof showToast === 'function') {
+                    showToast('JSON kopiert!', 'success');
+                } else {
+                    alert('JSON kopiert!');
+                }
+            }).catch(err => {
+                console.error('Copy failed', err);
+            });
+        }
+    </script>
+</div>

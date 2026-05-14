@@ -1,0 +1,240 @@
+<div class="maintenance-container" style="width: 100%;">
+    <style>
+        .maintenance-input-group { margin-bottom: 1.5rem; }
+        .maintenance-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .maintenance-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: inherit; font-size: 1rem; }
+        .maintenance-input:focus { outline: none; border-color: var(--primary-color); }
+        .maintenance-textarea { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-family: inherit; font-size: 1rem; resize: vertical; min-height: 100px; }
+        .maintenance-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .maintenance-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .maintenance-result-text {
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-break: break-all;
+            width: 100%;
+            text-align: left;
+            line-height: 1.5;
+            font-family: monospace;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .maintenance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .maintenance-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="maintenance-grid">
+        <div class="maintenance-form-section">
+            <div class="maintenance-input-group">
+                <label>Page Title</label>
+                <input type="text" id="maint-title" class="maintenance-input" placeholder="e.g. Under Maintenance" value="Under Maintenance">
+            </div>
+            
+            <div class="maintenance-input-group">
+                <label>Message</label>
+                <textarea id="maint-message" class="maintenance-textarea" placeholder="e.g. We are currently performing scheduled maintenance.">We are currently performing scheduled maintenance. We will be back online shortly.</textarea>
+            </div>
+            
+            <div class="maintenance-input-group">
+                <label>ETA (Estimated Time of Arrival)</label>
+                <input type="text" id="maint-eta" class="maintenance-input" placeholder="e.g. 2 Hours" value="2 Hours">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateMaintenancePage(this)">
+                Generate HTML
+            </button>
+            <div id="maint-error-state" style="display:none; color: var(--error-color, #ff4d4d); margin-top: 1rem; font-size: 0.9rem;"></div>
+        </div>
+
+        <div class="maintenance-preview-section">
+            <div class="maintenance-preview-box" id="maint-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="maint-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Configure details to generate the maintenance page.</p>
+                </div>
+                
+                <div id="maint-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem; gap: 0.5rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="previewHTML(this)">Preview</button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyHTML(this)">Copy HTML</button>
+                    </div>
+                    <pre class="maintenance-result-text" id="maint-result"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateMaintenancePage(btn) {
+            const title = document.getElementById('maint-title').value;
+            const message = document.getElementById('maint-message').value;
+            const eta = document.getElementById('maint-eta').value;
+            
+            const container = document.getElementById('maint-preview-container');
+            const emptyState = document.getElementById('maint-empty-state');
+            const resultState = document.getElementById('maint-result-state');
+            const errorState = document.getElementById('maint-error-state');
+            
+            if (errorState) errorState.style.display = 'none';
+
+            if (!title || !message) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Title and Message are required.');
+                } else if (errorState) {
+                    errorState.innerText = 'Title and Message are required.';
+                    errorState.style.display = 'block';
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'maint-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/maintenance_page_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        message: message,
+                        eta: eta
+                    })
+                });
+                
+                const result = await response.json();
+                
+                const loader = document.getElementById('maint-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'An error occurred during generation.');
+                    } else if (errorState) {
+                        errorState.innerText = result.message || 'An error occurred during generation.';
+                        errorState.style.display = 'block';
+                    }
+                    emptyState.style.display = 'flex';
+                } else if (result.status === 'success' && result.data && result.data.html_output) {
+                    document.getElementById('maint-result').textContent = result.data.html_output;
+                    resultState.style.display = 'block';
+                } else {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', 'Unexpected response format.');
+                    } else if (errorState) {
+                        errorState.innerText = 'Unexpected response format.';
+                        errorState.style.display = 'block';
+                    }
+                    emptyState.style.display = 'flex';
+                }
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate HTML'; }
+
+            } catch (err) {
+                const loader = document.getElementById('maint-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else if (errorState) {
+                    errorState.innerText = 'Failed to connect to the API.';
+                    errorState.style.display = 'block';
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate HTML'; }
+                emptyState.style.display = 'flex';
+            }
+        }
+
+        async function copyHTML(btn) {
+            const textContent = document.getElementById('maint-result').textContent;
+            try {
+                await navigator.clipboard.writeText(textContent);
+                if (typeof showCopySuccess === 'function') {
+                    showCopySuccess(btn, true);
+                } else {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = 'Copied!';
+                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                }
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Copy Error', 'Failed to copy text.');
+                } else {
+                    btn.innerHTML = 'Error';
+                    setTimeout(() => { btn.innerHTML = 'Copy HTML'; }, 2000);
+                }
+            }
+        }
+
+        function previewHTML(btn) {
+            const textContent = document.getElementById('maint-result').textContent;
+            const newWindow = window.open();
+            newWindow.document.write(textContent);
+            newWindow.document.close();
+        }
+    </script>
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um programmgesteuert Maintenance-Seiten (Wartungsseiten) zu generieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/maintenance_page_generator</code>
+        </div>
+
+        <div class="maintenance-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "title": "Under Maintenance",
+  "message": "We are currently performing scheduled maintenance.",
+  "eta": "2 Hours"
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `title` und `message` sind Pflichtfelder. `eta` ist optional.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "html_output": "&lt;!DOCTYPE html&gt;\n&lt;html lang=\"en\"&gt;\n&lt;head&gt;..."
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>

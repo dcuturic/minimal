@@ -1,0 +1,373 @@
+<div class="docker-compose-viewer-container" style="width: 100%;">
+    <style>
+        .dc-input-group { margin-bottom: 1.5rem; }
+        .dc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .dc-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .dc-textarea {
+            min-height: 250px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        .dc-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .dc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .dc-result-table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .dc-result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .dc-result-table th, .dc-result-table td {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+        
+        .dc-result-table th {
+            background: var(--bg-color);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        
+        .dc-result-table td:nth-child(1) {
+            font-family: monospace;
+            color: var(--primary-color);
+            font-weight: 600;
+            width: 25%;
+        }
+        
+        .dc-result-table td:nth-child(2) {
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .dc-controls { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
+        .dc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .dc-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="dc-grid">
+        <div class="dc-form-section">
+            <div class="dc-input-group">
+                <label>Docker Compose YAML</label>
+                <textarea id="compose-yaml" class="dc-input dc-textarea" placeholder="version: '3.8'&#10;services:&#10;  web:&#10;    image: nginx:latest&#10;    ports:&#10;      - '80:80'&#10;  db:&#10;    image: postgres:13&#10;    environment:&#10;      POSTGRES_USER: user"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processComposeYaml(this)">
+                View Services
+            </button>
+        </div>
+
+        <div class="dc-preview-section">
+            <div class="dc-preview-box" id="dc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="dc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter docker-compose.yml content and click view.</p>
+                </div>
+                
+                <div id="dc-result-state" style="display: none; width: 100%;">
+                    <div class="dc-result-table-container">
+                        <table class="dc-result-table">
+                            <thead>
+                                <tr>
+                                    <th>Service Name</th>
+                                    <th>Image</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dc-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="dc-raw-data" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="dc-controls" style="display: none;" id="dc-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyDcJson(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy JSON
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadDcJson()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processComposeYaml(btn) {
+            const yamlInput = document.getElementById('compose-yaml').value.trim();
+            
+            const container = document.getElementById('dc-preview-container');
+            const emptyState = document.getElementById('dc-empty-state');
+            const resultState = document.getElementById('dc-result-state');
+            const tableBody = document.getElementById('dc-table-body');
+            
+            if (!yamlInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide Docker Compose YAML text.');
+                } else {
+                    alert('Please provide Docker Compose YAML text.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Parsing...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            document.getElementById('dc-result-controls').style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'dc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const payload = {
+                    compose_yaml: yamlInput
+                };
+
+                const response = await fetch('/api/minimal-solutions/docker_compose_service_viewer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('dc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'View Services'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                let dataToRender = result.data.services || result.data.result || result.data;
+                tableBody.innerHTML = '';
+                
+                if (Array.isArray(dataToRender)) {
+                    dataToRender.forEach(item => {
+                        const name = item.name || item.service || '';
+                        const image = item.image || 'N/A';
+                        
+                        let detailsStr = '';
+                        if (item.ports) detailsStr += `Ports: ${Array.isArray(item.ports) ? item.ports.join(', ') : item.ports}\n`;
+                        if (item.volumes) detailsStr += `Volumes: ${Array.isArray(item.volumes) ? item.volumes.length : 1}\n`;
+                        if (item.build) detailsStr += `Build: ${typeof item.build === 'object' ? item.build.context || 'Yes' : item.build}\n`;
+                        
+                        if (!detailsStr) detailsStr = '-';
+
+                        const tr = document.createElement('tr');
+                        
+                        const tdName = document.createElement('td');
+                        tdName.innerText = name;
+                        
+                        const tdImage = document.createElement('td');
+                        tdImage.innerText = image;
+                        
+                        const tdDetails = document.createElement('td');
+                        tdDetails.innerText = detailsStr.trim();
+                        tdDetails.style.whiteSpace = 'pre-wrap';
+                        
+                        tr.appendChild(tdName);
+                        tr.appendChild(tdImage);
+                        tr.appendChild(tdDetails);
+                        tableBody.appendChild(tr);
+                    });
+                } else if (typeof dataToRender === 'object' && dataToRender !== null) {
+                    for(const [k, v] of Object.entries(dataToRender)) {
+                        const name = k;
+                        const image = v.image || 'N/A';
+                        
+                        let detailsStr = '';
+                        if (v.ports) detailsStr += `Ports: ${Array.isArray(v.ports) ? v.ports.join(', ') : v.ports}\n`;
+                        if (v.volumes) detailsStr += `Volumes: ${Array.isArray(v.volumes) ? v.volumes.length : 1}\n`;
+                        if (v.build) detailsStr += `Build: ${typeof v.build === 'object' ? v.build.context || 'Yes' : v.build}\n`;
+                        
+                        if (!detailsStr) detailsStr = '-';
+                        
+                        const tr = document.createElement('tr');
+                        
+                        const tdName = document.createElement('td');
+                        tdName.innerText = name;
+                        
+                        const tdImage = document.createElement('td');
+                        tdImage.innerText = image;
+                        
+                        const tdDetails = document.createElement('td');
+                        tdDetails.innerText = detailsStr.trim();
+                        tdDetails.style.whiteSpace = 'pre-wrap';
+                        
+                        tr.appendChild(tdName);
+                        tr.appendChild(tdImage);
+                        tr.appendChild(tdDetails);
+                        tableBody.appendChild(tr);
+                    }
+                } else {
+                    const tr = document.createElement('tr');
+                    const td = document.createElement('td');
+                    td.colSpan = 3;
+                    td.innerText = "No services found.";
+                    td.style.textAlign = 'center';
+                    tr.appendChild(td);
+                    tableBody.appendChild(tr);
+                }
+                
+                document.getElementById('dc-raw-data').innerText = JSON.stringify(dataToRender, null, 2);
+                
+                resultState.style.display = 'block';
+                document.getElementById('dc-result-controls').style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'View Services'; }
+
+            } catch (err) {
+                const loader = document.getElementById('dc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'View Services'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyDcJson(btn) {
+            const outputText = document.getElementById('dc-raw-data').innerText;
+            if (!outputText) return;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function downloadDcJson() {
+            const outputText = document.getElementById('dc-raw-data').innerText;
+            if (!outputText) return;
+
+            const blob = new Blob([outputText], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'docker-compose-services.json');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+
+    <div class="api-docs-section" style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You can use this tool via API. Send a POST request to <code>/api/minimal-solutions/docker_compose_service_viewer</code>.</p>
+        
+        <div class="api-docs-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div class="api-docs-req">
+                <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Request Example</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto;">{
+  "compose_yaml": "version: '3'\nservices:\n  web:\n    image: nginx\n    ports:\n      - \"80:80\""
+}</pre>
+            </div>
+            <div class="api-docs-res">
+                <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Response Example</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "services": [
+      {
+        "name": "web",
+        "image": "nginx",
+        "ports": ["80:80"],
+        "volumes": [],
+        "build": null
+      }
+    ]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @media (max-width: 768px) {
+            .api-docs-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</div>

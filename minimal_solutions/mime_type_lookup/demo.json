@@ -1,0 +1,23 @@
+{
+  "scenarios": [
+    {
+      "name": "Standard MIME Type",
+      "description": "Suche nach der Dateiendung für application/json",
+      "request": {
+        "query": "application/json"
+      }
+    },
+    {
+      "name": "Dateiendung",
+      "description": "Suche nach dem MIME Type für .png",
+      "request": {
+        "query": ".png"
+      }
+    },
+    {
+      "name": "Leere Eingabe",
+      "description": "Erwartet einen Validierungsfehler",
+      "request": {}
+    }
+  ]
+}

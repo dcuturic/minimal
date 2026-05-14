@@ -1,0 +1,287 @@
+<div class="tpc-container" style="width: 100%;">
+    <style>
+        .tpc-input-group { margin-bottom: 1.5rem; }
+        .tpc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .tpc-textarea {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.8rem 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            min-height: 200px;
+            resize: vertical;
+        }
+        .tpc-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .tpc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .tpc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .tpc-grid { grid-template-columns: 1fr; } }
+        
+        .tpc-controls { display: flex; gap: 1rem; justify-content: center; }
+
+        /* Badge Styles */
+        .priority-badge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .priority-badge.urgent { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+        .priority-badge.high { background: linear-gradient(135deg, #f12711, #f5af19); }
+        .priority-badge.medium { background: linear-gradient(135deg, #f7b733, #fc4a1a); }
+        .priority-badge.low { background: linear-gradient(135deg, #56ab2f, #a8e063); }
+        .priority-badge.default { background: linear-gradient(135deg, #4b6cb7, #182848); }
+        
+        .priority-confidence {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .priority-reason {
+            font-size: 0.95rem;
+            color: var(--text-color);
+            text-align: center;
+            max-width: 80%;
+            margin-top: 0.5rem;
+            line-height: 1.5;
+            padding: 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+
+    <div class="tpc-grid">
+        <div class="tpc-form-section">
+            <div class="tpc-input-group">
+                <label>Ticket Text</label>
+                <textarea id="tpc-text-input" class="tpc-textarea" placeholder="Paste the customer ticket text here to classify its priority..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="classifyPriority(this)">
+                Classify Ticket
+            </button>
+        </div>
+
+        <div class="tpc-preview-section">
+            <div class="tpc-preview-box" id="tpc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="tpc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter ticket text to classify priority.</p>
+                </div>
+                
+                <div id="tpc-result-state" style="display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center;">
+                    <div class="priority-badge-container">
+                        <div id="tpc-badge" class="priority-badge default">UNKNOWN</div>
+                        <div id="tpc-reason" class="priority-reason"></div>
+                        <div id="tpc-confidence" class="priority-confidence"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tpc-controls" style="display: none;" id="tpc-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyResult(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Priority
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Documentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            You can also use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; font-family: monospace; border: 1px solid var(--border-color);">
+                POST /api/minimal-solutions/ticket_priority_classifier
+            </code>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Request</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "ticket_text": "The entire server is down and clients are complaining. Fix immediately!"
+}</code></pre>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Example Response</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "priority": "Urgent",
+    "confidence": 0.98,
+    "reason": "Contains terms like 'server is down', 'clients complaining', 'immediately'."
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResult = null;
+
+        async function classifyPriority(btn) {
+            const ticketText = document.getElementById('tpc-text-input').value.trim();
+            
+            const container = document.getElementById('tpc-preview-container');
+            const controls = document.getElementById('tpc-result-controls');
+            const emptyState = document.getElementById('tpc-empty-state');
+            const resultState = document.getElementById('tpc-result-state');
+            
+            if (!ticketText) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide the ticket text.');
+                } else {
+                    alert('Please provide the ticket text.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Classifying...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'tpc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const payload = { ticket_text: ticketText };
+
+                const response = await fetch('/api/minimal-solutions/ticket_priority_classifier', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const loader = document.getElementById('tpc-temp-loader');
+                if (loader) loader.remove();
+
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error('Invalid JSON response from server.');
+                }
+
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || 'Unknown error occurred.');
+                }
+
+                const data = result.data || {};
+                currentResult = data;
+                
+                const badge = document.getElementById('tpc-badge');
+                const reason = document.getElementById('tpc-reason');
+                const confidence = document.getElementById('tpc-confidence');
+                
+                const priority = data.priority || 'Medium';
+                badge.textContent = priority.toUpperCase();
+                
+                badge.className = 'priority-badge';
+                const pLower = priority.toLowerCase();
+                if (pLower.includes('urgent')) badge.classList.add('urgent');
+                else if (pLower.includes('high')) badge.classList.add('high');
+                else if (pLower.includes('low')) badge.classList.add('low');
+                else if (pLower.includes('medium')) badge.classList.add('medium');
+                else badge.classList.add('default');
+                
+                if (data.reason) {
+                    reason.textContent = data.reason;
+                    reason.style.display = 'block';
+                } else {
+                    reason.style.display = 'none';
+                }
+                
+                if (data.confidence !== undefined) {
+                    confidence.textContent = `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+                    confidence.style.display = 'block';
+                } else {
+                    confidence.style.display = 'none';
+                }
+                
+                resultState.style.display = 'flex';
+                controls.style.display = 'flex';
+                
+            } catch (err) {
+                const loader = document.getElementById('tpc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Error', err.message || 'Failed to classify ticket.');
+                } else {
+                    alert(err.message || 'Failed to classify ticket.');
+                }
+                emptyState.style.display = 'block';
+            } finally {
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Classify Ticket'; }
+            }
+        }
+
+        function copyResult(btn) {
+            if (!currentResult || !currentResult.priority) return;
+            const textToCopy = currentResult.priority;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') showCopySuccess(btn, true);
+                } catch (err) { }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

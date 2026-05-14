@@ -1,0 +1,228 @@
+<div class="ipub-container" style="width: 100%;">
+    <style>
+        .ipub-input-group { margin-bottom: 1.5rem; }
+        .ipub-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .ipub-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .ipub-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .ipub-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .ipub-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+        }
+
+        .ipub-controls { display: flex; gap: 1rem; justify-content: center; }
+        .ipub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .ipub-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="ipub-grid">
+        <div class="ipub-form-section">
+            <div class="ipub-input-group">
+                <label>Page</label>
+                <input type="text" id="ipub-page-input" class="ipub-input" placeholder="e.g. index" />
+            </div>
+            <div class="ipub-input-group">
+                <label>Component</label>
+                <input type="text" id="ipub-component-input" class="ipub-input" placeholder="e.g. Header" />
+            </div>
+            <div class="ipub-input-group">
+                <label>Mode</label>
+                <input type="text" id="ipub-mode-input" class="ipub-input" placeholder="e.g. preview" />
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processIpub(this)">
+                Generate URL
+            </button>
+        </div>
+
+        <div class="ipub-preview-section">
+            <div class="ipub-preview-box" id="ipub-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="ipub-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter details to generate preview URL.</p>
+                </div>
+                
+                <div id="ipub-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0; color: var(--text-color);">Generated Iframe Code</h4>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-sm" onclick="copyIpub()" title="Copy to Clipboard" style="padding: 0.25rem 0.5rem;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <pre class="ipub-result-text" id="ipub-text-result"></pre>
+                    <div style="margin-top: 1rem; text-align: center;">
+                        <a id="ipub-test-link" href="#" target="_blank" class="btn btn-secondary btn-sm">Test Preview</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0;">API Usage</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            You can use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        <div style="background: var(--surface-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/iframe_preview_url_builder
+        </div>
+        
+        <div class="ipub-grid" style="gap: 1rem; margin-top: 1rem;">
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Request Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "page": "index",
+  "component": "Header",
+  "mode": "preview"
+}</pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Response Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "preview_url": "/preview?page=index&amp;component=Header&amp;mode=preview",
+    "iframe_code": "&lt;iframe src=\"/preview?page=index&amp;component=Header&amp;mode=preview\" ...&gt;&lt;/iframe&gt;"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processIpub(btn) {
+            const pageInput = document.getElementById('ipub-page-input').value.trim();
+            const componentInput = document.getElementById('ipub-component-input').value.trim();
+            const modeInput = document.getElementById('ipub-mode-input').value.trim();
+            
+            const container = document.getElementById('ipub-preview-container');
+            const emptyState = document.getElementById('ipub-empty-state');
+            const resultState = document.getElementById('ipub-result-state');
+            
+            if (!pageInput && !componentInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'At least Page or Component is required.');
+                } else {
+                    alert('At least Page or Component is required.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'ipub-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const requestData = {
+                    page: pageInput,
+                    component: componentInput,
+                    mode: modeInput
+                };
+                
+                const response = await fetch('/api/minimal-solutions/iframe_preview_url_builder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('ipub-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate URL'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const previewUrl = result.data.preview_url || '';
+                const iframeCode = result.data.iframe_code || '';
+                document.getElementById('ipub-text-result').innerText = iframeCode;
+                document.getElementById('ipub-test-link').href = previewUrl;
+                
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate URL'; }
+
+            } catch (err) {
+                const loader = document.getElementById('ipub-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate URL'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyIpub() {
+            const url = document.getElementById('ipub-text-result').innerText;
+            if (!url) return;
+            navigator.clipboard.writeText(url).then(() => {
+                if (typeof showToast === 'function') {
+                    showToast('URL copied to clipboard!', 'success');
+                } else {
+                    alert('Copied to clipboard');
+                }
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+    </script>
+</div>

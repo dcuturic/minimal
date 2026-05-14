@@ -1,0 +1,292 @@
+<div class="tbg-container" style="width: 100%;">
+    <style>
+        .tbg-input-group { margin-bottom: 1.5rem; }
+        .tbg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .tbg-input, .tbg-select {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .tbg-input:focus, .tbg-select:focus { outline: none; border-color: var(--primary-color); }
+        
+        .tbg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .tbg-ticket-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tbg-ticket {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            width: 100%;
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .tbg-ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .tbg-ticket-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin: 0;
+            word-break: break-word;
+        }
+        
+        .tbg-ticket-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            line-height: 1.4;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .tbg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .tbg-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="tbg-grid">
+        <div class="tbg-form-section">
+            <div class="tbg-input-group">
+                <label>Task Text</label>
+                <textarea id="tbg-text-input" class="tbg-input" placeholder="e.g. Build a user login and registration system with email verification." rows="5"></textarea>
+            </div>
+            <div class="tbg-input-group">
+                <label>Breakdown Depth</label>
+                <select id="tbg-depth-input" class="tbg-select">
+                    <option value="1">1 - High Level (Few tickets)</option>
+                    <option value="2" selected>2 - Medium (Standard breakdown)</option>
+                    <option value="3">3 - Detailed (Many small tickets)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processTbg(this)">
+                Generate Breakdown
+            </button>
+        </div>
+
+        <div class="tbg-preview-section">
+            <div class="tbg-preview-box" id="tbg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="tbg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter task details to generate tickets.</p>
+                </div>
+                
+                <div id="tbg-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0; color: var(--text-color);">Ticket Breakdown (<span id="tbg-count">0</span> tickets)</h4>
+                    </div>
+                    
+                    <div class="tbg-ticket-list" id="tbg-ticket-list-container">
+                        <!-- Tickets will be rendered here -->
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; justify-content: center; width: 100%; margin-top: 1.5rem;">
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="copyTbgTickets()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy JSON
+                        </button>
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="downloadTbgJson()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Download JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0;">API Usage</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            You can use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        <div style="background: var(--surface-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/task_breakdown_generator
+        </div>
+        
+        <div class="tbg-grid" style="gap: 1rem; margin-top: 1rem;">
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Request Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "task_text": "Build a simple login page",
+  "depth": 2
+}</pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Response Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "tickets": [
+      {
+        "title": "Create User Login UI",
+        "description": "Design and build the login form with email and password fields."
+      },
+      {
+        "title": "Implement Login API",
+        "description": "Create the backend endpoint to handle authentication."
+      }
+    ]
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processTbg(btn) {
+            const textInput = document.getElementById('tbg-text-input').value.trim();
+            const depthInput = parseInt(document.getElementById('tbg-depth-input').value, 10);
+            
+            const container = document.getElementById('tbg-preview-container');
+            const emptyState = document.getElementById('tbg-empty-state');
+            const resultState = document.getElementById('tbg-result-state');
+            
+            if (!textInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Task text is required.');
+                } else {
+                    alert('Task text is required.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'tbg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const requestData = {
+                    task_text: textInput,
+                    depth: depthInput
+                };
+                
+                const response = await fetch('/api/minimal-solutions/task_breakdown_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('tbg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Breakdown'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const tickets = result.data.tickets || [];
+                window.lastTbgData = tickets;
+                
+                document.getElementById('tbg-count').innerText = tickets.length;
+                
+                const listContainer = document.getElementById('tbg-ticket-list-container');
+                listContainer.innerHTML = '';
+                
+                tickets.forEach((ticket, index) => {
+                    const ticketDiv = document.createElement('div');
+                    ticketDiv.className = 'tbg-ticket';
+                    
+                    ticketDiv.innerHTML = `
+                        <div class="tbg-ticket-header">
+                            <h3 class="tbg-ticket-title">${index + 1}. ${ticket.title}</h3>
+                        </div>
+                        <div class="tbg-ticket-desc">${ticket.description || 'No description provided.'}</div>
+                    `;
+                    listContainer.appendChild(ticketDiv);
+                });
+                
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Breakdown'; }
+
+            } catch (err) {
+                const loader = document.getElementById('tbg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Breakdown'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        async function copyTbgTickets() {
+            if (!window.lastTbgData) return;
+            try {
+                await navigator.clipboard.writeText(JSON.stringify(window.lastTbgData, null, 2));
+                if (typeof showToast === 'function') {
+                    showToast('JSON copied to clipboard!');
+                } else {
+                    alert('JSON copied to clipboard!');
+                }
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+
+        function downloadTbgJson() {
+            if (!window.lastTbgData) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.lastTbgData, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "task_breakdown.json");
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+        }
+    </script>
+</div>

@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.crafthoster.com/v1/deploy",
+    "headers": {
+      "Authorization": "Bearer YOUR_TOKEN",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "project_name": "my-cool-app",
+      "version": "1.0.0"
+    }
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "curl_command": "curl -X POST 'https://api.crafthoster.com/v1/deploy' \\\n  -H 'Authorization: Bearer YOUR_TOKEN' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"project_name\": \"my-cool-app\", \"version\": \"1.0.0\"}'"
+    }
+  }
+}

@@ -1,0 +1,339 @@
+<div class="risk-matrix-container" style="width: 100%;">
+    <style>
+        .risk-matrix-input-group { margin-bottom: 1.5rem; }
+        .risk-matrix-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .risk-matrix-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .risk-matrix-textarea:focus { outline: none; border-color: var(--primary-color); }
+
+        .risk-matrix-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .risk-matrix-result-text {
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .risk-matrix-controls { display: flex; gap: 1rem; justify-content: center; }
+        .risk-matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .risk-matrix-grid { grid-template-columns: 1fr; } }
+
+        .risk-matrix-error-box {
+            width: 100%;
+            background: rgba(255, 60, 60, 0.08);
+            border: 1px solid rgba(255, 60, 60, 0.3);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            display: none;
+        }
+        .risk-matrix-error-box p {
+            margin: 0;
+            color: #ff5c5c;
+            font-size: 0.9rem;
+        }
+        .risk-matrix-error-box strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #ff5c5c;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .risk-matrix-loading-box {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .risk-matrix-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color, var(--text-color));
+            border-radius: 50%;
+            animation: risk-matrix-spin 0.8s linear infinite;
+        }
+        @keyframes risk-matrix-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .risk-matrix-loading-text {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+    </style>
+
+    <div class="risk-matrix-grid">
+        <div class="risk-matrix-form-section">
+            <div class="risk-matrix-input-group">
+                <label>Risks (JSON list or plain text)</label>
+                <textarea id="risk-matrix-text-input" class="risk-matrix-textarea" placeholder='Enter risks here...&#10;Example:&#10;[&#10;  {"name": "Server Crash", "probability": "High", "impact": "High"},&#10;  {"name": "Data Loss", "probability": "Low", "impact": "High"}&#10;]'></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processRiskMatrix(this)">
+                Generate Risk Matrix
+            </button>
+        </div>
+
+        <div class="risk-matrix-preview-section">
+            <div class="risk-matrix-preview-box" id="risk-matrix-preview-container">
+                <!-- Empty State -->
+                <div style="text-align: center; color: var(--text-muted);" id="risk-matrix-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter risks to generate the matrix.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="risk-matrix-loading-box" id="risk-matrix-loading-state">
+                    <div class="risk-matrix-spinner"></div>
+                    <span class="risk-matrix-loading-text">Generating matrix…</span>
+                </div>
+
+                <!-- Error State -->
+                <div class="risk-matrix-error-box" id="risk-matrix-error-state">
+                    <strong id="risk-matrix-error-title">Error</strong>
+                    <p id="risk-matrix-error-message"></p>
+                </div>
+
+                <!-- Result State -->
+                <div id="risk-matrix-result-state" style="display: none; width: 100%;">
+                    <div class="risk-matrix-result-item">
+                        <pre class="risk-matrix-result-text" id="risk-matrix-text-result"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="risk-matrix-controls" style="display: none;" id="risk-matrix-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyRiskMatrix(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Result
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div class="risk-matrix-api-docs" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem; display: block;">
+        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem; color: var(--text-color);">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">The Risk Matrix Generator functionality can also be accessed via API.</p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpoint</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: inline-block; font-family: monospace;">POST /api/minimal-solutions/risk_matrix_generator</code>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "risks": [
+    {"name": "Server Crash", "probability": "High", "impact": "High"}
+  ]
+}</pre>
+        </div>
+        
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response Example</strong>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.9rem; margin: 0; color: var(--text-color);">{
+  "status": "success",
+  "data": {
+    "matrix": "Risk Matrix\n========================================\n\n[HIGH RISK]\n- Server Crash (Prob: High, Impact: High)\n"
+  }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        function riskMatrixShowState(state) {
+            const empty = document.getElementById('risk-matrix-empty-state');
+            const loading = document.getElementById('risk-matrix-loading-state');
+            const error = document.getElementById('risk-matrix-error-state');
+            const result = document.getElementById('risk-matrix-result-state');
+            const controls = document.getElementById('risk-matrix-result-controls');
+
+            empty.style.display = 'none';
+            loading.style.display = 'none';
+            error.style.display = 'none';
+            result.style.display = 'none';
+            controls.style.display = 'none';
+
+            switch (state) {
+                case 'empty':
+                    empty.style.display = 'block';
+                    break;
+                case 'loading':
+                    loading.style.display = 'flex';
+                    break;
+                case 'error':
+                    error.style.display = 'block';
+                    break;
+                case 'result':
+                    result.style.display = 'block';
+                    controls.style.display = 'flex';
+                    break;
+            }
+        }
+
+        function riskMatrixShowError(title, message) {
+            document.getElementById('risk-matrix-error-title').textContent = title;
+            document.getElementById('risk-matrix-error-message').textContent = message;
+            riskMatrixShowState('error');
+        }
+
+        async function processRiskMatrix(btn) {
+            const risksInput = document.getElementById('risk-matrix-text-input').value.trim();
+
+            if (!risksInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide risks to generate the matrix.');
+                } else {
+                    riskMatrixShowError('Validation', 'Please provide risks to generate the matrix.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+
+            riskMatrixShowState('loading');
+
+            try {
+                let parsedRisks;
+                try {
+                    parsedRisks = JSON.parse(risksInput);
+                } catch (e) {
+                    parsedRisks = risksInput; // Let backend handle plain text if needed
+                }
+
+                const response = await fetch('/api/minimal-solutions/risk_matrix_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        risks: parsedRisks
+                    })
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok || result.status === 'error') {
+                    let errorMsg = result.message || 'Unknown error occurred.';
+                    if (result.details) {
+                        if (typeof result.details === 'object') {
+                            const detailsStr = Object.values(result.details).join(', ');
+                            if (detailsStr) {
+                                errorMsg += ' - ' + detailsStr;
+                            }
+                        } else if (Array.isArray(result.details)) {
+                            errorMsg += ' - ' + result.details.join(', ');
+                        } else {
+                            errorMsg += ' - ' + result.details;
+                        }
+                    }
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', errorMsg);
+                    } else {
+                        riskMatrixShowError('API Error', errorMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Generate Risk Matrix'; }
+                    return;
+                }
+
+                // Assume result.data contains the generated matrix string or object
+                const outputData = result.data.matrix || result.data.result || JSON.stringify(result.data, null, 2);
+                const outputText = typeof outputData === 'string' ? outputData : JSON.stringify(outputData, null, 2);
+
+                document.getElementById('risk-matrix-text-result').innerText = outputText;
+
+                riskMatrixShowState('result');
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Risk Matrix'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    riskMatrixShowError('Network Error', 'Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate Risk Matrix'; }
+            }
+        }
+
+        function copyRiskMatrix(btn) {
+            const outputText = document.getElementById('risk-matrix-text-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

@@ -1,0 +1,9 @@
+{
+  "topic": "Next-Gen AI Code Assistant",
+  "target": "Softwareentwickler und DevOps Teams",
+  "options": {
+    "tone": "Technisch, innovativ, professionell",
+    "primary_color": "#8b5cf6",
+    "features": "Echtzeit Code-Completion, Automatische Refactorings, Security Scans"
+  }
+}

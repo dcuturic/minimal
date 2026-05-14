@@ -1,0 +1,19 @@
+{
+  "tokens": {
+    "colors": {
+      "primary": "#3b82f6",
+      "secondary": "#10b981",
+      "background": "#ffffff",
+      "text": "#111827"
+    },
+    "typography": {
+      "fontFamily": "Inter, sans-serif",
+      "fontSizeBase": "16px"
+    },
+    "spacing": {
+      "small": "8px",
+      "medium": "16px",
+      "large": "24px"
+    }
+  }
+}

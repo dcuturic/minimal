@@ -1,0 +1,306 @@
+<div class="lr-container" style="width: 100%;">
+    <style>
+        .lr-input-group { margin-bottom: 1.5rem; }
+        .lr-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .lr-textarea {
+            width: 100%;
+            min-height: 250px;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        .lr-textarea:focus { outline: none; border-color: var(--primary-color); }
+        
+        .lr-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        .lr-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .lr-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .lr-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .lr-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .lr-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-color: var(--primary-color);
+        }
+
+        .lr-card-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .lr-card-value {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .lr-controls { display: flex; gap: 1rem; justify-content: center; }
+        .lr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .lr-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="lr-grid">
+        <div class="lr-form-section">
+            <div class="lr-input-group">
+                <label>Text</label>
+                <textarea id="lr-text-input" class="lr-textarea" placeholder="Enter the text you want to read..."></textarea>
+            </div>
+
+            <div class="lr-input-group">
+                <label>Words per Minute (WPM)</label>
+                <input type="number" id="lr-wpm-input" class="lr-input" value="200" min="1" max="2000" />
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processReadingTime(this)">
+                Calculate Reading Time
+            </button>
+        </div>
+
+        <div class="lr-preview-section">
+            <div class="lr-preview-box" id="lr-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="lr-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter text to estimate reading time.</p>
+                </div>
+                
+                <div id="lr-result-state" style="display: none; width: 100%;">
+                    <div class="lr-cards">
+                        <div class="lr-card">
+                            <div class="lr-card-label">Reading Time</div>
+                            <div class="lr-card-value" id="lr-val-time">0m</div>
+                        </div>
+                        <div class="lr-card">
+                            <div class="lr-card-label">Words</div>
+                            <div class="lr-card-value" id="lr-val-words">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lr-controls" style="display: none;" id="lr-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyReadingStats(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy Stats
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processReadingTime(btn) {
+            const textInput = document.getElementById('lr-text-input').value.trim();
+            const wpmInput = document.getElementById('lr-wpm-input').value;
+            
+            const container = document.getElementById('lr-preview-container');
+            const controls = document.getElementById('lr-result-controls');
+            const emptyState = document.getElementById('lr-empty-state');
+            const resultState = document.getElementById('lr-result-state');
+            
+            if (!textInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide text to analyze.');
+                } else {
+                    alert('Please provide text.');
+                }
+                return;
+            }
+
+            if (!wpmInput || wpmInput <= 0) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Words per minute must be greater than 0.');
+                } else {
+                    alert('Invalid words per minute.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Calculating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'lr-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                // Assuming standard endpoint for minimal-solutions
+                const response = await fetch('/api/minimal-solutions/lesezeit_rechner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: textInput,
+                        words_per_minute: parseInt(wpmInput, 10)
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('lr-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Calculate Reading Time'; }
+                    return;
+                }
+
+                // Expected response structure: data: { result: "...", word_count: 123 }
+                const data = result.data || {};
+                
+                document.getElementById('lr-val-time').innerText = data.result || '0m';
+                document.getElementById('lr-val-words').innerText = data.word_count || '0';
+                
+                // Keep the values for copying
+                document.getElementById('lr-val-time').dataset.raw = data.result || '0m';
+                document.getElementById('lr-val-words').dataset.raw = data.word_count || '0';
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Calculate Reading Time'; }
+
+            } catch (err) {
+                const loader = document.getElementById('lr-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Calculate Reading Time'; }
+            }
+        }
+
+        function copyReadingStats(btn) {
+            const time = document.getElementById('lr-val-time').dataset.raw;
+            const words = document.getElementById('lr-val-words').dataset.raw;
+            const outputText = `Reading Time: ${time} (${words} words)`;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <div class="lr-api-docs" style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-bottom: 1rem;">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Du kannst diese Minimal-Lösung auch über unsere API in deine eigenen Anwendungen integrieren.</p>
+        
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+            <div style="margin-bottom: 1rem;">
+                <strong>Endpoint:</strong> <code style="background: var(--surface-color); padding: 0.2rem 0.4rem; border-radius: 4px;">POST /api/minimal-solutions/lesezeit_rechner</code>
+            </div>
+            
+            <div class="lr-grid" style="gap: 1.5rem; display: grid; grid-template-columns: 1fr 1fr;">
+                <div>
+                    <strong style="display: block; margin-bottom: 0.5rem;">Request Example:</strong>
+                    <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-size: 0.9rem;"><code>{
+  "text": "Dieser Text wird berechnet...",
+  "words_per_minute": 200
+}</code></pre>
+                </div>
+                <div>
+                    <strong style="display: block; margin-bottom: 0.5rem;">Response Example:</strong>
+                    <pre style="background: var(--surface-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-size: 0.9rem;"><code>{
+  "status": "success",
+  "data": {
+    "result": "1 min 0 sek",
+    "minutes": 1,
+    "seconds": 0,
+    "total_seconds": 60,
+    "word_count": 200
+  }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

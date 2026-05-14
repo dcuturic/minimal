@@ -1,0 +1,4 @@
+{
+  "keys": ["btn_submit", "btn_cancel", "lbl_username", "lbl_password"],
+  "languages": ["en", "de", "fr", "es"]
+}

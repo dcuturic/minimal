@@ -1,0 +1,256 @@
+<div class="port-checker-container" style="width: 100%;">
+    <style>
+        .pc-input-group { margin-bottom: 1.5rem; }
+        .pc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .pc-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .pc-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .pc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .pc-status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .pc-status-open {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .pc-status-closed {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .pc-status-icon {
+            margin-right: 0.5rem;
+            width: 20px;
+            height: 20px;
+        }
+
+        .pc-details {
+            margin-top: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .pc-controls { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
+        .pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .pc-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="pc-grid">
+        <div class="pc-form-section">
+            <div class="pc-input-group">
+                <label>Host</label>
+                <input type="text" id="pc-host" class="pc-input" placeholder="e.g. google.com or 127.0.0.1" value="google.com" />
+            </div>
+
+            <div class="pc-input-group">
+                <label>Port</label>
+                <input type="number" id="pc-port" class="pc-input" placeholder="e.g. 443" value="443" />
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="checkPortStatus(this)">
+                Check Port
+            </button>
+        </div>
+
+        <div class="pc-preview-section">
+            <div class="pc-preview-box" id="pc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="pc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect><path d="M12 8v4l3 3"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter Host and Port to check its status.</p>
+                </div>
+                
+                <div id="pc-result-state" style="display: none; width: 100%; text-align: center;">
+                    <div id="pc-badge-container"></div>
+                    <div class="pc-details" id="pc-result-details"></div>
+                    <div class="pc-controls" id="pc-controls-container" style="display: none;">
+                        <button class="btn btn-secondary" onclick="copyResult()" id="pc-btn-copy">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function checkPortStatus(btn) {
+            const hostInput = document.getElementById('pc-host').value.trim();
+            const portInput = parseInt(document.getElementById('pc-port').value.trim(), 10);
+            
+            const container = document.getElementById('pc-preview-container');
+            const emptyState = document.getElementById('pc-empty-state');
+            const resultState = document.getElementById('pc-result-state');
+            const badgeContainer = document.getElementById('pc-badge-container');
+            const detailsContainer = document.getElementById('pc-result-details');
+            
+            if (!hostInput || isNaN(portInput)) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation Error', 'Please provide a valid Host and Port.');
+                } else {
+                    alert('Please provide a valid Host and Port.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Checking...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'pc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const payload = {
+                    host: hostInput,
+                    port: portInput
+                };
+
+                const response = await fetch('/api/minimal-solutions/port_checker_demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('pc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Check Port'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const data = result.data || {};
+                const isOp = data.is_open || data.open || data.status === 'open';
+                
+                let iconSvg = '';
+                if (isOp) {
+                    iconSvg = '<svg class="pc-status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+                    badgeContainer.innerHTML = `<div class="pc-status-badge pc-status-open">${iconSvg} OPEN</div>`;
+                } else {
+                    iconSvg = '<svg class="pc-status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+                    badgeContainer.innerHTML = `<div class="pc-status-badge pc-status-closed">${iconSvg} CLOSED</div>`;
+                }
+                
+                detailsContainer.innerHTML = `Checked <strong>${hostInput}:${portInput}</strong>`;
+                
+                resultState.style.display = 'block';
+                document.getElementById('pc-controls-container').style.display = 'flex';
+                
+                // Store result for copy
+                window.lastPortResult = `Host: ${hostInput}\Port: ${portInput}\Status: ${isOp ? 'OPEN' : 'CLOSED'}`;
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Check Port'; }
+
+            } catch (err) {
+                const loader = document.getElementById('pc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Check Port'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        async function copyResult() {
+            if (!window.lastPortResult) return;
+            try {
+                await navigator.clipboard.writeText(window.lastPortResult);
+                if (typeof showToast === 'function') {
+                    showToast('Result copied to clipboard', 'success');
+                } else {
+                    const btn = document.getElementById('pc-btn-copy');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = 'Copied!';
+                    setTimeout(() => btn.innerHTML = originalText, 2000);
+                }
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+    </script>
+    <div class="api-docs-section" style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-color);">API Integration</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You can use this tool via API. Send a POST request to <code>/api/minimal-solutions/port_checker_demo</code>.</p>
+        
+        <div class="api-docs-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div class="api-docs-req">
+                <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Request Example</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto;">{
+  "host": "google.com",
+  "port": 443
+}</pre>
+            </div>
+            <div class="api-docs-res">
+                <h4 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Response Example</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: var(--text-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "is_open": true
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @media (max-width: 768px) {
+            .api-docs-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</div>

@@ -1,0 +1,264 @@
+<div class="fg-container" style="width: 100%;">
+    <style>
+        .fg-input-group { margin-bottom: 1.5rem; }
+        .fg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .fg-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; }
+        .fg-input:focus { outline: none; border-color: var(--primary-color); }
+        .fg-select { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; appearance: none; }
+        .fg-select:focus { outline: none; border-color: var(--primary-color); }
+
+        .fg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .fg-result-box {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            overflow-x: auto;
+            color: var(--text-color);
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            margin-bottom: 1rem;
+        }
+
+        .fg-controls { display: flex; gap: 1rem; justify-content: center; }
+        .fg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .fg-grid { grid-template-columns: 1fr; } }
+        
+        .fg-favicon-preview {
+            width: 128px;
+            height: 128px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+    </style>
+
+    <div class="fg-grid">
+        <div class="fg-form-section">
+            <div class="fg-input-group">
+                <label>Buchstaben (max. 3)</label>
+                <input type="text" id="fg-letters" class="fg-input" placeholder="CH" maxlength="3" required>
+            </div>
+            
+            <div class="fg-input-group">
+                <label>Primärfarbe</label>
+                <input type="color" id="fg-primary-color" class="fg-input" value="#3b82f6" style="padding: 0.25rem; height: 50px; cursor: pointer;">
+            </div>
+            
+            <div class="fg-input-group">
+                <label>Form (Shape)</label>
+                <select id="fg-shape" class="fg-select">
+                    <option value="square">Quadratisch</option>
+                    <option value="rounded">Abgerundet</option>
+                    <option value="circle">Kreis</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateFaviconDemo(this)">
+                Favicon generieren
+            </button>
+        </div>
+
+        <div class="fg-preview-section">
+            <div class="fg-preview-box" id="fg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="fg-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Passe die Parameter an und klicke auf generieren.</p>
+                </div>
+                
+                <div id="fg-result-state" style="display: none; width: 100%; text-align: center;">
+                    <div id="fg-favicon-output" class="fg-favicon-preview"></div>
+                    <div class="fg-result-box" id="fg-svg-code" style="margin-top: 1.5rem; text-align: left; display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="fg-controls" style="display: none;" id="fg-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyFaviconCode(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    SVG Kopieren
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="downloadFavicon(this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download SVG
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; padding: 2rem; background: var(--surface-color); border-radius: 8px; border: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color);">API-Dokumentation</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Verwende die REST-API, um Favicons extern zu generieren.
+        </p>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="color: var(--text-color);">Endpoint:</strong><br>
+            <code style="background: var(--bg-color); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: var(--primary-color);">POST /api/minimal-solutions/favicon_generator_demo</code>
+        </div>
+        
+        <div class="fg-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <strong style="color: var(--text-color);">Request-Beispiel:</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color); font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "letters": "CH",
+  "primary_color": "#3b82f6",
+  "shape": "rounded"
+}</pre>
+            </div>
+            <div>
+                <strong style="color: var(--text-color);">Response-Beispiel:</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-color); font-size: 0.85rem; overflow-x: auto; margin-top: 0.5rem;">{
+  "status": "success",
+  "data": {
+    "favicon_svg": "&lt;svg xmlns=\"http://www.w3.org/2000/svg\"...&gt;...&lt;/svg&gt;"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSvgResult = null;
+
+        async function generateFaviconDemo(btn) {
+            const letters = document.getElementById('fg-letters').value.trim() || 'CH';
+            const primaryColor = document.getElementById('fg-primary-color').value.trim();
+            const shape = document.getElementById('fg-shape').value.trim();
+            
+            const container = document.getElementById('fg-preview-container');
+            const controls = document.getElementById('fg-result-controls');
+            const emptyState = document.getElementById('fg-empty-state');
+            const resultState = document.getElementById('fg-result-state');
+            
+            if (!letters) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Bitte gib Buchstaben ein.');
+                } else {
+                    alert('Bitte gib Buchstaben ein.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generiere...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'fg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/favicon_generator_demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ letters, primary_color: primaryColor, shape })
+                });
+
+                const result = await response.json();
+
+                const loader = document.getElementById('fg-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || !result.success) {
+                    let errorMsg = 'Ein Fehler ist aufgetreten.';
+                    if (result.error && result.error.message) {
+                        errorMsg = result.error.message;
+                        if (result.error.details && Object.keys(result.error.details).length > 0) {
+                            errorMsg += '\\n' + JSON.stringify(result.error.details, null, 2);
+                        }
+                    }
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Fehler', errorMsg);
+                    } else {
+                        alert('API Fehler: ' + errorMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Favicon generieren'; }
+                    return;
+                }
+
+                currentSvgResult = result.data.favicon_svg;
+
+                // API returns SVG as string
+                document.getElementById('fg-favicon-output').innerHTML = currentSvgResult;
+                // Add a small inline style to the output to make it visible
+                const svgNode = document.getElementById('fg-favicon-output').querySelector('svg');
+                if (svgNode) {
+                    svgNode.setAttribute('width', '128');
+                    svgNode.setAttribute('height', '128');
+                }
+
+                document.getElementById('fg-svg-code').innerText = currentSvgResult;
+
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Favicon generieren'; }
+
+            } catch (err) {
+                const loader = document.getElementById('fg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Netzwerkfehler', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Favicon generieren'; }
+            }
+        }
+
+        function copyFaviconCode(btn) {
+            if (!currentSvgResult) return;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(currentSvgResult).then(() => {
+                    if (typeof showCopySuccess === 'function') {
+                        showCopySuccess(btn, true);
+                    } else {
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Kopiert!';
+                        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                    }
+                });
+            }
+        }
+
+        function downloadFavicon() {
+            if (!currentSvgResult) return;
+            const blob = new Blob([currentSvgResult], { type: 'image/svg+xml' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `favicon.svg`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</div>

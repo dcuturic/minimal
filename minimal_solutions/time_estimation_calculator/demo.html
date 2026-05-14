@@ -1,0 +1,306 @@
+<div class="tec-container" style="width: 100%;">
+    <style>
+        .tec-input-group { margin-bottom: 1.5rem; }
+        .tec-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .tec-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+        }
+        .tec-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .tec-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .tec-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .tec-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .tec-card-title {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tec-card-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin: 0;
+        }
+
+        .tec-card.success .tec-card-value { color: #10b981; }
+        .tec-card.danger .tec-card-value { color: #ef4444; }
+
+        .tec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .tec-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="tec-grid">
+        <div class="tec-form-section">
+            <div class="tec-input-group">
+                <label>Ticket Count</label>
+                <input type="number" id="tec-ticket-count" class="tec-input" placeholder="e.g. 50" min="0" />
+            </div>
+            <div class="tec-input-group">
+                <label>Minutes per Ticket (Average)</label>
+                <input type="number" id="tec-minutes-per-ticket" class="tec-input" placeholder="e.g. 60" min="0" />
+            </div>
+            <div class="tec-input-group">
+                <label>Available Days</label>
+                <input type="number" id="tec-days" class="tec-input" placeholder="e.g. 14" min="0" />
+            </div>
+            <div class="tec-input-group">
+                <label>Number of Workers</label>
+                <input type="number" id="tec-workers" class="tec-input" placeholder="e.g. 2" min="0" />
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processTec(this)">
+                Calculate Estimation
+            </button>
+        </div>
+
+        <div class="tec-preview-section">
+            <div class="tec-preview-box" id="tec-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="tec-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter estimation parameters to calculate capacity.</p>
+                </div>
+                
+                <div id="tec-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">
+                        <h4 style="margin: 0; color: var(--text-color);">Estimation Results</h4>
+                    </div>
+                    
+                    <div class="tec-card-grid" id="tec-card-container">
+                        <!-- Cards injected here -->
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; justify-content: center; width: 100%; margin-top: 2rem;">
+                        <button class="btn btn-secondary" style="font-size: 0.85rem;" onclick="copyTecJson()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: text-bottom;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Result JSON
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="api-docs" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <h3 style="margin-top: 0;">API Usage</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            You can use this tool via our REST API. Send a POST request to the endpoint below.
+        </p>
+        <div style="background: var(--surface-color); padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/time_estimation_calculator
+        </div>
+        
+        <div class="tec-grid" style="gap: 1rem; margin-top: 1rem;">
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Request Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "ticket_count": 50,
+  "minutes_per_ticket": 60,
+  "days": 14,
+  "workers": 2
+}</pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; font-size: 0.9rem;">Response Example</h4>
+                <pre class="code-block" style="background: var(--bg-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color); overflow-x: auto;">{
+  "status": "success",
+  "data": {
+    "total_hours_required": 50.0,
+    "total_hours_available": 224.0,
+    "is_feasible": true,
+    "utilization_percent": 22.32
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processTec(btn) {
+            const ticketCount = parseInt(document.getElementById('tec-ticket-count').value, 10);
+            const minutesPerTicket = parseInt(document.getElementById('tec-minutes-per-ticket').value, 10);
+            const days = parseInt(document.getElementById('tec-days').value, 10);
+            const workers = parseInt(document.getElementById('tec-workers').value, 10);
+            
+            const container = document.getElementById('tec-preview-container');
+            const emptyState = document.getElementById('tec-empty-state');
+            const resultState = document.getElementById('tec-result-state');
+            
+            if (isNaN(ticketCount) || isNaN(minutesPerTicket) || isNaN(days) || isNaN(workers)) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'All fields are required and must be valid numbers.');
+                } else {
+                    alert('All fields are required and must be valid numbers.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Calculating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'tec-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const requestData = {
+                    ticket_count: ticketCount,
+                    minutes_per_ticket: minutesPerTicket,
+                    days: days,
+                    workers: workers
+                };
+                
+                const response = await fetch('/api/minimal-solutions/time_estimation_calculator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+
+                const loader = document.getElementById('tec-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Calculate Estimation'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                window.lastTecData = result.data;
+                
+                const cardContainer = document.getElementById('tec-card-container');
+                cardContainer.innerHTML = '';
+
+                let totalReq = result.data.total_hours_required !== undefined ? result.data.total_hours_required + 'h' : '-';
+                let totalCap = result.data.total_hours_available !== undefined ? result.data.total_hours_available + 'h' : '-';
+                let isFeasible = result.data.is_feasible !== undefined ? (result.data.is_feasible ? 'Yes' : 'No') : '-';
+                let util = result.data.utilization_percent !== undefined ? result.data.utilization_percent + '%' : '-';
+
+                // fallback if API is not yet returning calculated values, we just calculate it in UI temporarily for demo
+                if (result.data.total_hours_required === undefined && result.data.result) {
+                    const reqMin = ticketCount * minutesPerTicket;
+                    const capMin = days * workers * 8 * 60; // assume 8h work day
+                    const capMinSafe = capMin > 0 ? capMin : 1; // prevent division by zero
+                    totalReq = (reqMin / 60).toFixed(1) + 'h';
+                    totalCap = (capMin / 60).toFixed(1) + 'h';
+                    const feasible = reqMin <= capMin;
+                    isFeasible = feasible ? 'Yes' : 'No';
+                    util = ((reqMin / capMinSafe) * 100).toFixed(1) + '%';
+                    
+                    window.lastTecData = {
+                        total_hours_required: Number((reqMin / 60).toFixed(2)),
+                        total_hours_available: Number((capMin / 60).toFixed(2)),
+                        is_feasible: feasible,
+                        utilization_percent: Number(((reqMin / capMinSafe) * 100).toFixed(2)),
+                        ...result.data
+                    };
+                }
+
+                const feasibleClass = isFeasible === 'Yes' ? 'success' : (isFeasible === 'No' ? 'danger' : '');
+
+                cardContainer.innerHTML = `
+                    <div class="tec-card">
+                        <div class="tec-card-title">Required Time</div>
+                        <div class="tec-card-value">${totalReq}</div>
+                    </div>
+                    <div class="tec-card">
+                        <div class="tec-card-title">Capacity</div>
+                        <div class="tec-card-value">${totalCap}</div>
+                    </div>
+                    <div class="tec-card">
+                        <div class="tec-card-title">Utilization</div>
+                        <div class="tec-card-value">${util}</div>
+                    </div>
+                    <div class="tec-card ${feasibleClass}">
+                        <div class="tec-card-title">Feasible?</div>
+                        <div class="tec-card-value">${isFeasible}</div>
+                    </div>
+                `;
+                
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Calculate Estimation'; }
+
+            } catch (err) {
+                const loader = document.getElementById('tec-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Calculate Estimation'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        async function copyTecJson() {
+            if (!window.lastTecData) return;
+            try {
+                await navigator.clipboard.writeText(JSON.stringify(window.lastTecData, null, 2));
+                if (typeof showToast === 'function') {
+                    showToast('JSON copied to clipboard!');
+                } else {
+                    alert('JSON copied to clipboard!');
+                }
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        }
+    </script>
+</div>

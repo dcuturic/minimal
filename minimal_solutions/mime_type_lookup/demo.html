@@ -1,0 +1,245 @@
+<div class="mtl-container" style="width: 100%;">
+    <style>
+        .mtl-input-group { margin-bottom: 1.5rem; }
+        .mtl-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .mtl-input { width: 100%; padding: 0.75rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-color); font-size: 1rem; }
+        .mtl-input:focus { outline: none; border-color: var(--primary-color); }
+
+        .mtl-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .mtl-result-content {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1.5rem;
+            text-align: left;
+        }
+
+        .mtl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .mtl-grid { grid-template-columns: 1fr; } }
+        
+        .mtl-result-item { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+        .mtl-result-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        
+        .mtl-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: rgba(var(--primary-color-rgb, 100, 100, 255), 0.1);
+            color: var(--primary-color);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: monospace;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .mtl-mime-text { font-family: monospace; color: var(--text-color); font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .mtl-ext-text { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem; }
+    </style>
+
+    <div class="mtl-grid">
+        <div class="mtl-form-section">
+            <div class="mtl-input-group">
+                <label>Suchbegriff (Dateiendung, Dateiname oder MIME Type)</label>
+                <input type="text" id="mtl-query" class="mtl-input" placeholder="z. B. .json, image/png oder index.html">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="lookupMimeType(this)">
+                MIME Type suchen
+            </button>
+        </div>
+
+        <div class="mtl-preview-section">
+            <div class="mtl-preview-box" id="mtl-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="mtl-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Gib eine Dateiendung, einen Dateinamen oder einen MIME Type ein.</p>
+                </div>
+                
+                <div id="mtl-result-state" style="display: none; width: 100%;">
+                    <div class="mtl-result-content" id="mtl-result-list">
+                        <!-- Results will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation -->
+    <div class="api-doc-box" style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            API Dokumentation
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+            Du kannst diese Funktion auch über unsere REST-API nutzen. Sende dazu einen <code>POST</code>-Request an den unten stehenden Endpunkt.
+        </p>
+
+        <div style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem; font-family: monospace; display: flex; justify-content: space-between; align-items: center;">
+            <span><span style="color: var(--primary-color); font-weight: bold;">POST</span> /api/minimal-solutions/mime_type_lookup</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Request Beispiel</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "query": ".json"
+}</code></pre>
+            </div>
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Response Beispiel (Erfolg)</h4>
+                <pre style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);"><code>{
+  "status": "success",
+  "data": {
+    "results": [
+      {
+        "extension": ".json",
+        "mime_type": "application/json",
+        "description": "JSON format"
+      }
+    ]
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function lookupMimeType(btn) {
+            const queryInput = document.getElementById('mtl-query').value.trim();
+            
+            const container = document.getElementById('mtl-preview-container');
+            const emptyState = document.getElementById('mtl-empty-state');
+            const resultState = document.getElementById('mtl-result-state');
+            const resultList = document.getElementById('mtl-result-list');
+            
+            // Error-State Validation
+            if (!queryInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validierung', 'Bitte gib einen Suchbegriff ein.');
+                } else {
+                    alert('Bitte gib einen Suchbegriff ein.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Suche läuft...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            resultList.innerHTML = '';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'mtl-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/mime_type_lookup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: queryInput })
+                });
+                
+                const loader = document.getElementById('mtl-temp-loader');
+                if (loader) loader.remove();
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    throw new Error("Ungültige Antwort vom Server");
+                }
+                
+                if (!response.ok || result.status === 'error') {
+                    const errorMsg = result.message || (result.detail && result.detail[0] && result.detail[0].msg) || 'Ein unbekannter Fehler ist aufgetreten.';
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Fehler', errorMsg);
+                    } else {
+                        alert('API Fehler: ' + errorMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'MIME Type suchen'; }
+                    
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const results = result.data?.results || [];
+                
+                if (results.length === 0) {
+                    resultList.innerHTML = '<div style="text-align: center; padding: 2rem 0; color: var(--text-muted);">Keine passenden MIME Types gefunden.</div>';
+                } else {
+                    results.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'mtl-result-item';
+                        div.innerHTML = `
+                            <div class="mtl-mime-text">${item.mime_type}</div>
+                            <div class="mtl-ext-text">Erweiterung(en): <span class="mtl-badge">${item.extension}</span></div>
+                            ${item.description ? `<div style="font-size: 0.9rem; color: var(--text-muted);">${item.description}</div>` : ''}
+                            <button class="btn btn-secondary btn-sm" style="margin-top: 0.75rem; display: inline-flex; align-items: center;" onclick="copyMimeText('${item.mime_type}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.25rem;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                MIME Type kopieren
+                            </button>
+                        `;
+                        resultList.appendChild(div);
+                    });
+                    
+                }
+
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'MIME Type suchen'; }
+
+            } catch (err) {
+                const loader = document.getElementById('mtl-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Netzwerkfehler', 'Verbindung zur API fehlgeschlagen.');
+                } else {
+                    alert('Verbindung zur API fehlgeschlagen.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'MIME Type suchen'; }
+                
+                emptyState.style.display = 'block';
+            }
+        }
+
+        async function copyMimeText(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                if (typeof showToast === 'function') {
+                    showToast('MIME Type kopiert!', 'success');
+                } else {
+                    alert('MIME Type kopiert!');
+                }
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Fehler', 'Konnte Text nicht kopieren.');
+                } else {
+                    console.error('Kopieren fehlgeschlagen', err);
+                }
+            }
+        }
+    </script>
+</div>

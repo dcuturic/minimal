@@ -1,0 +1,5 @@
+{
+  "source": "https://github.com/my-org/my-react-app",
+  "config": "React, Nginx, Node.js",
+  "mode": "preview"
+}

@@ -1,0 +1,293 @@
+<div class="oesg-container" style="width: 100%;">
+    <style>
+        .oesg-input-group { margin-bottom: 1.5rem; }
+        .oesg-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+        .oesg-input, .oesg-select, .oesg-textarea {
+            width: 100%;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-family, system-ui, sans-serif);
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .oesg-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .oesg-input:focus, .oesg-select:focus, .oesg-textarea:focus { 
+            outline: none; 
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .oesg-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 450px;
+            position: relative;
+            height: 100%;
+        }
+
+        .oesg-result-text {
+            font-family: 'Fira Code', Consolas, monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            text-align: left;
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .oesg-controls { display: flex; gap: 1rem; justify-content: flex-end; width: 100%; }
+        .oesg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .oesg-grid { grid-template-columns: 1fr; } }
+        
+        .oesg-empty-icon {
+            color: var(--text-muted);
+            opacity: 0.5;
+            margin-bottom: 1rem;
+        }
+    </style>
+
+    <div class="oesg-grid">
+        <div class="oesg-form-section">
+            <div class="oesg-input-group">
+                <label>Endpoint Path</label>
+                <input type="text" id="oesg-path" class="oesg-input" placeholder="/api/users" value="/api/users">
+            </div>
+            
+            <div class="oesg-input-group">
+                <label>HTTP Method</label>
+                <select id="oesg-method" class="oesg-select">
+                    <option value="GET">GET</option>
+                    <option value="POST" selected>POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="PATCH">PATCH</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+            </div>
+
+            <div class="oesg-input-group">
+                <label>Summary</label>
+                <input type="text" id="oesg-summary" class="oesg-input" placeholder="Create a new user" value="Create a new user">
+            </div>
+            
+            <div class="oesg-input-group">
+                <label>Request Fields (comma separated)</label>
+                <textarea id="oesg-request-fields" class="oesg-textarea" placeholder="username, email, password">username, email, password</textarea>
+                <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem; display: block;">Applicable for methods with body (POST, PUT, PATCH)</small>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.75rem;" onclick="generateOpenAPI(this)">
+                Generate OpenAPI Stub
+            </button>
+        </div>
+
+        <div class="oesg-preview-section">
+            <div class="oesg-preview-box" id="oesg-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="oesg-empty-state">
+                    <svg class="oesg-empty-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p style="margin:0; font-size: 0.95rem;">Enter endpoint details and click generate.</p>
+                </div>
+                
+                <div id="oesg-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">YAML Output</h4>
+                    </div>
+                    <pre class="oesg-result-text" id="oesg-yaml-result"></pre>
+                    
+                    <div class="oesg-controls" id="oesg-result-controls">
+                        <button class="btn btn-secondary btn-sm" onclick="copyYAML(this)" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy YAML
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+        <h3 style="margin-bottom: 1rem;">API Documentation</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">You can generate OpenAPI stubs directly via our API.</p>
+        
+        <div style="background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <span style="background: var(--primary-color); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.8rem;">POST</span>
+                <code style="font-family: monospace; color: var(--text-color);">/api/minimal-solutions/openapi_endpoint_stub_generator</code>
+            </div>
+            
+            <h4 style="margin: 1rem 0 0.5rem; font-size: 0.9rem; text-transform: uppercase; color: var(--text-muted);">Request Example</h4>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace;">{
+  "path": "/api/users",
+  "method": "POST",
+  "summary": "Create a new user",
+  "request_fields": "username, email, password"
+}</code></pre>
+
+            <h4 style="margin: 1rem 0 0.5rem; font-size: 0.9rem; text-transform: uppercase; color: var(--text-muted);">Response Example</h4>
+            <pre style="background: var(--bg-color); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="color: var(--text-color); font-family: monospace;">{
+  "status": "success",
+  "data": {
+    "yaml": "paths:\n  \"/api/users\":\n    post:\n      summary: \"Create a new user\"\n..."
+  }
+}</code></pre>
+        </div>
+    </div>
+
+    <script>
+        async function generateOpenAPI(btn) {
+            const path = document.getElementById('oesg-path').value.trim();
+            const method = document.getElementById('oesg-method').value;
+            const summary = document.getElementById('oesg-summary').value.trim();
+            const requestFields = document.getElementById('oesg-request-fields').value.trim();
+            
+            const container = document.getElementById('oesg-preview-container');
+            const emptyState = document.getElementById('oesg-empty-state');
+            const resultState = document.getElementById('oesg-result-state');
+            
+            // Validation Error-State
+            if (!path) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide an endpoint path.');
+                } else {
+                    alert('Please provide an endpoint path.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Generating...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            // Loading-State
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'oesg-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/openapi_endpoint_stub_generator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        path: path,
+                        method: method,
+                        summary: summary,
+                        request_fields: requestFields
+                    })
+                });
+                
+                let yamlOutput = '';
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        yamlOutput = result.data.yaml;
+                    } else {
+                        throw new Error(result.message || 'API Error');
+                    }
+                } else {
+                    // Fallback logic for demo purposes if API isn't ready
+                    const result = await response.json().catch(() => ({}));
+                    if (result && result.message) {
+                        throw new Error(result.message);
+                    }
+                    
+                    const fields = requestFields ? requestFields.split(',').map(f => f.trim()).filter(f => f) : [];
+                    
+                    yamlOutput = `paths:
+  "${path}":
+    ${method.toLowerCase()}:
+      summary: "${summary || 'Endpoint summary'}"
+      responses:
+        "200":
+          description: "Successful response"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  status:
+                    type: "string"
+                    example: "success"`;
+                    
+                    if (['POST', 'PUT', 'PATCH'].includes(method) && fields.length > 0) {
+                        let properties = '';
+                        fields.forEach(f => {
+                            properties += `\n                  ${f}:\n                    type: "string"`;
+                        });
+                        
+                        yamlOutput += `\n      requestBody:\n        required: true\n        content:\n          application/json:\n            schema:\n              type: "object"\n              properties:${properties}`;
+                    }
+                }
+
+                const loader = document.getElementById('oesg-temp-loader');
+                if (loader) loader.remove();
+
+                // Update UI Result-State
+                document.getElementById('oesg-yaml-result').innerText = yamlOutput;
+                resultState.style.display = 'block';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate OpenAPI Stub'; }
+
+            } catch (err) {
+                const loader = document.getElementById('oesg-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('API Error', err.message || 'Failed to generate stub.');
+                } else {
+                    alert('Failed to generate stub.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Generate OpenAPI Stub'; }
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyYAML(btn) {
+            const yamlOutput = document.getElementById('oesg-yaml-result').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(yamlOutput).then(() => {
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+                });
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = yamlOutput;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+</div>

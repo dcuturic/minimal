@@ -1,0 +1,25 @@
+{
+  "requests": [
+    {
+      "name": "Standard JWT",
+      "description": "Ein typisches JSON Web Token mit Header, Payload und Signatur",
+      "payload": {
+        "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+      }
+    },
+    {
+      "name": "Leeres Token",
+      "description": "Ein leerer String, der zu einem Validierungsfehler führt",
+      "payload": {
+        "jwt": ""
+      }
+    },
+    {
+      "name": "Ungültiges Format",
+      "description": "Ein Token, dem Teile fehlen (z.B. nur zwei Punkte)",
+      "payload": {
+        "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid"
+      }
+    }
+  ]
+}

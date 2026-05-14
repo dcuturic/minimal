@@ -1,0 +1,299 @@
+<div class="fc-container" style="width: 100%;">
+    <style>
+        .fc-input-group { margin-bottom: 1.5rem; }
+        .fc-input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .fc-input {
+            width: 100%;
+            background: var(--surface-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .fc-input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .fc-preview-box {
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .fc-color-preview-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: transparent;
+        }
+
+        .fc-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: var(--bg-color);
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .fc-result-label {
+            font-weight: bold;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            width: 60px;
+        }
+
+        .fc-result-value {
+            font-family: monospace;
+            color: var(--text-color);
+            flex: 1;
+            text-align: right;
+            margin-right: 1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .fc-copy-icon {
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+        .fc-copy-icon:hover {
+            color: var(--primary-color);
+        }
+
+        .fc-controls { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
+        .fc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .fc-grid { grid-template-columns: 1fr; } }
+    </style>
+
+    <div class="fc-grid">
+        <div class="fc-form-section">
+            <div class="fc-input-group">
+                <label>Color Value (HEX, RGB, HSL, RGBA)</label>
+                <input type="text" id="fc-color-input" class="fc-input" placeholder="e.g. #FF5733, rgb(255, 87, 51)...">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="processColor(this)">
+                Convert Color
+            </button>
+        </div>
+
+        <div class="fc-preview-section">
+            <div class="fc-preview-box" id="fc-preview-container">
+                <div style="text-align: center; color: var(--text-muted);" id="fc-empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                    <p style="margin:0; font-size: 0.9rem;">Enter a color and click convert.</p>
+                </div>
+                
+                <div id="fc-result-state" style="display: none; width: 100%;">
+                    <div style="display: flex; justify-content: center;">
+                        <div class="fc-color-preview-circle" id="fc-color-circle"></div>
+                    </div>
+                    
+                    <div class="fc-result-item">
+                        <span class="fc-result-label">HEX</span>
+                        <span class="fc-result-value" id="fc-res-hex">-</span>
+                        <svg class="fc-copy-icon" onclick="copyFormat('fc-res-hex', this)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
+                    <div class="fc-result-item">
+                        <span class="fc-result-label">RGB</span>
+                        <span class="fc-result-value" id="fc-res-rgb">-</span>
+                        <svg class="fc-copy-icon" onclick="copyFormat('fc-res-rgb', this)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
+                    <div class="fc-result-item">
+                        <span class="fc-result-label">RGBA</span>
+                        <span class="fc-result-value" id="fc-res-rgba">-</span>
+                        <svg class="fc-copy-icon" onclick="copyFormat('fc-res-rgba', this)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
+                    <div class="fc-result-item">
+                        <span class="fc-result-label">HSL</span>
+                        <span class="fc-result-value" id="fc-res-hsl">-</span>
+                        <svg class="fc-copy-icon" onclick="copyFormat('fc-res-hsl', this)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="fc-controls" style="display: none;" id="fc-result-controls">
+                <button class="btn btn-secondary btn-sm" onclick="copyFormat('fc-res-hex', this)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    Copy HEX
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function processColor(btn) {
+            const colorInput = document.getElementById('fc-color-input').value.trim();
+            
+            const container = document.getElementById('fc-preview-container');
+            const controls = document.getElementById('fc-result-controls');
+            const emptyState = document.getElementById('fc-empty-state');
+            const resultState = document.getElementById('fc-result-state');
+            
+            if (!colorInput) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Validation', 'Please provide a color value.');
+                } else {
+                    alert('Please provide a color value.');
+                }
+                return;
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Converting...'; }
+            
+            emptyState.style.display = 'none';
+            resultState.style.display = 'none';
+            controls.style.display = 'none';
+
+            const loaderDiv = document.createElement('div');
+            loaderDiv.className = 'loader-container';
+            loaderDiv.id = 'fc-temp-loader';
+            loaderDiv.innerHTML = '<div class="loader"></div>';
+            container.appendChild(loaderDiv);
+
+            try {
+                const response = await fetch('/api/minimal-solutions/farbkonverter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        color_value: colorInput
+                    })
+                });
+                const result = await response.json();
+
+                const loader = document.getElementById('fc-temp-loader');
+                if (loader) loader.remove();
+
+                if (!response.ok || result.status === 'error') {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', result.message || 'Unknown error occurred.');
+                    } else {
+                        alert(result.message || 'Unknown error occurred.');
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Convert Color'; }
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const colorData = result.data;
+
+                document.getElementById('fc-res-hex').innerText = colorData.hex || '-';
+                document.getElementById('fc-res-rgb').innerText = colorData.rgb || '-';
+                document.getElementById('fc-res-rgba').innerText = colorData.rgba || '-';
+                document.getElementById('fc-res-hsl').innerText = colorData.hsl || '-';
+                
+                document.getElementById('fc-color-circle').style.backgroundColor = colorData.hex || colorData.rgb || colorData.hsl || 'transparent';
+                
+                resultState.style.display = 'block';
+                controls.style.display = 'flex';
+                
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Convert Color'; }
+
+            } catch (err) {
+                const loader = document.getElementById('fc-temp-loader');
+                if (loader) loader.remove();
+
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Failed to connect to the API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Convert Color'; }
+                emptyState.style.display = 'block';
+            }
+        }
+
+        function copyFormat(elementId, iconElement) {
+            const outputText = document.getElementById(elementId).innerText;
+            if (outputText === '-') return;
+            
+            const doCopy = () => {
+                if (iconElement && iconElement.tagName === 'svg') {
+                    const origColor = iconElement.style.color;
+                    iconElement.style.color = 'var(--primary-color)';
+                    setTimeout(() => { iconElement.style.color = origColor; }, 1000);
+                } else if (iconElement) {
+                    const originalText = iconElement.innerHTML;
+                    iconElement.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => {
+                        iconElement.innerHTML = originalText;
+                    }, 2000);
+                }
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(doCopy);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = outputText;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    doCopy();
+                } catch (err) {
+                    console.error('Unable to copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um Farbwerte zwischen verschiedenen Formaten zu konvertieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/farbkonverter</code>
+        </div>
+
+        <div class="fc-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "color_value": "#FF5733"
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Hinweis: `color_value` kann als HEX, RGB, RGBA oder HSL übergeben werden.</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "status": "success",
+  "data": {
+    "hex": "#FF5733",
+    "rgb": "rgb(255, 87, 51)",
+    "rgba": "rgba(255, 87, 51, 1)",
+    "hsl": "hsl(11, 100%, 60%)"
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>
