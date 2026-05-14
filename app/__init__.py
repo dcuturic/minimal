@@ -346,6 +346,8 @@ def create_app():
         try:
             from minimal_solutions.minecraft_generator.api_minecraft_generator import api_bp as minecraft_generator_api_bp
             app.register_blueprint(minecraft_generator_api_bp)
+            from minimal_solutions.minecraft_generator.ui_minecraft_generator import ui_bp as minecraft_generator_ui_bp
+            app.register_blueprint(minecraft_generator_ui_bp)
         except ImportError:
             pass
 
