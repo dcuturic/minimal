@@ -1,5 +1,8 @@
 {
-  "source": "",
-  "config": {},
-  "mode": "default"
+  "source": "server1.hosting.com, server2.hosting.com, server3.hosting.com",
+  "config": {
+    "delimiter": ", ",
+    "trim_whitespace": true
+  },
+  "mode": "CSV"
 }
