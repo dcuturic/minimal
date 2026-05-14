@@ -1,3 +1,7 @@
 {
-    "demo_requests": []
+  "input_text": "Notch",
+  "mode": "username",
+  "options": {
+    "strict_mode": true
+  }
 }
