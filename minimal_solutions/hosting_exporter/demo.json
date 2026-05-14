@@ -1,3 +1,8 @@
 {
-  "demo": "Hosting Exporter"
+  "source": "https://github.com/my-org/my-app",
+  "config": {
+    "format": "zip",
+    "include_assets": true
+  },
+  "mode": "full_export"
 }
