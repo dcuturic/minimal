@@ -1,2 +1,9 @@
 {
+  "source": "server-config-v1.json",
+  "config": {
+    "target": "server-config-v2.json",
+    "ignore_whitespace": true,
+    "context_lines": 3
+  },
+  "mode": "side-by-side"
 }
