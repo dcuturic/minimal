@@ -234,7 +234,7 @@
             <p><strong>Request-Beispiel:</strong></p>
             <pre>
 {
-  "source": "{\"host\": \"example.com\", \"metrics\": \"cpu_usage\"}",
+  "source": "example.com\nexample.net",
   "config": "{\"verbose\": true}",
   "mode": "analyze"
 }
@@ -244,11 +244,17 @@
 {
   "success": true,
   "data": {
-    "source": "{\"host\": \"example.com\", \"metrics\": \"cpu_usage\"}",
-    "config": "{\"verbose\": true}",
-    "mode": "analyze",
-    "analysis_result": "...",
-    "message": "Hosting successfully analyzed."
+    "status": "success",
+    "message": "Hosting analysis completed successfully.",
+    "analysis_results": {
+      "domain_count": 2,
+      "mode_used": "analyze",
+      "issues_found": 0,
+      "recommendations": [
+        "Optimize DNS settings",
+        "Check SSL certificates"
+      ]
+    }
   },
   "error": null,
   "warnings": [],
