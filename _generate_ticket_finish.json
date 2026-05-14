@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-14 21:42:33",
+  "finish_id": "af3b8818-bfc8-4621-8ca6-be50ee6f57e8",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "cc45fe52",
+  "ticket_title": "Minimal-Lösung Ordnerstruktur erstellen: Minecraft Formatter",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
