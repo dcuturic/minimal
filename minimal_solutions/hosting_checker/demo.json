@@ -1,1 +1,27 @@
-{}
+{
+  "demo_requests": [
+    {
+      "name": "Quick Health Check",
+      "request": {
+        "source": "https://example.com",
+        "config": {
+          "check_ssl": true,
+          "ping_only": false
+        },
+        "mode": "quick"
+      }
+    },
+    {
+      "name": "Deep Security Audit",
+      "request": {
+        "source": "https://secure-app.example.com",
+        "config": {
+          "check_ssl": true,
+          "check_headers": true,
+          "timeout": 60
+        },
+        "mode": "deep"
+      }
+    }
+  ]
+}
