@@ -273,17 +273,29 @@
         // Form Submission Logic
         document.getElementById('summarizerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const source = sourceInput.value;
-            const config = document.getElementById('configInput').value;
-            const mode = document.getElementById('modeSelect').value;
-            
             const submitBtn = document.getElementById('submitBtn');
             const emptyState = document.getElementById('emptyState');
             const loadingState = document.getElementById('loadingState');
             const errorState = document.getElementById('errorState');
             const resultState = document.getElementById('resultState');
             const resultOutput = document.getElementById('resultOutput');
+            
+            const source = sourceInput.value;
+            let configStr = document.getElementById('configInput').value;
+            const mode = document.getElementById('modeSelect').value;
+            
+            let config = {};
+            if (configStr.trim() !== '') {
+                try {
+                    config = JSON.parse(configStr);
+                } catch (e) {
+                    errorState.textContent = 'Config ist kein gültiges JSON.';
+                    errorState.style.display = 'block';
+                    loadingState.style.display = 'none';
+                    submitBtn.disabled = false;
+                    return;
+                }
+            }
             
             // Reset states
             emptyState.style.display = 'none';
