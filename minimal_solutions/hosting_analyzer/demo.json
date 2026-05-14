@@ -1,3 +1,27 @@
 {
-  "demo": true
+  "request": {
+    "source": "example.com\nmy-awesome-domain.net\ntest-site.org",
+    "config": {
+      "timeout": 30,
+      "resolve_dns": true,
+      "check_ssl": true
+    },
+    "mode": "comprehensive"
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "status": "success",
+      "message": "Hosting analysis completed successfully.",
+      "analysis_results": {
+        "domain_count": 3,
+        "mode_used": "comprehensive",
+        "issues_found": 0,
+        "recommendations": [
+          "Optimize DNS settings",
+          "Check SSL certificates"
+        ]
+      }
+    }
+  }
 }
