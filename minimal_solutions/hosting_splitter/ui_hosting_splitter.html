@@ -274,7 +274,7 @@
             e.preventDefault();
             
             const source = sourceInput.value;
-            const config = document.getElementById('configInput').value;
+            const configRaw = document.getElementById('configInput').value.trim();
             const mode = document.getElementById('modeSelect').value;
             
             const submitBtn = document.getElementById('submitBtn');
@@ -288,6 +288,18 @@
             emptyState.style.display = 'none';
             errorState.style.display = 'none';
             resultState.style.display = 'none';
+
+            let config = {};
+            if (configRaw) {
+                try {
+                    config = JSON.parse(configRaw);
+                } catch (err) {
+                    errorState.textContent = 'Config muss gültiges JSON sein (z.B. {"key": "value"}).';
+                    errorState.style.display = 'block';
+                    return;
+                }
+            }
+            
             loadingState.style.display = 'block';
             submitBtn.disabled = true;
             
