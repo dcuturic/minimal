@@ -34,7 +34,16 @@ def handle_minecraft_builder_request():
         "mode": mode,
         "options": options,
         "status": "success",
-        "message": f"Minecraft Builder request successfully processed for mode '{mode}'."
+        "message": f"Minecraft Builder request successfully processed for mode '{mode}'.",
+        "result": {
+            "blueprint_url": "https://example.com/blueprints/medieval_castle_1.5x.blueprint",
+            "blocks_required": {
+                "stone_bricks": 4500,
+                "oak_wood": 1200,
+                "glass_panes": 300
+            },
+            "estimated_build_time": "4 hours"
+        }
     }
 
     return success_response(data=result_data)
