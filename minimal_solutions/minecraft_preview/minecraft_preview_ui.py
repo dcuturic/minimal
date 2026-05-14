@@ -1,5 +1,12 @@
-import streamlit as st
+from flask import Blueprint
+import os
 
-def render_minecraft_preview_ui():
-    st.header("Minecraft Preview")
-    st.write("UI for Minecraft Preview")
+ui_bp = Blueprint('minecraft_preview_ui', __name__)
+
+@ui_bp.route('/minimal-solutions/minecraft_preview', methods=['GET'])
+def index():
+    html_path = os.path.join(os.path.dirname(__file__), 'ui_minecraft_preview.html')
+    if os.path.exists(html_path):
+        with open(html_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    return "Demo UI for Minecraft Preview"
