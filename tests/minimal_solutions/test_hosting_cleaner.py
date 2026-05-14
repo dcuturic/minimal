@@ -17,7 +17,7 @@ def test_hosting_cleaner_happy_path(client):
     
     assert response.status_code == 200
     data = response.get_json()
-    assert data['status'] == 'success'
+    assert data['success'] is True
     assert data['data']['source'] == 'server1.example.com'
     assert data['data']['mode'] == 'aggressive'
     assert data['data']['cleaned'] is True
@@ -27,8 +27,8 @@ def test_hosting_cleaner_empty_input(client):
     response = client.post('/api/minimal-solutions/hosting_cleaner', json={})
     assert response.status_code == 400
     data = response.get_json()
-    assert data['status'] == 'error'
-    assert data['code'] == 'VALIDATION_ERROR'
+    assert data['success'] is False
+    assert data['error']['code'] == 'VALIDATION_ERROR'
 
 def test_hosting_cleaner_invalid_input(client):
     response = client.post('/api/minimal-solutions/hosting_cleaner', json={
@@ -38,5 +38,5 @@ def test_hosting_cleaner_invalid_input(client):
     })
     assert response.status_code == 400
     data = response.get_json()
-    assert data['status'] == 'error'
-    assert data['code'] == 'VALIDATION_ERROR'
+    assert data['success'] is False
+    assert data['error']['code'] == 'VALIDATION_ERROR'
