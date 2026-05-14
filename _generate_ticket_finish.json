@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-14 23:54:01",
+  "finish_id": "40aad16b-ebe8-42f7-95ca-35ac06644ada",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "e90d40a1",
+  "ticket_title": "Minimal-Lösung Doku und API-Beispiele ergänzen: Minecraft Converter",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
