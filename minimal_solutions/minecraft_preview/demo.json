@@ -1,4 +1,8 @@
 {
-  "name": "Minecraft Preview",
-  "description": "Demo data for Minecraft Preview minimal solution."
+  "input_text": "stone",
+  "mode": "3d",
+  "options": {
+    "resolution": "high",
+    "lighting": "smooth"
+  }
 }
