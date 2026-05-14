@@ -1,3 +1,9 @@
 {
-  "example": "data"
+  "source": "https://github.com/my-org/production-app",
+  "config": {
+    "framework": "Next.js",
+    "theme": "light",
+    "responsive": true
+  },
+  "mode": "detailed"
 }
