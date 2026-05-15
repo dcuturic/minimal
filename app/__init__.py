@@ -472,8 +472,21 @@ def create_app():
             pass
 
         try:
+        try:
             from minimal_solutions.minecraft_splitter.minecraft_splitter_ui import ui_bp as minecraft_splitter_ui_bp
             app.register_blueprint(minecraft_splitter_ui_bp)
+        except ImportError:
+            pass
+
+        try:
+            from minimal_solutions.minecraft_merger.minecraft_merger_api import api_bp as minecraft_merger_api_bp
+            app.register_blueprint(minecraft_merger_api_bp)
+        except ImportError:
+            pass
+
+        try:
+            from minimal_solutions.minecraft_merger.minecraft_merger_ui import ui_bp as minecraft_merger_ui_bp
+            app.register_blueprint(minecraft_merger_ui_bp)
         except ImportError:
             pass
 
