@@ -10,16 +10,16 @@ def client():
 
 def test_minecraft_importer_happy_path(client):
     response = client.post('/api/minimal-solutions/minecraft_importer', json={
-        "input_text": "Sample block data for import.",
-        "mode": "schematic",
-        "options": ["compress"]
+        "input_text": "sample.schematic",
+        "mode": "world_import",
+        "options": ["overwrite", "auto_scale"]
     })
     assert response.status_code == 200
     data = response.get_json()
     assert data["status"] == "success"
-    assert data["data"]["input_text"] == "Sample block data for import."
-    assert data["data"]["mode"] == "schematic"
-    assert data["data"]["options"] == ["compress"]
+    assert data["data"]["input_text"] == "sample.schematic"
+    assert data["data"]["mode"] == "world_import"
+    assert data["data"]["options"] == ["overwrite", "auto_scale"]
     assert "message" in data["data"]
 
 def test_minecraft_importer_empty_input(client):
