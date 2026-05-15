@@ -1,0 +1,12 @@
+{
+  "demo_requests": [
+    {
+      "name": "Happy Path",
+      "payload": {
+        "input_text": "Sample block data for import.",
+        "mode": "schematic",
+        "options": ["compress"]
+      }
+    }
+  ]
+}
