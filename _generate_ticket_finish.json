@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 05:41:34",
+  "finish_id": "a2843885-d3cf-40ba-b9f2-17f878d41947",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "87483caf",
+  "ticket_title": "Minimal-Lösung Ordnerstruktur erstellen: Minecraft Mapper",
+  "worker_id": "wk_7106f5d5efaa"
+}
