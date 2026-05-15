@@ -141,11 +141,20 @@
                 
                 const result = await response.json();
                 
-                if (!response.ok || result.status === 'error') {
+                if (!response.ok || result.success === false) {
+                    let errMsg = 'Unknown API error.';
+                    if (result.error && result.error.message) {
+                        errMsg = result.error.message;
+                        if (result.error.details && Object.keys(result.error.details).length > 0) {
+                            errMsg += ' ' + JSON.stringify(result.error.details);
+                        }
+                    } else if (result.message) {
+                        errMsg = result.message;
+                    }
                     if (typeof showErrorPanel === 'function') {
-                        showErrorPanel('API Error', result.message || 'Unknown API error.');
+                        showErrorPanel('API Error', errMsg);
                     } else {
-                        alert('API Error: ' + (result.message || 'Unknown'));
+                        alert('API Error: ' + errMsg);
                     }
                     if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
                     else { btn.disabled = false; btn.innerHTML = 'Split Minecraft Data'; }
