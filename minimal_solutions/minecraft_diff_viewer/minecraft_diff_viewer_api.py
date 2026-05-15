@@ -30,27 +30,28 @@ def process():
     else:
         input_string = str(input_text)
     
-    # Minimal mapping logic
-    mapped_lines = []
+    # Minimal diff logic
+    diff_lines = []
     for line in input_string.split("\n"):
         line = line.strip()
         if not line:
             continue
             
-        if mode == 'prefix':
-            mapped_lines.append(f"[Mapped] {line}")
-        elif mode == 'suffix':
-            mapped_lines.append(f"{line} [Mapped]")
+        if mode == 'strict':
+            diff_lines.append(f"- {line}")
+            diff_lines.append(f"+ {line}")
+        elif mode == 'relaxed':
+            diff_lines.append(f"~ {line}")
         else:
-            mapped_lines.append(f"-> {line}")
+            diff_lines.append(f"  {line}")
             
-    mapped_text = "\n".join(mapped_lines)
+    diff_text = "\n".join(diff_lines)
     
     result_data = {
-        "mapped_text": mapped_text,
+        "diff_text": diff_text,
         "mode": mode,
         "options": options,
-        "message": "Mapping erfolgreich durchgeführt."
+        "message": "Diff erfolgreich durchgeführt."
     }
     
     return success_response(data=result_data)
