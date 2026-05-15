@@ -246,11 +246,17 @@
   "success": true,
   "data": {
     "input_text": "mc.example.com",
-    "options": {"verbose": true},
     "mode": "check",
-    "checker_output": "...",
+    "options": {
+      "verbose": true
+    },
     "status": "success",
-    "message": "Minecraft Checker erfolgreich ausgeführt."
+    "message": "Minecraft Checker request successfully processed for mode 'check'.",
+    "result": {
+      "check_status": "passed",
+      "issues_found": 0,
+      "details": "Checked 'mc.example.com...' in mode 'check'. No issues found."
+    }
   },
   "error": null,
   "warnings": [],
