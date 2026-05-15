@@ -1,5 +1,7 @@
 {
-  "input_text": "stone",
-  "mode": "default",
-  "options": {}
+  "input_text": "stone\ndirt\ngranite\nandesite",
+  "mode": "strict",
+  "options": {
+    "ignore_whitespace": true
+  }
 }
