@@ -1,1 +1,7 @@
-{}
+{
+  "input_text": "Here is a large text about Minecraft servers. Server performance is important. Lag is bad.",
+  "mode": "performance",
+  "options": {
+    "format": "bullet_points"
+  }
+}
