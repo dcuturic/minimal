@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 03:16:51",
+  "finish_id": "48ea4cd6-03a8-4411-8f79-355047984894",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "1d21b4ff",
+  "ticket_title": "Minimal-Lösung Tests und Demo-Daten erstellen: Minecraft Masker",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
