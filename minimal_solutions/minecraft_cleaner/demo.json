@@ -1,5 +1,14 @@
 {
-    "input_text": "text1\ntext2\ntext3",
-    "mode": "standard",
-    "options": {}
+  "input_text": [
+    "§c[Server] §fWelcome to the server!",
+    "§aPlayer1 joined the game.",
+    "§eWarning: §rServer will restart in 5 minutes.",
+    "   ",
+    "§b[VIP] §6Notch§f: Hello everyone!",
+    "§7(This is a test message with random colors §1b§2l§3u§4e)"
+  ],
+  "mode": "strict",
+  "options": {
+    "remove_empty": true
+  }
 }
