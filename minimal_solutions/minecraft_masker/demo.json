@@ -1,0 +1,8 @@
+{
+  "input_text": "Player Notch connected with IP 127.0.0.1",
+  "mode": "mask_log",
+  "options": [
+    "hide_ips",
+    "hide_usernames"
+  ]
+}
