@@ -1,7 +1,8 @@
 {
-  "input_text": "Dieser Text wird vom Minecraft Splitter verarbeitet.",
-  "mode": "basic",
-  "options": {
-    "split_character": " "
-  }
+    "input_text": "Willkommen auf unserem Minecraft-Server! Bitte lies die Regeln sorgfältig durch, bevor du anfängst zu spielen. Respektiere andere Spieler, nutze keine Cheats oder Hacks und baue nicht zu nah an den Grundstücken anderer. Bei Fragen wende dich an die Administratoren.",
+    "mode": "chat",
+    "options": {
+        "max_length": 256,
+        "prefix": "[Info] "
+    }
 }
