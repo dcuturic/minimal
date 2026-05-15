@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 01:01:32",
+  "finish_id": "0acd0583-b140-4a59-a2be-0163185877ce",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "e237e677",
+  "ticket_title": "Minimal-Lösung registrieren: Minecraft Checker",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
