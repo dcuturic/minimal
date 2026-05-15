@@ -1,12 +1,8 @@
 {
-  "demo_requests": [
-    {
-      "name": "Happy Path",
-      "payload": {
-        "input_text": "Sample block data for import.",
-        "mode": "schematic",
-        "options": ["compress"]
-      }
-    }
+  "input_text": "sample_world_data",
+  "mode": "world_import",
+  "options": [
+    "overwrite_existing",
+    "backup_first"
   ]
 }
