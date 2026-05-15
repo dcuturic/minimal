@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 00:39:29",
+  "finish_id": "a632e75b-2092-4f2b-a6ae-cc2633e66489",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "6c2e93d1",
+  "ticket_title": "Minimal-Lösung UI-Demo bauen: Minecraft Summarizer",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
