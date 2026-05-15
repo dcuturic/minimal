@@ -465,6 +465,18 @@ def create_app():
         except ImportError:
             pass
 
+        try:
+            from minimal_solutions.minecraft_splitter.minecraft_splitter_api import api_bp as minecraft_splitter_api_bp
+            app.register_blueprint(minecraft_splitter_api_bp)
+        except ImportError:
+            pass
+
+        try:
+            from minimal_solutions.minecraft_splitter.minecraft_splitter_ui import ui_bp as minecraft_splitter_ui_bp
+            app.register_blueprint(minecraft_splitter_ui_bp)
+        except ImportError:
+            pass
+
     except ImportError as e:
         print(f"Warning: Could not import UI blueprints: {e}")
         
