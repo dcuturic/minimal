@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 04:54:31",
+  "finish_id": "f9cb2506-594d-4ad7-b23a-46976389454e",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "dc21ec20",
+  "ticket_title": "Minimal-Lösung Ordnerstruktur erstellen: Minecraft Normalizer",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
