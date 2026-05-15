@@ -1,0 +1,7 @@
+{
+  "input_text": "Dieser Text wird vom Minecraft Splitter verarbeitet.",
+  "mode": "basic",
+  "options": {
+    "split_character": " "
+  }
+}
