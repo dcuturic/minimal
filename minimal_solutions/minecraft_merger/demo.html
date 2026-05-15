@@ -110,6 +110,19 @@
             });
         }
 
+        function downloadResult(btn) {
+            const resultText = document.getElementById('sm-json-result').innerText;
+            const blob = new Blob([resultText], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'minecraft_merger_result.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
         async function generateAPIMerger(btn) {
             const inputTextRaw = document.getElementById('sm-input-text').value;
             const mode = document.getElementById('sm-mode').value;
