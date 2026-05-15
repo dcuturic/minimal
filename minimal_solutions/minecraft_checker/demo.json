@@ -1,5 +1,8 @@
 {
-  "input_text": "sample text",
-  "mode": "basic",
-  "options": {}
+    "input_text": "[15:22:30] [Server thread/INFO]: Done (1.234s)! For help, type \"help\"",
+    "mode": "log_check",
+    "options": {
+        "strict": true,
+        "verbose": false
+    }
 }
