@@ -1,9 +1,12 @@
-"""
-UI Backend for Minecraft Merger
-"""
+from flask import Blueprint
+import os
 
-def get_ui_context():
-    return {
-        "title": "Minecraft Merger",
-        "description": "A minimal solution to merge Minecraft data."
-    }
+ui_bp = Blueprint('minecraft_merger_ui', __name__)
+
+@ui_bp.route('/minimal-solutions/minecraft_merger/demo')
+def demo():
+    html_path = os.path.join(os.path.dirname(__file__), 'demo.html')
+    if os.path.exists(html_path):
+        with open(html_path, 'r') as f:
+            return f.read()
+    return "Demo UI for Minecraft Merger"
