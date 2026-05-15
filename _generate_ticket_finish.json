@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 06:07:28",
+  "finish_id": "aca022c4-6556-459c-8d7e-a8a3843474c7",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "b308c6a4",
+  "ticket_title": "Minimal-Lösung registrieren: Minecraft Diff Viewer",
+  "worker_id": "wk_7106f5d5efaa"
+}
