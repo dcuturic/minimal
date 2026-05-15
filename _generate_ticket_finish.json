@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 05:34:46",
+  "finish_id": "487e2e18-c2a0-4a24-965a-e13470495d88",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "b13291d9",
+  "ticket_title": "Minimal-Lösung QA und Abschluss prüfen: Minecraft Normalizer",
+  "worker_id": "wk_7106f5d5efaa"
+}
