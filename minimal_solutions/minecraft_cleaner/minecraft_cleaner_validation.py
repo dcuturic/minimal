@@ -4,7 +4,7 @@ def validate_input(data):
     rules = {
         "input_text": {
             "required": True,
-            "type": str,
+            "type": (str, list),
             "min_length": 1,
             "max_length": 5000
         },
