@@ -472,7 +472,6 @@ def create_app():
             pass
 
         try:
-        try:
             from minimal_solutions.minecraft_splitter.minecraft_splitter_ui import ui_bp as minecraft_splitter_ui_bp
             app.register_blueprint(minecraft_splitter_ui_bp)
         except ImportError:
