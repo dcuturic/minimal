@@ -1,3 +1,16 @@
 {
-  "input_text": "sample text"
+  "request": {
+    "input_text": "  Welcome to    Minecraft  \n   Server  1.20   \n  Enjoy  your  stay!   ",
+    "mode": "lowercase",
+    "options": {}
+  },
+  "response": {
+    "success": true,
+    "data": {
+      "normalized_text": "welcome to minecraft\nserver 1.20\nenjoy your stay!",
+      "mode": "lowercase",
+      "options": {},
+      "message": "Normalisierung erfolgreich durchgeführt."
+    }
+  }
 }
