@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 04:28:42",
+  "finish_id": "764e0f33-d0a2-4077-a8a5-066498426d20",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "3d2a2ae1",
+  "ticket_title": "Minimal-Lösung UI-Demo bauen: Minecraft Cleaner",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
