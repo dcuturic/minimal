@@ -21,15 +21,42 @@ def process():
         )
         
     input_text = data.get("input_text")
-    mode = data.get("mode")
+    mode = data.get("mode", "basic")
     options = data.get("options", {})
     
-    # Mock behavior for the minimal solution
-    result_data = {
-        "input_text": input_text,
-        "mode": mode,
-        "options": options,
-        "message": "Clean erfolgreich durchgeführt."
-    }
+    remove_empty = options.get("remove_empty", False)
+
+    import re
+    # Minecraft color codes are usually § or & followed by 0-9, a-f, k-o, r
+    pattern = r'[&§][0-9a-fA-Fk-oK-oRr]'
+    
+    def clean_text(text, m):
+        cleaned = re.sub(pattern, '', str(text))
+        if m == 'strict':
+            # Strict mode: also strip non-printable characters or excessive whitespace
+            cleaned = re.sub(r'[^A-Za-z0-9_\-\. ]+', '', cleaned)
+            cleaned = cleaned.strip()
+        return cleaned
+
+    if isinstance(input_text, list):
+        cleaned_list = [clean_text(item, mode) for item in input_text]
+        if remove_empty:
+            cleaned_list = [item for item in cleaned_list if item.strip() != ""]
+        result_data = {
+            "input_text": cleaned_list,
+            "mode": mode,
+            "options": options,
+            "message": "Clean erfolgreich durchgeführt."
+        }
+    else:
+        cleaned_str = clean_text(input_text, mode)
+        if remove_empty and cleaned_str.strip() == "":
+            cleaned_str = ""
+        result_data = {
+            "input_text": cleaned_str,
+            "mode": mode,
+            "options": options,
+            "message": "Clean erfolgreich durchgeführt."
+        }
     
     return success_response(data=result_data)
