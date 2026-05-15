@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 02:16:08",
+  "finish_id": "ac82177f-89c6-451f-a095-a27658f64cc0",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "c300f5cb",
+  "ticket_title": "Minimal-Lösung Doku und API-Beispiele ergänzen: Minecraft Exporter",
+  "worker_id": "wk_7cbb8c1d86b7"
+}
