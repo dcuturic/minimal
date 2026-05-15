@@ -1,5 +1,8 @@
 {
-  "example_input": {
-    "data": "sample"
+  "input_text": "Text snippet 1\nText snippet 2\nText snippet 3",
+  "mode": "chat",
+  "options": {
+    "separator": " | ",
+    "prefix": "[MERGED] "
   }
 }
