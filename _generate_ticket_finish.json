@@ -1,0 +1,13 @@
+{
+  "created_at": "2026-05-15 05:38:25",
+  "finish_id": "527b121b-fcd9-4b64-95c7-9459ae604a2d",
+  "note": "done",
+  "project_id": "b3068c89",
+  "schema": "auto_coder_finish_signal.v1",
+  "stage_id": "in_progress",
+  "stage_label": "In Bearbeitung",
+  "status": "done",
+  "ticket_id": "c0542154",
+  "ticket_title": "Minimal-Lösung registrieren: Minecraft Mapper",
+  "worker_id": "wk_7106f5d5efaa"
+}
