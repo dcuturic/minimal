@@ -15,10 +15,10 @@ def client(app):
 
 def test_minecraft_cleaner_happy_path(client):
     response = client.post('/api/minimal-solutions/minecraft_cleaner', json={
-        "input_text": "text part 1\ntext part 2\ntext part 3",
-        "mode": "standard",
+        "input_text": "§aHello §bWorld",
+        "mode": "basic",
         "options": {
-            "separator": " "
+            "remove_empty": False
         }
     })
     assert response.status_code == 200
@@ -28,7 +28,7 @@ def test_minecraft_cleaner_happy_path(client):
 def test_minecraft_cleaner_empty_input(client):
     response = client.post('/api/minimal-solutions/minecraft_cleaner', json={
         "input_text": "",
-        "mode": "standard",
+        "mode": "basic",
         "options": {}
     })
     assert response.status_code == 400
