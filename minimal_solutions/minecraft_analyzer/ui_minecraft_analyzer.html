@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Analyzer - UI Demo</title>
+    <style>
+        /* global monochrome styles */
+        :root {
+            --bg-color: #f9fafb;
+            --surface-color: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+            --accent-color: #000000;
+            --error-color: #ef4444;
+            --success-color: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: monospace;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* States */
+        #emptyState {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 1rem;
+        }
+
+        #loadingState {
+            display: none;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 1rem;
+        }
+
+        #errorState {
+            display: none;
+            color: var(--error-color);
+            background-color: #fef2f2;
+            border: 1px solid #f87171;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        #resultState {
+            display: none;
+            margin-top: 1.5rem;
+        }
+
+        .result-box {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .copy-btn {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            background-color: var(--border-color);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .api-docs {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .api-docs pre {
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .live-preview-box {
+            margin-top: 0.5rem;
+            padding: 1rem;
+            background-color: var(--bg-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            font-family: monospace;
+            min-height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Minecraft Analyzer</h1>
+            <p>Minecraft Analyzer analysiert Minecraft-Daten als kleine UI-Demo und stellt dieselbe Funktion als API-Schnittstelle bereit.</p>
+
+            <form id="analyzerForm">
+                <div class="form-group">
+                    <label for="textInput">Input Text:</label>
+                    <textarea id="textInput" placeholder="Z.B. log_data oder minecraft_config" required></textarea>
+                    <div>
+                        <small>Live-Vorschau (Input Text):</small>
+                        <div id="livePreview" class="live-preview-box"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="optionsInput">Options (Optional JSON):</label>
+                    <input type="text" id="optionsInput" placeholder='{"verbose": true}'>
+                </div>
+
+                <div class="form-group">
+                    <label for="modeSelect">Mode:</label>
+                    <select id="modeSelect">
+                        <option value="analyze" selected>Analyze</option>
+                        <option value="extract">Extract</option>
+                        <option value="validate">Validate</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="submitBtn">Analysieren</button>
+            </form>
+
+            <div id="emptyState">Bitte geben Sie die Daten ein und klicken Sie auf "Analysieren".</div>
+            <div id="loadingState">Wird analysiert...</div>
+            <div id="errorState"></div>
+            
+            <div id="resultState">
+                <h3>Ergebnis:</h3>
+                <div class="result-box">
+                    <div class="action-buttons">
+                        <button class="copy-btn" onclick="downloadResult()">Download</button>
+                        <button class="copy-btn" onclick="copyResult()">Kopieren</button>
+                    </div>
+                    <pre id="resultOutput" style="margin-top: 1.5rem;"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-docs">
+            <h2>API Dokumentation</h2>
+            <p><strong>Endpoint:</strong> <code>POST /api/minimal-solutions/minecraft_analyzer</code></p>
+            <p>Die Schnittstelle kann von externen Systemen aufgerufen werden, indem ein <code>POST</code>-Request mit den entsprechenden Parametern (input_text, options, mode) als JSON-Body gesendet wird.</p>
+            <p><strong>Request-Beispiel:</strong></p>
+            <pre>
+{
+  "input_text": "server.properties content...",
+  "options": {"verbose": true},
+  "mode": "analyze"
+}
+            </pre>
+            <p><strong>Response-Beispiel:</strong></p>
+            <pre>
+{
+  "success": true,
+  "data": {
+    "input_text": "server.properties content...",
+    "options": {"verbose": true},
+    "mode": "analyze",
+    "analyzer_output": "...",
+    "status": "success",
+    "message": "Minecraft Analyzer erfolgreich ausgefuehrt."
+  },
+  "error": null,
+  "warnings": [],
+  "meta": {}
+}
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        // Live Preview Logic
+        const textInput = document.getElementById('textInput');
+        const livePreview = document.getElementById('livePreview');
+
+        textInput.addEventListener('input', () => {
+            livePreview.textContent = textInput.value || 'Keine Daten eingegeben';
+        });
+
+        // Initial preview
+        livePreview.textContent = 'Keine Daten eingegeben';
+
+        // Form Submission Logic
+        document.getElementById('analyzerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const input_text = textInput.value;
+            const optionsRaw = document.getElementById('optionsInput').value.trim();
+            const mode = document.getElementById('modeSelect').value;
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const emptyState = document.getElementById('emptyState');
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const resultState = document.getElementById('resultState');
+            const resultOutput = document.getElementById('resultOutput');
+            
+            // Reset states
+            emptyState.style.display = 'none';
+            errorState.style.display = 'none';
+            resultState.style.display = 'none';
+
+            let options = {};
+            if (optionsRaw) {
+                try {
+                    options = JSON.parse(optionsRaw);
+                } catch (err) {
+                    errorState.textContent = 'Options muss ein gültiges JSON sein (z.B. {"key": "value"}).';
+                    errorState.style.display = 'block';
+                    return;
+                }
+            }
+            
+            loadingState.style.display = 'block';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/minimal-solutions/minecraft_analyzer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input_text, options, mode })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    let errorMsg = 'Ein Fehler ist aufgetreten';
+                    if (data.error && data.error.message) {
+                        errorMsg = data.error.message;
+                        if (data.error.details) {
+                            errorMsg += ': ' + JSON.stringify(data.error.details);
+                        }
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                resultOutput.textContent = JSON.stringify(data.data, null, 2);
+                resultState.style.display = 'block';
+            } catch (err) {
+                errorState.textContent = err.message;
+                errorState.style.display = 'block';
+            } finally {
+                loadingState.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        function copyResult() {
+            const resultText = document.getElementById('resultOutput').textContent;
+            navigator.clipboard.writeText(resultText).then(() => {
+                const btns = document.querySelectorAll('.copy-btn');
+                const btn = btns[1]; // Kopieren button
+                const originalText = btn.textContent;
+                btn.textContent = 'Kopiert!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function downloadResult() {
+            const resultText = document.getElementById('resultOutput').textContent;
+            const blob = new Blob([resultText], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `minecraft_analyzer_result.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
