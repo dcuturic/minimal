@@ -453,6 +453,18 @@ def create_app():
         except ImportError:
             pass
 
+        try:
+            from minimal_solutions.minecraft_masker.minecraft_masker_api import api_bp as minecraft_masker_api_bp
+            app.register_blueprint(minecraft_masker_api_bp)
+        except ImportError:
+            pass
+
+        try:
+            from minimal_solutions.minecraft_masker.minecraft_masker_ui import ui_bp as minecraft_masker_ui_bp
+            app.register_blueprint(minecraft_masker_ui_bp)
+        except ImportError:
+            pass
+
     except ImportError as e:
         print(f"Warning: Could not import UI blueprints: {e}")
         
