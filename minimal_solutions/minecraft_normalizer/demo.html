@@ -1,0 +1,251 @@
+<div class="sm-container" style="width: 100%;">
+    <style>
+        .sm-input-group { margin-bottom: 1.2rem; }
+        .sm-input-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.9rem; }
+        .sm-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-color); font-size: 1rem; }
+        .sm-input:focus { outline: none; border-color: var(--primary-color); }
+        .sm-textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-color); font-size: 1rem; resize: vertical; min-height: 80px; }
+        
+        .sm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .sm-grid { grid-template-columns: 1fr; } }
+
+        .sm-preview-area {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            min-height: 300px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sm-result-box {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            margin-bottom: 1rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+    </style>
+
+    <div class="sm-grid">
+        <div class="sm-form-section">
+            <div class="sm-input-group">
+                <label>Input Text</label>
+                <input type="text" id="sm-input-text" class="sm-input" placeholder='e.g. some minecraft data' oninput="updateLivePreview()">
+            </div>
+            <div class="sm-input-group">
+                <label>Mode</label>
+                <input type="text" id="sm-mode" class="sm-input" placeholder="e.g. normalize, standardize" oninput="updateLivePreview()">
+            </div>
+            <div class="sm-input-group">
+                <label>Options (JSON format)</label>
+                <textarea id="sm-options" class="sm-textarea" placeholder='{"remove_invalid": true}' oninput="updateLivePreview()"></textarea>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="generateAPINormalizer(this)">
+                Normalize Data
+            </button>
+        </div>
+
+        <div class="sm-preview-section">
+            <div id="sm-empty-state" style="text-align: center; padding: 2rem; border: 1px dashed var(--border-color); border-radius: 8px; background: var(--surface-color); min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; color: var(--text-muted);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                 <p style="color: var(--text-muted);">Enter input text and mode to normalize data</p>
+                 <div id="sm-live-preview" style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); font-family: monospace;"></div>
+            </div>
+
+            <div id="sm-result-state" class="sm-preview-area" style="display: none;">
+                <h4 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-color);">Normalized Result</h4>
+                <div class="sm-result-box" id="sm-json-result"></div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-start;">
+                    <button class="btn btn-secondary btn-sm" onclick="copyResult(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy Result
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="downloadResult(this)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Download Result
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateLivePreview() {
+            const inputText = document.getElementById('sm-input-text').value;
+            const mode = document.getElementById('sm-mode').value;
+            const previewEl = document.getElementById('sm-live-preview');
+            
+            if (inputText || mode) {
+                previewEl.innerText = `Pending request: ${inputText || 'empty'} -> [mode: ${mode || '...'}]`;
+            } else {
+                previewEl.innerText = '';
+            }
+        }
+
+        function copyResult(btn) {
+            const resultText = document.getElementById('sm-json-result').innerText;
+            navigator.clipboard.writeText(resultText).then(() => {
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            }).catch(e => {
+                const ta = document.createElement('textarea');
+                ta.value = resultText;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                const original = btn.innerHTML;
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
+        }
+
+        function downloadResult(btn) {
+            const resultText = document.getElementById('sm-json-result').innerText;
+            const blob = new Blob([resultText], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'minecraft_normalizer_result.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function generateAPINormalizer(btn) {
+            const inputTextRaw = document.getElementById('sm-input-text').value;
+            const mode = document.getElementById('sm-mode').value;
+            const optionsRaw = document.getElementById('sm-options').value;
+            
+            let inputText = inputTextRaw;
+            try {
+                 if(inputTextRaw.trim().startsWith('[')) {
+                     inputText = JSON.parse(inputTextRaw);
+                 }
+            } catch(e) {}
+            
+            let options = {};
+            if (optionsRaw.trim() !== '') {
+                try {
+                    options = JSON.parse(optionsRaw);
+                } catch(e) {
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('Validation Error', 'Options must be a valid JSON object.');
+                    } else {
+                        alert('Validation Error: Options must be a valid JSON object.');
+                    }
+                    return;
+                }
+            }
+
+            if (typeof setButtonLoading === 'function') setButtonLoading(btn, true);
+            else { btn.disabled = true; btn.innerHTML = 'Normalizing...'; }
+
+            try {
+                const response = await fetch('/api/minimal-solutions/minecraft_normalizer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input_text: inputText,
+                        mode: mode,
+                        options: options
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || result.success === false) {
+                    let errMsg = 'Unknown API error.';
+                    if (result.error && result.error.message) {
+                        errMsg = result.error.message;
+                        if (result.error.details && Object.keys(result.error.details).length > 0) {
+                            errMsg += ' ' + JSON.stringify(result.error.details);
+                        }
+                    } else if (result.message) {
+                        errMsg = result.message;
+                    }
+                    if (typeof showErrorPanel === 'function') {
+                        showErrorPanel('API Error', errMsg);
+                    } else {
+                        alert('API Error: ' + errMsg);
+                    }
+                    if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                    else { btn.disabled = false; btn.innerHTML = 'Normalize Data'; }
+                    return;
+                }
+
+                if (result.data) {
+                    document.getElementById('sm-json-result').innerText = JSON.stringify(result.data, null, 2);
+                    document.getElementById('sm-empty-state').style.display = 'none';
+                    document.getElementById('sm-result-state').style.display = 'flex';
+                } else if (result) {
+                    document.getElementById('sm-json-result').innerText = JSON.stringify(result, null, 2);
+                    document.getElementById('sm-empty-state').style.display = 'none';
+                    document.getElementById('sm-result-state').style.display = 'flex';
+                }
+
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Normalize Data'; }
+
+            } catch (err) {
+                if (typeof showErrorPanel === 'function') {
+                    showErrorPanel('Network Error', 'Failed to connect to the API.');
+                } else {
+                    alert('Network Error: Failed to connect to API.');
+                }
+                if (typeof setButtonLoading === 'function') setButtonLoading(btn, false);
+                else { btn.disabled = false; btn.innerHTML = 'Normalize Data'; }
+            }
+        }
+    </script>
+
+    <!-- API Documentation Section -->
+    <div style="margin-top: 3rem; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--primary-color);">API / Schnittstelle</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            Dieser Service kann extern als API genutzt werden, um Minecraft-Daten basierend auf input_text, mode und weiteren Optionen zu normalisieren.
+        </p>
+
+        <div style="margin-bottom: 1.5rem;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Endpunkt</strong>
+            <code style="background: var(--bg-color); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid var(--border-color); display: block; font-family: monospace; color: var(--text-color);">POST /api/minimal-solutions/minecraft_normalizer</code>
+        </div>
+
+        <div class="sm-grid" style="gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Request-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "input_text": "Diamond Sword (unbreakable)",
+  "mode": "standardize",
+  "options": {
+    "remove_invalid": true
+  }
+}</pre>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Die Felder <code>input_text</code>, <code>mode</code> und <code>options</code> sind erforderlich (bzw. gemäss Validierung).</p>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Response-Beispiel</strong>
+                <pre style="background: var(--bg-color); padding: 1rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 0; color: var(--text-color);">
+{
+  "success": true,
+  "data": {
+    "input_text": "Diamond Sword (unbreakable)",
+    "message": "Normalizer erfolgreich durchgeführt."
+  }
+}</pre>
+            </div>
+        </div>
+    </div>
+</div>
