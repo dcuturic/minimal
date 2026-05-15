@@ -501,6 +501,30 @@ def create_app():
         except ImportError:
             pass
 
+        try:
+            from minimal_solutions.minecraft_normalizer.minecraft_normalizer_api import api_bp as minecraft_normalizer_api_bp
+            app.register_blueprint(minecraft_normalizer_api_bp)
+        except ImportError:
+            pass
+
+        try:
+            from minimal_solutions.minecraft_normalizer.minecraft_normalizer_ui import ui_bp as minecraft_normalizer_ui_bp
+            app.register_blueprint(minecraft_normalizer_ui_bp)
+        except ImportError:
+            pass
+
+        try:
+            from minimal_solutions.minecraft_mapper.minecraft_mapper_api import api_bp as minecraft_mapper_api_bp
+            app.register_blueprint(minecraft_mapper_api_bp)
+        except ImportError:
+            pass
+
+        try:
+            from minimal_solutions.minecraft_mapper.minecraft_mapper_ui import ui_bp as minecraft_mapper_ui_bp
+            app.register_blueprint(minecraft_mapper_ui_bp)
+        except ImportError:
+            pass
+
     except ImportError as e:
         print(f"Warning: Could not import UI blueprints: {e}")
         
