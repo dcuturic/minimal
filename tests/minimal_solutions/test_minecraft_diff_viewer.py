@@ -22,6 +22,8 @@ def test_minecraft_diff_viewer_happy_path(client):
     assert response.status_code == 200
     data = response.get_json()
     assert "data" in data
+    assert data["data"]["diff_text"] == "  stone\n  dirt"
+    assert data["data"]["mode"] == "prefix"
 
 def test_minecraft_diff_viewer_empty_input(client):
     response = client.post('/api/minimal-solutions/minecraft_diff_viewer', json={
