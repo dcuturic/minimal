@@ -1,3 +1,31 @@
 {
-  "demo": "data"
+  "scenarios": [
+    {
+      "name": "Default Mapping",
+      "description": "Standard mapping of Minecraft items.",
+      "request": {
+        "input_text": ["minecraft:stone", "minecraft:dirt", "minecraft:cobblestone"],
+        "mode": "default",
+        "options": {}
+      }
+    },
+    {
+      "name": "Prefix Mapping",
+      "description": "Prefixing Minecraft items.",
+      "request": {
+        "input_text": "stone\ndirt\nwood",
+        "mode": "prefix",
+        "options": {}
+      }
+    },
+    {
+      "name": "Suffix Mapping",
+      "description": "Suffixing Minecraft items.",
+      "request": {
+        "input_text": "diamond_sword\niron_pickaxe",
+        "mode": "suffix",
+        "options": {}
+      }
+    }
+  ]
 }
