@@ -317,14 +317,17 @@
                 
                 const data = await response.json();
                 
-                if (!response.ok) {
-                    throw new Error('Ein Fehler ist aufgetreten: ' + response.statusText);
-                }
-                
-                if (data.error && data.error.message) {
-                    let errorMsg = data.error.message;
-                    if (data.error.details) {
-                        errorMsg += ': ' + JSON.stringify(data.error.details);
+                if (!response.ok || (data && data.error && data.error.message)) {
+                    let errorMsg = 'Ein Fehler ist aufgetreten: ' + response.statusText;
+                    if (data && data.error && data.error.message) {
+                        errorMsg = data.error.message;
+                        if (data.error.details) {
+                            if (typeof data.error.details === 'object' && !Array.isArray(data.error.details)) {
+                                errorMsg += ' - ' + Object.entries(data.error.details).map(([k, v]) => `${k}: ${v}`).join(', ');
+                            } else {
+                                errorMsg += ': ' + JSON.stringify(data.error.details);
+                            }
+                        }
                     }
                     throw new Error(errorMsg);
                 }
