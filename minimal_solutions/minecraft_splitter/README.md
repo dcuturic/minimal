@@ -1,28 +1,39 @@
 # Minecraft Splitter
 
-Minimal-Lösung für Minecraft Splitter.
+Minimal-Lösung für den Minecraft Splitter.
 
 ## Beschreibung
-Dieses Tool bietet Funktionen für den Minecraft Splitter.
+Dieses Tool bietet Funktionen, um Minecraft-Daten (z. B. Inventar-Strings, Befehle, Koordinaten) basierend auf verschiedenen Modi und spezifischen Trennzeichen strukturiert in einzelne Bestandteile aufzuteilen ("zu splitten").
+
+## Externe Nutzung der Schnittstelle (API)
+Dieser Service kann extern als REST-API genutzt werden, um Daten automatisiert aufzuteilen. Senden Sie dazu einfach einen `POST`-Request mit den erforderlichen Parametern (`input_text`, `mode`, `options`) im JSON-Format an den unten stehenden Endpunkt. Das System validiert die Eingaben und liefert die gesplitteten Daten strukturiert als JSON zurück.
 
 ## API-Endpunkt
 `POST /api/minimal-solutions/minecraft_splitter`
 
-### Anfrage
+### Request-Beispiel
 ```json
 {
-  "input_text": "text",
+  "input_text": "Steve:diamond:64",
   "mode": "basic",
-  "options": {}
+  "options": {
+    "split_character": ":"
+  }
 }
 ```
 
-### Antwort
+### Response-Beispiel
 ```json
 {
-  "status": "success",
+  "success": true,
   "data": {
-    "message": "Split erfolgreich durchgeführt."
+    "split_result": [
+      "Steve",
+      "diamond",
+      "64"
+    ],
+    "mode": "basic",
+    "timestamp": "2024-05-14T12:00:00Z"
   }
 }
 ```
